@@ -1,0 +1,172 @@
+name: Kubernetes Static Analysis
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  static-analysis:
+    name: Static Security Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Install Kubesec
+      run: |
+        curl -sSX GET https://api.github.com/repos/controlplaneio/kubesec/releases/latest \
+          | grep browser_download_url \
+          | grep linux \
+          | cut -d '"' -f 4 \
+          | wget -O kubesec -i -
+        chmod +x kubesec
+        sudo mv kubesec /usr/local/bin/
+        kubesec version
+        
+    - name: Install KubeLinter
+      run: |
+        curl -L https://github.com/stackrox/kube-linter/releases/latest/download/kube-linter-linux.tar.gz \
+          | tar xz
+        sudo mv kube-linter /usr/local/bin/
+        kube-linter version
+        
+    - name: Create Reports Directory
+      run: mkdir -p reports
+      
+    - name: Run Kubesec Analysis
+      run: |
+        echo "Running Kubesec analysis..."
+        for file in manifests/*.yaml; do
+          if [ -f "$file" ]; then
+            filename=$(basename "$file" .yaml)
+            echo "Analyzing $file..."
+            kubesec scan "$file" > "reports/kubesec-${filename}-report.json"
+            
+            # Check if score is below threshold
+            score=$(jq -r '.[0].score // 0' "reports/kubesec-${filename}-report.json")
+            echo "File: $file, Score: $score"
+            
+            if [ "$score" -lt 0 ]; then
+              echo "::error::Security score for $file is $score (below threshold of 0)"
+              echo "KUBESEC_FAILED=true" >> $GITHUB_ENV
+            fi
+          fi
+        done
+        
+    - name: Run KubeLinter Analysis
+      run: |
+        echo "Running KubeLinter analysis..."
+        kube-linter lint manifests/ --format json > reports/kube-linter-report.json || true
+        kube-linter lint manifests/ --format plain > reports/kube-linter-summary.txt || true
+        
+        # Check for critical issues
+        critical_count=$(jq -r '.Reports[] | select(.Level == "error") | .Check' reports/kube-linter-report.json | wc -l)
+        echo "Critical issues found: $critical_count"
+        
+        if [ "$critical_count" -gt 0 ]; then
+          echo "::error::Found $critical_count critical security issues"
+          echo "KUBELINTER_FAILED=true" >> $GITHUB_ENV
+        fi
+        
+    - name: Image Security Scan
+      run: |
+        echo "Scanning container images for vulnerabilities..."
+        
+        # Extract images from manifests
+        images=$(grep -h "image:" manifests/*.yaml | sed 's/.*image: *//' | sort | uniq)
+        
+        for image in $images; do
+          echo "Checking image: $image"
+          
+          # Check if image is from trusted registry
+          if [[ "$image" == *"docker.io"* ]] || [[ "$image" != *"/"* ]]; then
+            echo "::warning::Image $image may not be from a trusted registry"
+          fi
+          
+          # Check for latest tag usage
+          if [[ "$image" == *":latest" ]] || [[ "$image" != *":"* ]]; then
+            echo "::error::Image $image uses 'latest' tag or no tag specified"
+            echo "IMAGE_TAG_FAILED=true" >> $GITHUB_ENV
+          fi
+          
+          # Basic image pull test
+          docker pull "$image" || echo "::warning::Failed to pull image $image"
+        done
+        
+    - name: Generate Security Report
+      run: |
+        cat > reports/security-summary.md << 'EOF'
+        # Security Analysis Report
+        
+        **Analysis Date:** $(date)
+        **Repository:** ${{ github.repository }}
+        **Commit:** ${{ github.sha }}
+        
+        ## Kubesec Results
+        $(for file in reports/kubesec-*-report.json; do
+          if [ -f "$file" ]; then
+            filename=$(basename "$file" -report.json | sed 's/kubesec-//')
+            score=$(jq -r '.[0].score // "N/A"' "$file")
+            echo "- **$filename**: Score $score"
+          fi
+        done)
+        
+        ## KubeLinter Issues
+        **Total Issues:** $(jq -r '.Reports | length' reports/kube-linter-report.json)
+        
+        ### Critical Issues
+        $(jq -r '.Reports[] | select(.Level == "error") | "- " + .Check + ": " + .Message' reports/kube-linter-report.json)
+        
+        ### Warnings
+        $(jq -r '.Reports[] | select(.Level == "warning") | "- " + .Check + ": " + .Message' reports/kube-linter-report.json | head -10)
+        
+        ## Recommendations
+        1. Fix all critical security issues before deployment
+        2. Use specific image tags instead of 'latest'
+        3. Implement proper RBAC and security contexts
+        4. Remove hardcoded secrets from manifests
+        5. Enable security scanning in your deployment pipeline
+        EOF
+        
+    - name: Upload Analysis Reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-analysis-reports
+        path: reports/
+        retention-days: 30
+        
+    - name: Comment PR with Results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = 'reports/security-summary.md';
+          
+          if (fs.existsSync(path)) {
+            const report = fs.readFileSync(path, 'utf8');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🔒 Security Analysis Results\n\n${report}`
+            });
+          }
+          
+    - name: Fail on Security Issues
+      run: |
+        if [ "$KUBESEC_FAILED" = "true" ] || [ "$KUBELINTER_FAILED" = "true" ] || [ "$IMAGE_TAG_FAILED" = "true" ]; then
+          echo "::error::Security analysis failed. Please fix the issues before proceeding."
+          exit 1
+        fi
+        echo "✅ All security checks passed!"
