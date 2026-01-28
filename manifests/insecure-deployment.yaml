@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vulnerable-app
+  labels:
+    app: vulnerable-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: vulnerable-app
+  template:
+    metadata:
+      labels:
+        app: vulnerable-app
+    spec:
+      containers:
+      - name: web-server
+        image: nginx:1.14
+        ports:
+        - containerPort: 80
+        securityContext:
+          allowPrivilegeEscalation: true
+          readOnlyRootFilesystem: false
+        env:
+        - name: DB_PASSWORD
+          value: "admin123"
+        - name: API_KEY
+          value: "sk-1234567890abcdef"
+        volumeMounts:
+        - name: host-volume
+          mountPath: /host
+      volumes:
+      - name: host-volume
+        hostPath:
+          path: /
+          type: Directory
+      serviceAccountName: default

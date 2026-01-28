@@ -1,0 +1,20 @@
+checks:
+  # Enable all default checks
+  addAllBuiltIn: true
+  
+  # Disable specific checks if needed (example)
+  exclude:
+    - "dangling-service"
+  
+  # Include additional checks
+  include:
+    - "privileged-ports"
+    - "ssh-port"
+    - "unsafe-sysctls"
+
+# Custom check configurations
+customChecks: []
+
+# Ignore specific files or patterns
+ignore:
+  - "kustomization.yaml"

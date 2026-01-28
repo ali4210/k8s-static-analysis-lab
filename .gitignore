@@ -1,0 +1,12 @@
+# Reports and logs
+reports/*.json
+reports/*.html
+*.log
+
+# Temporary files
+*.tmp
+.DS_Store
+
+# IDE files
+.vscode/
+.idea/

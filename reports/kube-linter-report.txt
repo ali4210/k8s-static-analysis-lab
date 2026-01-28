@@ -1,0 +1,92 @@
+KubeLinter 0.6.8
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-deployment.yaml: (object: <no namespace>/vulnerable-app apps/v1, Kind=Deployment) found matching serviceAccount ("default") (check: default-service-account, remediation: Create a dedicated service account for your pod. Refer to https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/ for details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-deployment.yaml: (object: <no namespace>/vulnerable-app apps/v1, Kind=Deployment) Object does not define any DNSConfig rules. (check: dnsconfig-options, remediation: Specify dnsconfig options in your Pod specification to ensure the expected DNS setting on the Pod. Refer to https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config for details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-deployment.yaml: (object: <no namespace>/vulnerable-app apps/v1, Kind=Deployment) object has 3 replicas but does not specify inter pod anti-affinity (check: no-anti-affinity, remediation: Specify anti-affinity in your pod specification to ensure that the orchestrator attempts to schedule replicas on different nodes. Using podAntiAffinity, specify a labelSelector that matches pods for the deployment, and set the topologyKey to kubernetes.io/hostname. Refer to https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity for details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-deployment.yaml: (object: <no namespace>/vulnerable-app apps/v1, Kind=Deployment) container "web-server" does not specify a liveness probe (check: no-liveness-probe, remediation: Specify a liveness probe in your container. Refer to https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/ for details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-deployment.yaml: (object: <no namespace>/vulnerable-app apps/v1, Kind=Deployment) object does not define any node affinity rules. (check: no-node-affinity, remediation: Specify node-affinity in your pod specification to ensure that the orchestrator attempts to schedule replicas on specified nodes. Refer to https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity for details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-deployment.yaml: (object: <no namespace>/vulnerable-app apps/v1, Kind=Deployment) container "web-server" does not have a read-only root file system (check: no-read-only-root-fs, remediation: Set readOnlyRootFilesystem to true in the container securityContext.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-deployment.yaml: (object: <no namespace>/vulnerable-app apps/v1, Kind=Deployment) container "web-server" does not specify a readiness probe (check: no-readiness-probe, remediation: Specify a readiness probe in your container. Refer to https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/ for details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-deployment.yaml: (object: <no namespace>/vulnerable-app apps/v1, Kind=Deployment) object has no strategy type but must match regex ^(RollingUpdate|Rolling)$ (check: no-rolling-update-strategy, remediation: Use a rolling update strategy to avoid service disruption during an update. A rolling update strategy allows for pods to be systematicaly replaced in a controlled fashion to ensure no service disruption.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-deployment.yaml: (object: <no namespace>/vulnerable-app apps/v1, Kind=Deployment) pods created by this object are non-isolated (check: non-isolated-pod, remediation: Ensure pod does not accept unsafe traffic by isolating it with a NetworkPolicy. See https://cloud.redhat.com/blog/guide-to-kubernetes-ingress-network-policies for more details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-deployment.yaml: (object: <no namespace>/vulnerable-app apps/v1, Kind=Deployment) container "web-server" has AllowPrivilegeEscalation set to true. (check: privilege-escalation-container, remediation: Ensure containers do not allow privilege escalation by setting allowPrivilegeEscalation=false, privileged=false and removing CAP_SYS_ADMIN capability. See https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ for more details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-deployment.yaml: (object: <no namespace>/vulnerable-app apps/v1, Kind=Deployment) port 80 is mapped in container "web-server". (check: privileged-ports, remediation: Ensure privileged ports [0, 1024] are not mapped within containers.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-deployment.yaml: (object: <no namespace>/vulnerable-app apps/v1, Kind=Deployment) no annotation matching "email=[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+" found (check: required-annotation-email, remediation: Add an email annotation to your object with the email address of the object's owner.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-deployment.yaml: (object: <no namespace>/vulnerable-app apps/v1, Kind=Deployment) no label matching "owner=<any>" found (check: required-label-owner, remediation: Add an email annotation to your object with the name of the object's owner.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-deployment.yaml: (object: <no namespace>/vulnerable-app apps/v1, Kind=Deployment) container "web-server" is not set to runAsNonRoot (check: run-as-non-root, remediation: Set runAsUser to a non-zero number and runAsNonRoot to true in your pod or container securityContext. Refer to https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ for details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-deployment.yaml: (object: <no namespace>/vulnerable-app apps/v1, Kind=Deployment) host system directory "/" is mounted on container "web-server" (check: sensitive-host-mounts, remediation: Ensure sensitive host system directories are not mounted in containers by removing those Volumes and VolumeMounts.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-deployment.yaml: (object: <no namespace>/vulnerable-app apps/v1, Kind=Deployment) container "web-server" has cpu request 0 (check: unset-cpu-requirements, remediation: Set CPU requests and limits for your container based on its requirements. Refer to https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits for details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-deployment.yaml: (object: <no namespace>/vulnerable-app apps/v1, Kind=Deployment) container "web-server" has cpu limit 0 (check: unset-cpu-requirements, remediation: Set CPU requests and limits for your container based on its requirements. Refer to https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits for details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-deployment.yaml: (object: <no namespace>/vulnerable-app apps/v1, Kind=Deployment) container "web-server" has memory request 0 (check: unset-memory-requirements, remediation: Set memory requests and limits for your container based on its requirements. Refer to https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits for details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-deployment.yaml: (object: <no namespace>/vulnerable-app apps/v1, Kind=Deployment) container "web-server" has memory limit 0 (check: unset-memory-requirements, remediation: Set memory requests and limits for your container based on its requirements. Refer to https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits for details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-deployment.yaml: (object: <no namespace>/vulnerable-app apps/v1, Kind=Deployment) object in default namespace (check: use-namespace, remediation: Create namespaces for objects in your deployment.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-deployment.yaml: (object: <no namespace>/vulnerable-app apps/v1, Kind=Deployment) container web-server mounts path / on the host as writable (check: writable-host-mount, remediation: Set containers to mount host paths as readOnly, if you need to access files on the host.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-pod.yaml: (object: <no namespace>/insecure-app /v1, Kind=Pod) found matching serviceAccount ("") (check: default-service-account, remediation: Create a dedicated service account for your pod. Refer to https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/ for details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-pod.yaml: (object: <no namespace>/insecure-app /v1, Kind=Pod) Object does not define any DNSConfig rules. (check: dnsconfig-options, remediation: Specify dnsconfig options in your Pod specification to ensure the expected DNS setting on the Pod. Refer to https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config for details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-pod.yaml: (object: <no namespace>/insecure-app /v1, Kind=Pod) environment variable SECRET_KEY in container "app-container" found (check: env-var-secret, remediation: Do not use raw secrets in environment variables. Instead, either mount the secret as a file or use a secretKeyRef. Refer to https://kubernetes.io/docs/concepts/configuration/secret/#using-secrets for details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-pod.yaml: (object: <no namespace>/insecure-app /v1, Kind=Pod) The container "app-container" is using an invalid container image, "nginx:latest". Please use images that are not blocked by the `BlockList` criteria : [".*:(latest)$" "^[^:]*$" "(.*/[^:]+)$"] (check: latest-tag, remediation: Use a container image with a specific tag other than latest.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-pod.yaml: (object: <no namespace>/insecure-app /v1, Kind=Pod) container "app-container" does not specify a liveness probe (check: no-liveness-probe, remediation: Specify a liveness probe in your container. Refer to https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/ for details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-pod.yaml: (object: <no namespace>/insecure-app /v1, Kind=Pod) object does not define any node affinity rules. (check: no-node-affinity, remediation: Specify node-affinity in your pod specification to ensure that the orchestrator attempts to schedule replicas on specified nodes. Refer to https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity for details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-pod.yaml: (object: <no namespace>/insecure-app /v1, Kind=Pod) container "app-container" does not have a read-only root file system (check: no-read-only-root-fs, remediation: Set readOnlyRootFilesystem to true in the container securityContext.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-pod.yaml: (object: <no namespace>/insecure-app /v1, Kind=Pod) container "app-container" does not specify a readiness probe (check: no-readiness-probe, remediation: Specify a readiness probe in your container. Refer to https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/ for details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-pod.yaml: (object: <no namespace>/insecure-app /v1, Kind=Pod) pods created by this object are non-isolated (check: non-isolated-pod, remediation: Ensure pod does not accept unsafe traffic by isolating it with a NetworkPolicy. See https://cloud.redhat.com/blog/guide-to-kubernetes-ingress-network-policies for more details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-pod.yaml: (object: <no namespace>/insecure-app /v1, Kind=Pod) container "app-container" is Privileged hence allows privilege escalation. (check: privilege-escalation-container, remediation: Ensure containers do not allow privilege escalation by setting allowPrivilegeEscalation=false, privileged=false and removing CAP_SYS_ADMIN capability. See https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ for more details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-pod.yaml: (object: <no namespace>/insecure-app /v1, Kind=Pod) container "app-container" is privileged (check: privileged-container, remediation: Do not run your container as privileged unless it is required.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-pod.yaml: (object: <no namespace>/insecure-app /v1, Kind=Pod) port 80 is mapped in container "app-container". (check: privileged-ports, remediation: Ensure privileged ports [0, 1024] are not mapped within containers.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-pod.yaml: (object: <no namespace>/insecure-app /v1, Kind=Pod) no annotation matching "email=[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+" found (check: required-annotation-email, remediation: Add an email annotation to your object with the email address of the object's owner.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-pod.yaml: (object: <no namespace>/insecure-app /v1, Kind=Pod) no label matching "owner=<any>" found (check: required-label-owner, remediation: Add an email annotation to your object with the name of the object's owner.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-pod.yaml: (object: <no namespace>/insecure-app /v1, Kind=Pod) container "app-container" is not set to runAsNonRoot (check: run-as-non-root, remediation: Set runAsUser to a non-zero number and runAsNonRoot to true in your pod or container securityContext. Refer to https://kubernetes.io/docs/tasks/configure-pod-container/security-context/ for details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-pod.yaml: (object: <no namespace>/insecure-app /v1, Kind=Pod) container "app-container" has cpu request 0 (check: unset-cpu-requirements, remediation: Set CPU requests and limits for your container based on its requirements. Refer to https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits for details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-pod.yaml: (object: <no namespace>/insecure-app /v1, Kind=Pod) container "app-container" has cpu limit 0 (check: unset-cpu-requirements, remediation: Set CPU requests and limits for your container based on its requirements. Refer to https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits for details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-pod.yaml: (object: <no namespace>/insecure-app /v1, Kind=Pod) container "app-container" has memory request 0 (check: unset-memory-requirements, remediation: Set memory requests and limits for your container based on its requirements. Refer to https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits for details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-pod.yaml: (object: <no namespace>/insecure-app /v1, Kind=Pod) container "app-container" has memory limit 0 (check: unset-memory-requirements, remediation: Set memory requests and limits for your container based on its requirements. Refer to https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/#requests-and-limits for details.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-pod.yaml: (object: <no namespace>/insecure-app /v1, Kind=Pod) object in default namespace (check: use-namespace, remediation: Create namespaces for objects in your deployment.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-service.yaml: (object: <no namespace>/vulnerable-service /v1, Kind=Service) "NodePort" service type is forbidden. (check: exposed-services, remediation: Ensure containers are not exposed through a forbidden service type such as NodePort or LoadBalancer.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-service.yaml: (object: <no namespace>/vulnerable-service /v1, Kind=Service) object in default namespace (check: use-namespace, remediation: Create namespaces for objects in your deployment.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-service.yaml: (object: <no namespace>/admin-service /v1, Kind=Service) "LoadBalancer" service type is forbidden. (check: exposed-services, remediation: Ensure containers are not exposed through a forbidden service type such as NodePort or LoadBalancer.)
+
+/home/kali/k8s_labs_2/CKS/Lab-19/manifests/insecure-service.yaml: (object: <no namespace>/admin-service /v1, Kind=Service) object in default namespace (check: use-namespace, remediation: Create namespaces for objects in your deployment.)
+
