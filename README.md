@@ -1,192 +1,36 @@
-# KCNA Complete Master Guide
+# KCNA Labs - Complete Master Guide
 ## Kubernetes and Cloud Native Associate Certification Labs
 
 **Author:** Saleem Ali  
 **Course:** AIOps - Al-Nafi International College  
-**Certification:** KCNA (Kubernetes and Cloud Native Associate)  
-**Level:** Entry-Level | **Duration:** 90 minutes | **Passing Score:** 75%  
+**Date:** January 2026  
 **GitHub:** https://github.com/ali4210  
 **LinkedIn:** https://www.linkedin.com/in/saleem-ali-189719325/
 
 ---
 
-## 🎯 About KCNA Certification
+## Table of Contents
 
-The **Kubernetes and Cloud Native Associate (KCNA)** is an entry-level certification by the Cloud Native Computing Foundation (CNCF) that validates your understanding of Kubernetes and cloud-native technologies.
-
-**Exam Format:**
-- 60 multiple-choice questions
-- 90 minutes duration
-- 75% passing score
-- Online proctored exam
-- $250 USD exam fee
-- 3-year validity
-
----
-
-## 🖥️ Lab Environment Options
-
-This guide supports **TWO** Kubernetes environments. Choose based on your learning goals:
-
-### Option 1: Minikube (Single-Node) - Recommended for Beginners
-
-```
-┌─────────────────────────────┐
-│    Your Machine             │
-│  (Kali Linux/Ubuntu)        │
-│                             │
-│  ┌───────────────────────┐  │
-│  │  Minikube Cluster     │  │
-│  │  Control Plane +      │  │
-│  │  Worker (All-in-One)  │  │
-│  └───────────────────────┘  │
-└─────────────────────────────┘
-```
-
-**Best For:** Quick setup, learning basics, testing, development
-
-### Option 2: Kubeadm Multi-Node - Production-Like Setup
-
-```
-┌─────────────────┐
-│  Master Node    │
-│  (Kali Linux)   │
-│  Control Plane  │
-└────────┬────────┘
-         │
-    ┌────┴────┬─────────┬──────────┐
-    │         │         │          │
-┌───▼───┐ ┌──▼───┐ ┌───▼────┐ ┌───▼────┐
-│Parrot │ │Parrot│ │ Ubuntu │ │ Parrot │
-│Worker │ │Worker│ │ Worker │ │ Worker │
-│ Node  │ │ Node │ │  Node  │ │  Node  │
-└───────┘ └──────┘ └────────┘ └────────┘
-```
-
-**Best For:** Real-world scenarios, distributed systems, production practice
-
----
-
-## 📋 Table of Contents
-
-
-Lab 1: Exploring Container Orchestration
-Objectives
-
-By the end of this lab, students will be able to:
-
-• Understand the challenges of manually managing containerized applications • Deploy multiple containerized applications without orchestration tools • Identify and experience common issues such as port conflicts and resource management problems • Simulate scaling scenarios and observe manual intervention requirements • Analyze failure scenarios and recovery challenges in non-orchestrated environments • Explain how container orchestration platforms address these operational challenges • Compare manual container management with orchestrated solutions
-Prerequisites
-
-Before starting this lab, students should have:
-
-• Basic understanding of Linux command line operations • Fundamental knowledge of Docker containers and basic Docker commands • Understanding of networking concepts (ports, IP addresses) • Familiarity with text editors (nano, vim, or similar) • Basic knowledge of web applications and HTTP protocols
-Lab Environment Setup
-
-Ready-to-Use Cloud Machines: Al Nafi provides pre-configured Linux-based cloud machines with Docker already installed. Simply click Start Lab to access your environment - no need to build your own VM or install Docker manually.
-
-Your lab environment includes: • Ubuntu 20.04 LTS with Docker Engine installed • Pre-configured user with sudo privileges • Network access for downloading container images • Multiple terminal sessions available
-Task 1: Deploy Two Containerized Applications Manually
-Subtask 1.1: Verify Docker Installation and Prepare Environment
-
-First, let's verify that Docker is properly installed and running on your system.
-
-# Check Docker version
-docker --version
-
-# Check Docker service status
-sudo systemctl status docker
-
-# Verify Docker is running by listing containers
-docker ps
-
-Create a working directory for this lab:
-
-# Create lab directory
-mkdir ~/container-orchestration-lab
-cd ~/container-orchestration-lab
-
-# Create subdi
-
----
-
-## 🔧 Environment Setup Instructions
-
-### Minikube Setup (Single-Node)
-
-**Prerequisites:**
-- 2 CPUs or more
-- 2GB+ free memory
-- 20GB+ free disk space
-- Docker or VirtualBox installed
-
-**Installation:**
-```bash
-# Install kubectl
-curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-chmod +x kubectl
-sudo mv kubectl /usr/local/bin/
-
-# Install Minikube
-curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
-sudo install minikube-linux-amd64 /usr/local/bin/minikube
-
-# Start Minikube
-minikube start --driver=docker --memory=2048 --cpus=2
-
-# Verify
-kubectl cluster-info
-kubectl get nodes
-```
-
-### Kubeadm Multi-Node Setup
-
-**On Master Node (Kali Linux):**
-```bash
-# Install container runtime (containerd)
-sudo apt-get update
-sudo apt-get install -y containerd
-
-# Configure containerd
-sudo mkdir -p /etc/containerd
-containerd config default | sudo tee /etc/containerd/config.toml
-sudo systemctl restart containerd
-
-# Install kubeadm, kubelet, kubectl
-sudo apt-get update
-sudo apt-get install -y apt-transport-https ca-certificates curl
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.28/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.28/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
-sudo apt-get update
-sudo apt-get install -y kubelet kubeadm kubectl
-sudo apt-mark hold kubelet kubeadm kubectl
-
-# Initialize cluster
-sudo kubeadm init --pod-network-cidr=10.244.0.0/16
-
-# Configure kubectl for your user
-mkdir -p $HOME/.kube
-sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-sudo chown $(id -u):$(id -g) $HOME/.kube/config
-
-# Install network plugin (Flannel)
-kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
-```
-
-**On Worker Nodes (Parrot/Ubuntu):**
-```bash
-# Install container runtime and kubernetes tools (same as master)
-# Then join the cluster using the command from kubeadm init output:
-sudo kubeadm join <master-ip>:6443 --token <token> \
-  --discovery-token-ca-cert-hash sha256:<hash>
-```
-
-**Verify Multi-Node Cluster:**
-```bash
-# On master node
-kubectl get nodes
-kubectl get pods -A
-```
+1. [Lab 1: Exploring Container Orchestration](#lab-1-exploring-container-orchestration)
+2. [Lab 2: Introduction to Kubernetes](#lab-2-introduction-to-kubernetes)
+3. [Lab 3: Understanding Kubernetes Architecture](#lab-3-understanding-kubernetes-architecture)
+4. [Lab 4: Installing Kubernetes](#lab-4-installing-kubernetes)
+5. [Lab 5: Setting Up Minikube](#lab-5-setting-up-minikube)
+6. [Lab 6: Accessing Kubernetes Cluster](#lab-6-accessing-kubernetes-cluster)
+7. [Lab 7: Kubernetes Building Blocks](#lab-7-kubernetes-building-blocks)
+8. [Lab 8: Kubernetes Security](#lab-8-kubernetes-security)
+9. [Lab 9: Networking in Kubernetes](#lab-9-networking-in-kubernetes)
+10. [Lab 10: Services in Kubernetes](#lab-10-services-in-kubernetes)
+11. [Lab 11: Kubernetes Storage](#lab-11-kubernetes-storage)
+12. [Lab 12: Advanced Deployments](#lab-12-advanced-deployments)
+13. [Lab 13: StatefulSets](#lab-13-statefulsets)
+14. [Lab 14: Ingress Controllers](#lab-14-ingress-controllers)
+15. [Lab 15: Autoscaling](#lab-15-autoscaling)
+16. [Lab 16: CI/CD with Kubernetes](#lab-16-cicd-with-kubernetes)
+17. [Lab 17: Security Best Practices](#lab-17-security-best-practices)
+18. [Lab 18: Monitoring and Logging](#lab-18-monitoring-and-logging)
+19. [Lab 19: Helm Package Manager](#lab-19-helm-package-manager)
+20. [Lab 20: Final Project](#lab-20-final-project)
 
 ---
 
@@ -11220,43 +11064,33 @@ This lab has prepared you for the Kubernetes and Cloud Native Associate (KCNA) c
 
 ---
 
-## 🎓 Learning Path & Tips
+## Conclusion
 
-### Study Schedule
-- **Week 1:** Labs 1-5 (Foundations)
-- **Week 2:** Labs 6-10 (Core Concepts)
-- **Week 3:** Labs 11-15 (Advanced Topics)
-- **Week 4:** Labs 16-20 (Production Skills)
+This comprehensive guide covers all 20 labs required for KCNA certification preparation. Each lab builds upon previous concepts, providing hands-on experience with Kubernetes and cloud-native technologies.
 
-### Exam Preparation Tips
-1. ✅ Practice all kubectl commands without looking
-2. ✅ Understand Kubernetes architecture thoroughly
-3. ✅ Review CNCF landscape and cloud-native concepts
-4. ✅ Take practice exams
-5. ✅ Join Kubernetes community forums
-6. ✅ Review official documentation regularly
+### Key Learning Outcomes
 
-### Key Topics for KCNA
-- Kubernetes architecture and components
 - Container orchestration fundamentals
-- Cloud-native architecture principles
-- Kubernetes API and objects
-- Services and networking
-- Storage and persistence
-- Security basics
-- Observability fundamentals
+- Kubernetes architecture and components
+- Cluster installation and management
+- Application deployment and scaling
+- Security best practices
+- Networking and service discovery
+- Storage management
+- CI/CD integration
+- Monitoring and observability
+- Production-ready deployments
+
+### Next Steps
+
+1. Complete all labs sequentially
+2. Practice commands multiple times
+3. Experiment with variations
+4. Build personal projects
+5. Take KCNA certification exam
 
 ---
 
-## 🚀 Next Steps After KCNA
-
-1. **CKA** - Certified Kubernetes Administrator
-2. **CKAD** - Certified Kubernetes Application Developer  
-3. **CKS** - Certified Kubernetes Security Specialist
-
----
-
-**Created by:** Saleem Ali  
-**Institution:** Al-Nafi International College (AIOps Program)  
-**Date:** January 2026  
-**Status:** ✅ Complete & Production-Ready
+**Created by Saleem Ali**  
+**Learning Journey: AIOps @ Al-Nafi International College**  
+**January 2026**
